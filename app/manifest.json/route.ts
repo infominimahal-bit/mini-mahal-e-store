@@ -8,9 +8,9 @@ export async function GET() {
     const brandName = settings.storeName || 'TotVogue.pk';
     const description = settings.metaDescription || settings.tagline || `${brandName} - Kids Clothes Online Pakistan`;
 
-    // Use custom uploaded favicon/logo or fallback to default PWA icons
-    const faviconUrl = settings.faviconUrl || settings.logoUrl || '/default-favicon/android-chrome-192x192.png';
-    const logoUrl = settings.logoUrl || settings.faviconUrl || '/default-favicon/android-chrome-512x512.png';
+    // Use only settings-driven URLs — /favicon.ico itself reads from settings dynamically
+    const faviconUrl = settings.faviconUrl || settings.logoUrl || '/favicon.ico';
+    const logoUrl = settings.logoUrl || settings.faviconUrl || '/favicon.ico';
 
     const manifestData = {
       name: `${brandName} - Kids Clothes Online Pakistan`,
@@ -50,3 +50,4 @@ export async function GET() {
     return new Response(JSON.stringify({}), { status: 500 });
   }
 }
+

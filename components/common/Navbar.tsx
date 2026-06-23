@@ -251,17 +251,15 @@ export default function Navbar({
     <Link href="/" key="logo" className="flex items-center gap-2 shrink-0 select-none" onClick={() => { setSearchOpen(false); setMobileMenuOpen(false); }}>
       {logoUrl ? (
         <div
-          style={{ width: `${logoWidth}px` }}
-          className={`relative flex items-center ${desktopLogoAlign === 'left' ? 'md:justify-start' :
-              desktopLogoAlign === 'right' ? 'md:justify-end' : 'md:justify-center'
-            }`}
+          style={{ width: `${logoWidth}px`, maxWidth: `${logoWidth}px` }}
+          className="flex items-center shrink-0"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logoUrl}
             alt={storeName}
-            style={{ width: `${logoWidth}px` }}
-            className="object-contain h-auto max-h-12 md:max-h-16"
+            style={{ width: `${logoWidth}px`, height: 'auto', maxWidth: '100%', display: 'block' }}
+            className="object-contain"
           />
         </div>
       ) : (
@@ -271,6 +269,7 @@ export default function Navbar({
       )}
     </Link>
   );
+
 
   const renderSearch = () => !isAdmin && (
     <button

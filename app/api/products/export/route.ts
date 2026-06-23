@@ -27,10 +27,13 @@ export async function POST(request: NextRequest) {
       .single();
     const storeName = settings?.store_name || 'Zaynahs E-Store';
 
-    // Fetch products with images, variants, modifiers, and categories
+    // Fetch products with images, variants, modifiers
+    // NOTE: Omit categories(*) join — it causes "ambiguous relationship" error because
+    // products has both a category_id FK and a product_categories junction table.
+    // Instead we resolve category info from the category_id field separately below.
     const { data: productsData, error } = await supabaseAdmin
       .from('products')
-      .select('*, product_images(*), product_variants(*), product_modifiers(*), categories(*)')
+      .select('*, product_images(*), product_variants(*), product_modifiers(*)')
       .in('id', productIds);
 
     if (error) {
@@ -40,6 +43,19 @@ export async function POST(request: NextRequest) {
 
     if (!productsData || productsData.length === 0) {
       return NextResponse.json({ error: 'No products found' }, { status: 404 });
+    }
+
+    // Pre-fetch categories for all products in one batch query
+    const categoryIds = [...new Set(productsData.map((p: any) => p.category_id).filter(Boolean))];
+    const categoryMap: Record<string, { name: string; slug: string }> = {};
+    if (categoryIds.length > 0) {
+      const { data: catsData } = await supabaseAdmin
+        .from('categories')
+        .select('id, name, slug')
+        .in('id', categoryIds);
+      (catsData || []).forEach((cat: any) => {
+        categoryMap[cat.id] = { name: cat.name, slug: cat.slug };
+      });
     }
 
     const exportedProducts: ExportedProduct[] = [];
@@ -162,9 +178,10 @@ export async function POST(request: NextRequest) {
         sortOrder: m.sort_order || 0
       }));
 
-      // 4. Map the category
-      const categoryName = product.categories?.name;
-      const categorySlug = product.categories?.slug;
+      // 4. Resolve category from pre-fetched map (avoids ambiguous join)
+      const cat = product.category_id ? categoryMap[product.category_id] : null;
+      const categoryName = cat?.name;
+      const categorySlug = cat?.slug;
 
       exportedProducts.push({
         name: product.name,

@@ -32,16 +32,18 @@ export default function CategoryManager({ initialCategories, aiEnabled, storeUrl
   const [active, setActive] = useState(true);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
-  const [aiSettings, setAiSettings] = useState<{ ai_enabled: boolean } | null>(null);
+  // Always show AI button — guides user to settings if not configured
+  const [aiConfigured, setAiConfigured] = useState<boolean | null>(null);
 
   React.useEffect(() => {
     const fetchAiSettings = async () => {
       try {
         const res = await fetch('/api/ai-check');
         const data = await res.json();
-        setAiSettings({ ai_enabled: data.ai_enabled });
+        setAiConfigured(data.ai_enabled === true);
       } catch (err) {
         console.error('Failed to load AI settings:', err);
+        setAiConfigured(false);
       }
     };
     fetchAiSettings();
@@ -295,12 +297,17 @@ export default function CategoryManager({ initialCategories, aiEnabled, storeUrl
                 <h3 className="text-base font-extrabold tracking-tight text-gray-900 dark:text-white">
                   {editId ? 'Edit Category' : 'Create New Category'}
                 </h3>
-                {aiSettings?.ai_enabled && name.trim() !== '' && (
+                {name.trim() !== '' && (
                   <button
                     type="button"
-                    onClick={handleAICopywrite}
+                    onClick={aiConfigured ? handleAICopywrite : () => { toast.info('AI is not enabled. Go to Admin → Settings → AI Copywriter to enable it.', { duration: 5000 }); }}
                     disabled={isAiGenerating}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-purple-700 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]"
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98] ${
+                      aiConfigured
+                        ? 'bg-purple-600 bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-purple-700 hover:from-purple-700 hover:to-indigo-700'
+                        : 'bg-gray-400 hover:bg-gray-500'
+                    }`}
+                    title={aiConfigured ? 'Generate AI copy' : 'Enable AI in Settings → AI Copywriter'}
                   >
                     {isAiGenerating ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -426,12 +433,17 @@ export default function CategoryManager({ initialCategories, aiEnabled, storeUrl
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-gray-500">Description</label>
-                  {aiSettings?.ai_enabled && name.trim() !== '' && (
+                  {name.trim() !== '' && (
                     <button
                       type="button"
-                      onClick={handleAICopywrite}
+                      onClick={aiConfigured ? handleAICopywrite : () => { toast.info('AI is not enabled. Go to Admin → Settings → AI Copywriter to enable it.', { duration: 5000 }); }}
                       disabled={isAiGenerating}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-purple-700 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]"
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98] ${
+                        aiConfigured
+                          ? 'bg-purple-600 bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-purple-700 hover:from-purple-700 hover:to-indigo-700'
+                          : 'bg-gray-400 hover:bg-gray-500'
+                      }`}
+                      title={aiConfigured ? 'Generate AI copy' : 'Enable AI in Settings → AI Copywriter'}
                     >
                       {isAiGenerating ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />

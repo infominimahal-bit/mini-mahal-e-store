@@ -44,11 +44,30 @@ export async function generateMetadata(): Promise<Metadata> {
     const description = settings.metaDescription || settings.tagline || `Welcome to ${storeName}. Premium quality products delivered to your doorstep. Order via WhatsApp.`;
 
     const timestamp = settings.updatedAt ? new Date(settings.updatedAt).getTime() : Date.now();
-    const fav = settings.faviconUrl 
-      ? `${settings.faviconUrl}?v=${timestamp}` 
-      : settings.logoUrl 
-        ? `${settings.logoUrl}?v=${timestamp}` 
-        : "/favicon.ico";
+
+    // Dynamic favicon — always points to /favicon.ico route which reads from settings
+    const fav = settings.faviconUrl
+      ? `${settings.faviconUrl}?v=${timestamp}`
+      : settings.logoUrl
+        ? `${settings.logoUrl}?v=${timestamp}`
+        : `/favicon.ico?v=${timestamp}`;
+
+    // Apple touch icon — prefer logo (larger), fallback to favicon, then dynamic route
+    const appleTouchIcon = settings.logoUrl
+      ? `${settings.logoUrl}?v=${timestamp}`
+      : settings.faviconUrl
+        ? `${settings.faviconUrl}?v=${timestamp}`
+        : `/favicon.ico?v=${timestamp}`;
+
+    // OG/Social sharing image — prefer banner, then logo, then favicon (all from settings)
+    const ogImage = settings.bannerUrl
+      ? settings.bannerUrl
+      : settings.logoUrl
+        ? settings.logoUrl
+        : settings.faviconUrl
+          ? settings.faviconUrl
+          : `/favicon.ico?v=${timestamp}`;
+
     return {
       metadataBase: new URL(siteUrl),
       title: {
@@ -68,26 +87,18 @@ export async function generateMetadata(): Promise<Metadata> {
             type: getFaviconType(fav),
           },
           {
-            url: settings.faviconUrl 
-              ? `${settings.faviconUrl}?v=${timestamp}` 
-              : '/default-favicon/favicon-32x32.png',
+            url: fav,
             sizes: '32x32',
-            type: 'image/png',
+            type: getFaviconType(fav),
           },
           {
-            url: settings.faviconUrl 
-              ? `${settings.faviconUrl}?v=${timestamp}` 
-              : '/default-favicon/favicon-16x16.png',
+            url: fav,
             sizes: '16x16',
-            type: 'image/png',
-          }
+            type: getFaviconType(fav),
+          },
         ],
         shortcut: fav,
-        apple: settings.logoUrl 
-          ? `${settings.logoUrl}?v=${timestamp}` 
-          : settings.faviconUrl 
-            ? `${settings.faviconUrl}?v=${timestamp}` 
-            : '/default-favicon/apple-touch-icon.png',
+        apple: appleTouchIcon,
       },
       verification: {
         google: process.env.GOOGLE_SITE_VERIFICATION || '',
@@ -96,14 +107,15 @@ export async function generateMetadata(): Promise<Metadata> {
         type: 'website',
         title: title + suffix,
         description: description,
-        images: [{ url: '/og-default.jpg' }],
+        siteName: storeName,
+        images: [{ url: ogImage, width: 1200, height: 630, alt: storeName }],
       },
       twitter: {
         card: 'summary_large_image',
         title: title + suffix,
         description: description,
-        images: ['/og-default.jpg'],
-        creator: process.env.NEXT_PUBLIC_TWITTER_HANDLE || '',
+        images: [ogImage],
+        creator: settings.twitter_handle || process.env.NEXT_PUBLIC_TWITTER_HANDLE || '',
       }
     };
   } catch (err) {
