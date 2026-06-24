@@ -795,7 +795,15 @@ export default function StoreFront({
 }: StoreFrontProps) {
   const searchQuery = useSearchStore((state) => state.searchQuery);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(undefined);
+  const [clientSocialProofs, setClientSocialProofs] = useState<SocialProof[]>(socialProofs);
   useScrollRestoration();
+
+  useEffect(() => {
+    if (socialProofs.length > 0) return;
+    import('@/lib/services/socialProof').then(mod =>
+      mod.getTopSocialProofs(3).then(setClientSocialProofs)
+    ).catch(() => {});
+  }, [socialProofs.length]);
 
   // Live settings: SSR value shown immediately, overridden by fresh DB fetch on mount
   const { settings: liveSettings } = useSettings(settings);
@@ -1052,7 +1060,7 @@ export default function StoreFront({
       : 5.0;
 
     const displayReviews = reviews.slice(0, 3);
-    const displayProofs = socialProofs.slice(0, 3);
+    const displayProofs = clientSocialProofs.slice(0, 3);
 
     return (
       <div key={section.id} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 border-t border-gray-100 dark:border-gray-800">
