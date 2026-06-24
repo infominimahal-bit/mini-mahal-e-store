@@ -608,10 +608,84 @@ To prevent Vercel build-time crashes (`Error: supabaseUrl is required` / `Failed
 
 ---
 
+---
+## RULE AUTO1 — AGENT AUTOMATION FLOW (CLONE/SETUP)
+
+Jab user naye project ke liye yeh 7 values de (ref ID URL se auto-extract):
+1. Supabase URL (se ref auto-extract) + service role key
+2. Cloudflare zone ID + API token
+3. Vercel API token (settings → tokens → create)
+4. GitHub personal access token (repo + contents write)
+5. Domain name
+
+To agent AUTOMATICALLY kare ga:
+
+**Supabase API se:**
+- SUPER_MASTER_SCHEMA.sql execute (tables, policies, bucket)
+- Storage bucket create
+- 5 webhooks create (products, categories, homepage_sections, store_settings, reviews)
+
+**Cloudflare API se:**
+- 4 Cache Rules (no-cache-dynamic, static-assets, html-pages, supabase-images)
+- 3 Page Rules (cart, checkout, my-account → bypass)
+- DNS records (A, CNAME, TXT) — all proxied (orange cloud)
+
+**GitHub + Vercel API se:**
+- git init + commit + push (GITHUB_TOKEN se)
+- npm i -g vercel → vercel --prod --token=$VERCEL_TOKEN
+- Vercel env vars set via API (sab .env.local wale)
+- vercel domains add [domain]
+- Auto SSL enable
+
+**Verify:**
+- Cache headers (HIT/MISS/BYPASS)
+- Webhook (revalidated:true)
+- CF purge API
+- Page rules active
+
+Full details: `docs/NEW_PROJECT_SETUP_GUIDE.md#agent-automation--full-setup-flow`
+
+---
+## RULE CACHE1 — CACHE SYSTEM RULES (NEVER CHANGE THESE)
+
+### Cloudflare Cache Rules (Active — Set via API)
+| Rule | Action | Notes |
+|------|--------|-------|
+| `no-cache-dynamic` | cache:true + edge_ttl:0 + browser_ttl:0 | cart, checkout, account, api, admin |
+| `static-assets` | cache:true + edge_ttl:1yr | /_next/static/* |
+| `html-pages` | cache:true + edge_ttl:24h | All HTML pages (/*) |
+| `supabase-images` | cache:true + edge_ttl:30d | supabase.co images |
+
+### Page Rules (Active — Fallback)
+- `cart*` → cache_level: bypass
+- `checkout*` → cache_level: bypass  
+- `my-account*` → cache_level: bypass
+
+### ⚠️ Free Plan Limitation
+Cloudflare Free tier may cache 200 HTML responses despite bypass rules. Upgrade to Pro ($20/mo) for strict bypass enforcement on cart/checkout/account.
+
+### Server-Client Split (Always Follow)
+- `lib/site-url-server.ts`: Contains `getSiteUrl()` which uses `headers()` — ONLY import in Server Components
+- `lib/site-url.ts`: Contains `getClientSiteUrl()` and `cleanLocalhostUrls()` — safe for Client Components
+- Never import `next/headers` in a file imported by a Client Component
+
+### Shop Page Caching
+- Never use `getSiteUrl()` (has `headers()`) inside `generateMetadata` on shop page
+- Use `settings?.storeUrl?.replace(...)` directly instead
+- This prevents `cache-control: private, no-store` being forced
+
+### Cache Purge Flow
+```
+Admin DB change → Supabase webhook → /api/revalidate
+→ revalidateTag() + revalidatePath() + purgeCloudflareEverything()
+→ Next visitor → MISS → fresh data → re-cached as HIT
+```
+
+---
 ## RULE AI1 — SEO & COPYWRITING AI ENGINE
 - **Vision Models for Images**: Use Vision models (`gemini-2.0-flash` or similar) strictly for image SEO optimizations, alt tags, captions, and visual descriptive generation.
 - **Text Models for Copywriting**: Use content copywriting models (configured via `ai_settings` content model) to write descriptions, keywords, titles, and schema metadata.
-- **Brand Context Bound**: All copywriting requests must utilize the brand's general settings (`brand_name`, `store_type`, `target_market`, `tone`, `language`, `custom_instructions`, `address`, `whatsapp_number`, `tagline`) as system context to generate highly personalized, localized descriptions and structured FAQ schemas, guaranteeing maximized local SEO ranking.
+- **Brand Context Bound**: All copywriting requests must utilize the brand's general settings (`brand_name`, `store_type`, `target_market`, `tone`, `language`, `address`, `whatsapp_number`, `tagline`) as system context to generate highly personalized, localized descriptions and structured FAQ schemas, guaranteeing maximized local SEO ranking.
 - **Form Integration**: AI copywriting output must populate storefront description fields directly, and update main data tables (`products` and `categories`) upon generation for complete storefront data synchronization.
 
 

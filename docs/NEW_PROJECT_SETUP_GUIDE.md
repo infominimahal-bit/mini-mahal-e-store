@@ -1,9 +1,60 @@
 # Complete Project Setup Guide
-## From Clone to Live — Step by Step
+
+## ⚡ Agent-Driven Setup (Primary Flow)
+
+Sirf ye 4-5 credentials do — baqi **sab agent khud kar lega**.
+
+### Tumhara Kaam:
+
+```bash
+# 1. Clone karo
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
+cd YOUR_REPO
+
+# 2. Dependencies install karo
+npm install
+
+# 3. Agent ko ye dena hai:
+### — SUPABASE Management Token (https://supabase.com/dashboard/account/tokens)
+### — CLOUDFLARE Zone ID + API Token (https://dash.cloudflare.com/profile/api-tokens)
+### — VERCEL Token (https://vercel.com/account/tokens)
+### — GITHUB username + repo name
+```
+
+**Bus ye dena hai. Agent khud:**
+
+| Step | Agent Kya Karega |
+|---|---|
+| **Supabase** | Create project, extract keys (anon, service_role, db url), run all migrations, create webhooks, create bucket |
+| **Cloudflare** | Add DNS records, create cache page rules (html-pages 24h, no-cache-dynamic 0s), SSL/TLS config |
+| **Vercel** | Import repo, set env vars (secrets from Supabase), add domain, deploy |
+| **GitHub** | Push initial code, trigger deployment |
+| **Cache** | Wait for deployment, verify Cloudflare HIT/MISS/BYPASS, fix any cache issues |
+| **Env** | `.env.local` and `.env.example` populate karega with real keys |
+| **Docs** | `AGENTS.md`, `gemini.md`, setup guides update karega |
+
+### Agent Start Karne Ka Command:
+
+```
+Tum: "Setup mera naya project. Credentials: SUPABASE_MGMT_TOKEN = xyz, CLOUDFLARE_ZONE_ID = abc, CLOUDFLARE_API_TOKEN = def, VERCEL_TOKEN = vcp_xxx, GITHUB_USERNAME = myname, GITHUB_REPO = myrepo"
+```
+
+Agent:
+1. Supabase project create karega + saare keys extract karega
+2. Sab migrations run karega
+3. Storage bucket create karega
+4. Cloudflare DNS records add karega
+5. Cloudflare page rules apply karega
+6. Vercel deploy karega + env vars set karega
+7. Domain attach karega
+8. Cache verify karega
+9. Push to GitHub
+
+**Total automatic — tumhe kuch nahi karna.**
 
 ---
 
-## PART 1: Prerequisites
+## PART 1: Prerequisites (Manual Reference)
 
 - Node.js 18+ installed
 - Git installed
@@ -11,7 +62,7 @@
 
 ---
 
-## PART 2: Clone & Install
+## PART 2: Clone & Install (Manual Reference)
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
@@ -550,3 +601,166 @@ bashcurl -X POST https://www.zaynahs.pk/api/revalidate \
   -H "x-revalidate-secret: zaynahs_secret_cache_revalidate_2026" \
   -d '{"type":"UPDATE","table":"products","record":{"slug":"kids-sonic-game-on-graphic-cotton-t-shirt"}}'
 {"revalidated":true} aaye = ✅ kaam kar raha
+
+---
+
+# AGENT AUTOMATION — FULL SETUP FLOW
+
+> Jab aap agent ko yeh cheezein dein to wo SUB KAM KHUD KARE GA:
+
+## 📥 Input Required From You
+
+| # | What You Give | Kaise Mile Ga | Example |
+|---|---------------|--------------|---------|
+| 1 | Supabase project URL | Supabase dashboard → Settings → API | `https://xxxx.supabase.co` |
+| 2 | Supabase service role key | Supabase dashboard → Settings → API → `service_role key` | `eyJhbGciOiJI...` |
+| 3 | Supabase project ref ID | **URL se auto-extract:** `https://[REF].supabase.co` → ref = subdomain. Agent khud nikaal lega. | `abcdefghijklm` (auto) |
+| 4 | Cloudflare zone ID | Cloudflare dashboard → Right sidebar → Zone ID | `e4aceeacdc4f6a1...` |
+| 5 | Cloudflare API token | Cloudflare → My Profile → API Tokens → Create (permission: Zone:Cache Purge + DNS:Edit) | `cfut_ik8c0Y7o...` |
+| 6 | Vercel API token | Vercel dashboard → Settings → Tokens → Create → scope: full | `UcVbN7vH7w...` |
+| 7 | GitHub personal access token | GitHub → Settings → Developer settings → Personal access tokens → Fine-grained → repo + contents write | `ghp_xxxx...` |
+| 8 | Domain name | Aapka domain jo Cloudflare pe add hai | `mynewstore.pk` |
+
+> **Note:** Agent `npm i -g vercel` se Vercel CLI install kare ga. Non-interactive automation ke liye `VERCEL_TOKEN` env var use kare ga jo Vercel REST API ko call kare ga (env set, domain add, deploy trigger). GitHub push ke liye `GITHUB_TOKEN` se remote authenticate kare ga.
+
+## 🤖 Agent Khud Kya Kare Ga (Fully Automated)
+
+### Step 1 — Environment Setup
+```
+✅ .env.local file create kare ga with:
+   - Supabase URL + anon key + service role key
+   - Cloudflare zone ID + API token
+   - REVALIDATE_SECRET (auto-generate)
+   - NEXT_PUBLIC_SITE_URL = https://[domain]
+```
+
+### Step 2 — Supabase Database (via SQL API)
+```
+Agent Supabase SQL Editor API use kare ga:
+✅ SUPER_MASTER_SCHEMA.sql execute — sare tables, views, functions, policies, triggers bana de ga
+✅ Storage bucket create kare ga (product-images)
+✅ Storage policies set kare ga (public read, admin write)
+✅ pg_net extension enable kare ga (webhooks ke liye)
+✅ Realtime enable kare ga on relevant tables
+```
+
+### Step 3 — Supabase Webhooks (via Management API)
+
+Agent SUPABASE MANAGEMENT API se direct webhooks create kare ga:
+
+```bash
+# Products table
+POST https://api.supabase.com/v1/projects/{ref}/database/webhooks
+→ Name: revalidate-products
+→ Table: products
+→ Events: INSERT, UPDATE, DELETE
+→ URL: https://[domain]/api/revalidate
+→ Header: x-revalidate-secret = auto-generated
+
+# Categories table → Same pattern
+# Homepage sections → Same pattern  
+# Store settings → Same pattern
+# Reviews → Same pattern
+```
+
+### Step 4 — Cloudflare Cache Rules (via Rulesets API)
+```
+Agent Cloudflare API se 4 cache rules create/update kare ga:
+
+RULE 1 - no-cache-dynamic:
+  → Match: /cart OR /checkout OR /account OR /api OR /admin
+  → Action: cache:true, edge_ttl:0, browser_ttl:0
+  → Effectively bypass (Free plan limitation for 200 HTML noted)
+
+RULE 2 - static-assets:
+  → Match: /_next/static/
+  → Action: cache:true, edge_ttl: 31536000 (1 year)
+
+RULE 3 - html-pages:  
+  → Match: /* (wildcard)
+  → Action: cache:true, edge_ttl: 86400 (24 hours)
+  → Combined with webhook purge → admin change → fresh data in seconds
+
+RULE 4 - supabase-images:
+  → Match: supabase.co in URL
+  → Action: cache:true, edge_ttl: 2592000 (30 days)
+```
+
+### Step 5 — Cloudflare DNS Records (via DNS API)
+```
+Agent Cloudflare DNS API se records create kare ga:
+
+✅ A Record: @ → 192.0.2.1 (placeholder, proxied = orange cloud)
+✅ CNAME Record: www → [your-domain].vercel.app (proxied)
+✅ CNAME Record: * → [your-domain].vercel.app (proxied, optional)
+✅ TXT Record: google-site-verification (for Google Search Console)
+All records set to PROXIED (orange cloud) — Cloudflare CDN enabled ✅
+```
+
+### Step 6 — Cloudflare Page Rules (via Page Rules API)
+```
+Agent 3 Page Rules create kare ga (Free plan limit = 3):
+
+RULE 1: cart* → cache_level: bypass
+RULE 2: checkout* → cache_level: bypass
+RULE 3: my-account* → cache_level: bypass
+```
+
+### Step 7 — Github Push + Vercel Deployment (via API)
+
+```
+Agent GitHub API + Vercel API use kare ga:
+
+✅ git init + git add + git commit
+✅ GitHub remote add kare ga (token se authenticate)
+✅ git push (GITHUB_TOKEN se)
+✅ Vercel CLI install: npm i -g vercel
+✅ vercel --prod --token=$VERCEL_TOKEN deploy
+✅ Vercel env vars set kare ga (Vercel API se — aapke .env.local wale sab):
+   - NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
+   - SUPABASE_SERVICE_ROLE_KEY, REVALIDATE_SECRET
+   - CLOUDFLARE_ZONE_ID, CLOUDFLARE_API_TOKEN
+   - NEXT_PUBLIC_SITE_URL
+✅ Vercel domain add: vercel domains add [domain] --token=$VERCEL_TOKEN
+✅ Vercel auto SSL enable (automatic — no action needed)
+✅ Vercel pe deploy ho gaya → Live URL mil gaya
+```
+
+### Step 8 — Post-Deployment Verification
+```
+Agent sab verify kare ga:
+
+✅ curl test: page cache headers (cf-cache-status, x-vercel-cache)
+✅ API test: /api/revalidate → 405 (GET) / 200 (POST)
+✅ Webhook test: curl POST /api/revalidate → {"revalidated":true}
+✅ Cloudflare purge test: API call → success
+✅ Domain redirect test: non-www → www (308)
+✅ Active page test: All store pages return 200
+```
+
+## 📊 Summary — Aap Kya Dete Hain vs Agent Kya Karta Hai
+
+| Aap Dete Hain (8 values) | Agent Karta Hai (25+ steps) |
+|--------------------------|----------------------------|
+| Supabase URL + service key | DB schema, tables, policies, bucket, sql functions, triggers |
+| Supabase URL (ref auto-extract) | 5 webhooks via Supabase Management API |
+| Cloudflare zone ID + API token | 4 cache rules, 3 page rules, 4+ DNS records (all proxied) |
+| Vercel API token | CLI install, deploy, env vars, domain connect, SSL |
+| GitHub token | git init, commit, push |
+| Domain name | .env config, Vercel domain, redirect |
+| **✅ Sirf 7 values** (ref auto-extract) | **✅ 25+ automated steps via APIs** |
+
+## 🚀 Total Time
+```
+Manual: 2-3 hours (plus mistakes)
+Agent automated: 5-10 minutes
+```
+
+## ⚠️ Free Plan Limitations Agent Will Note
+```
+- Cloudflare Free: Only 3 Page Rules (used for cart/checkout/account bypass)
+- Cloudflare Free: 200 HTML responses may cache despite bypass rules
+- Supabase Free: 500k queries/day, 2GB database
+- Vercel Free: 1M requests/month, 100GB bandwidth
+- Agent will document all limitations in docs/CLOUDFLARE_SUPABASE_SETUP.md
+```

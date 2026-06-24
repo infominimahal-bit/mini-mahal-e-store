@@ -227,10 +227,10 @@ node --env-file=.env.local scripts/deploy-cloudflare-rules.js
 ### 2. Cloudflare Cache Settings Ruleset
 
 | Rule Name | Target Expression | Action | Cache TTL / Configuration |
-|---|---|---|---|
-| **`no-cache-dynamic`** | `(path contains "/cart")` or `(path contains "/admin")` or `(path contains "/checkout")` or `(path contains "/api")` | **Bypass Cache** | Excludes dynamic transactions from caching. |
+|---|---|---|---|---|
+| **`no-cache-dynamic`** | `(path contains "/cart")` or `(path contains "/admin")` or `(path contains "/checkout")` or `(path contains "/api")` | **Cache** | **Edge TTL: 0s, Browser TTL: 0s** — effectively bypass. ⚠️ CF Free plan may still cache 200 HTML responses (cart data loads client-side, zero impact). |
 | **`static-assets`** | `(path contains "/_next/static/")` | **Cache** | **Edge TTL: 1 Year** (override origin). Safe due to Next build content hashing. |
-| **`html-pages`** | `(path wildcard "/*")` | **Bypass Cache** | **Bypass** - Next.js HTML and RSC Vary headers must pass through to Vercel. |
+| **`html-pages`** | `(path wildcard "/*")` | **Cache** | **Edge TTL: 24 Hours** (override origin). Combined with webhook purge — admin change → Cloudflare purge → fresh data in seconds. |
 | **`supabase-images`** | `(full_uri contains "supabase.co")` | **Cache** | **Edge TTL: 1 Month** (override origin). Minimizes Supabase egress cost. |
 
 ---

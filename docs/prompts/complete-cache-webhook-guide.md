@@ -134,7 +134,8 @@ RULE 4 - HTML Pages:
 Name: html-pages
 Match: /* (wildcard - baaki sab)
 Action: Cache Everything
-Edge TTL: 1 minute ✅
+Edge TTL: 24 hours ✅
+(Webhook purge clear karta hai admin change pe → fresh data 1-2 sec me)
 ```
 
 ### Step 2: Speed Settings
@@ -384,8 +385,10 @@ Next.js + Agent sab handle karega ✅
 Agent next.config.ts mein lagayega:
 
 HTML Pages:
-  Cache-Control: s-maxage=60, stale-while-revalidate=600
-  Browser: hamesha server se fresh lega
+  Cache-Control: public, s-maxage=86400, stale-while-revalidate=60
+  CDN-Cache-Control: public, s-maxage=86400, stale-while-revalidate=60
+  Cloudflare: 24h Edge cache (webhook purge pe clear)
+  Browser: stale-while-revalidate=60 — 1 min stale allow
 
 Cart/Checkout:
   Cache-Control: no-store, no-cache
@@ -564,12 +567,12 @@ CODE:
 # PART 8 — COMPLETE SUMMARY TABLE
 
 ```
-Layer        | Kya Cache Hota  | Kab Clear Hota      | Kaun Karta
--------------|-----------------|---------------------|------------
-Browser      | CSS/JS/Images   | URL change pe auto  | Next.js auto
-Cloudflare   | HTML/Images     | Webhook + API purge | Agent code
-Vercel       | HTML pages      | revalidateTag       | Agent code
-Supabase     | Storage images  | Nahi hota (URL change)| uploadImage()
+Layer        | Kya Cache Hota     | Kab Clear Hota        | Kaun Karta
+-------------|--------------------|-----------------------|------------
+Browser      | CSS/JS/Images      | URL change pe auto    | Next.js auto
+Cloudflare   | HTML/Images        | Webhook + API purge   | Agent code + CF API
+Vercel       | HTML pages (ISR)   | revalidateTag         | Agent code
+Supabase     | Storage images     | Nahi hota (URL change)| uploadImage()
 
 No Cache:
 Cart         | Kabhi nahi      | N/A                 | no-store header

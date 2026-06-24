@@ -13,8 +13,8 @@
 | `lib/services/*.ts` | Next.js Server | **86,400s (24 Hours)** | Server Action queries are wrapped with `unstable_cache` to minimize DB queries. Tagged with granular tags (`products`, `settings`, `categories`) for instant invalidation. |
 | Cloudflare: `/_next/static/*` | Cloudflare CDN | **31,536,000s (1 Year)** | Hashed assets (compiled CSS/JS) generated at build time. Their names change when files are modified, making 1-year caching completely safe. |
 | Cloudflare: `supabase.co` | Cloudflare CDN | **2,592,000s (1 Month)** | Storage bucket public image URLs. Caching these at the CDN edge dramatically reduces Supabase egress bandwidth costs. |
-| Cloudflare: `/cart`, `/checkout`, `/admin`, `/api`, `/account` | Cloudflare CDN | **0s (Bypass Cache)** | Transactions, checkout flows, admin portals, and API endpoints must never be cached to prevent serving stale or private customer data. |
-| Cloudflare: `/*` (HTML pages) | Cloudflare CDN | **0s (Bypass Cache)** | Cloudflare must bypass HTML/RSC caching. Next.js uses custom headers (`Vary: RSC`) that Cloudflare doesn't natively support. Caching is handled on Vercel. |
+| Cloudflare: `/cart`, `/checkout`, `/admin`, `/api`, `/account` | Cloudflare CDN | **0s (Bypass Cache)** | Transactions, checkout flows, admin portals, and API endpoints must never be cached to prevent serving stale or private customer data. ⚠️ Free plan caches 200 HTML responses despite bypass rules — impact minimal (cart data client-side). |
+| Cloudflare: `/*` (HTML pages) | Cloudflare CDN | **86,400s (24 Hours)** | HTML pages are cached at Cloudflare Edge for 24h. Vercel ISR ensures fresh data after admin changes via webhook purge. |
 
 ---
 
@@ -27,6 +27,9 @@ REVALIDATE_SECRET="zaynahs_secret_cache_revalidate_2026"
 CLOUDFLARE_ZONE_ID="your_zone_id"
 CLOUDFLARE_API_TOKEN="your_api_token"
 NEXT_PUBLIC_SITE_URL="https://www.totvogue.pk"
+NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your_anon_key"
+SUPABASE_SERVICE_ROLE_KEY="your_service_role_key"
 GOOGLE_SITE_VERIFICATION="your_value"
 ```
 
@@ -66,10 +69,12 @@ We automate rule deployment, CNAME proxying (orange clouding), and google-site-v
 ### Cache Rules Configuration
 The script configures **4 cache rules** under the `http_request_cache_settings` ruleset:
 
-1. **`no-cache-dynamic`**: Bypasses caching for `/cart`, `/checkout`, `/account`, `/api`, and `/admin`.
+1. **`no-cache-dynamic`**: Bypasses caching for `/cart`, `/checkout`, `/account`, `/api`, and `/admin`. Uses `browser_ttl: 0` to also prevent browser cache. ⚠️ On Free plan, 200 HTML responses may still get cached — impact is minimal since cart/checkout data loads client-side.
 2. **`static-assets`**: Overrides origin headers to cache `/_next/static/*` files at the Edge for 1 year.
-3. **`html-pages`**: Bypasses caching for all html pages (`/*`). **(⛔ CRITICAL: This must always remain set to Bypass. Caching HTML at Cloudflare breaks Next.js client-side navigation due to Vary: RSC header mismatches, leading to white screens and React hydration crash errors).**
+3. **`html-pages`**: Caches all HTML pages (`/*`) at Cloudflare Edge for **24 hours**. Combined with Vercel ISR + webhook purge system — admin change triggers full cache clear within seconds.
 4. **`supabase-images`**: Caches all URLs containing `supabase.co` for 1 month at the edge.
+
+> **Note:** Page Rules (older system) are also active for additional bypass enforcement on `cart*`, `checkout*`, and `my-account*` paths with `cache_level: bypass`.
 
 ---
 
@@ -78,6 +83,8 @@ The script configures **4 cache rules** under the `http_request_cache_settings` 
 ### Rule 1: Never Call `headers()` or `cookies()` in Store Page Server Components
 Calling `headers()` or `cookies()` in any storefront Server Component (including `generateMetadata()`) dynamically forces the page into dynamic rendering. This appends `cache-control: private, no-store` headers, destroying Vercel's ISR cache.
 * **Exceptions**: Allowed only in `robots.ts`, `sitemap.ts`, `/admin/**`, and `/api/**`.
+* **Server-Client Split**: `getSiteUrl()` (uses `headers()`) is in `lib/site-url-server.ts` — only import from server components. `getClientSiteUrl()` and `cleanLocalhostUrls()` are in `lib/site-url.ts` — safe for client components.
+* **Shop Page Fix**: Always use `settings?.storeUrl?.replace(...)` directly in `generateMetadata` instead of `getSiteUrl()` to avoid `headers()` calls that break caching.
 * **Verification Command**:
   ```bash
   grep -rn "headers()\|cookies()" app/ --include="*.tsx" --include="*.ts" | grep -v "robots\|sitemap\|admin\|api"
