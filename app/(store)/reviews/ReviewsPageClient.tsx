@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState, useCallback, useTransition, useMemo } from 'react';
+import React, { useState, useCallback, useTransition, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Review, SocialProof } from '@/lib/types';
 import StarRating from '@/components/store/StarRating';
 import { Search, Star, MessageSquare, Package, Link as LinkIcon, Check, ShoppingBag, MessageCircle } from '@/components/common/Icons';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 
 interface ReviewsPageClientProps {
@@ -47,6 +49,10 @@ export default function ReviewsPageClient({
   const [copied, setCopied] = useState(false);
 
   const socialProofs = initialSocialProofs;
+
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const avgRating = useMemo(() => {
     if (reviews.length === 0) return 0;
@@ -157,6 +163,7 @@ export default function ReviewsPageClient({
   const showProofWall = activeTab === 'all' || activeTab === 'wall';
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50 dark:bg-[#0f0f1b]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Header */}
@@ -404,8 +411,8 @@ export default function ReviewsPageClient({
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {socialProofs.map((proof) => (
                     <div key={proof.id} className="bg-white dark:bg-[#16162a] rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-md transition-shadow">
-                      <div className="relative w-full aspect-[4/3] bg-gray-100 dark:bg-gray-800">
-                        <Image src={proof.imageUrl} alt={proof.caption || 'Customer feedback'} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+                      <div className="relative w-full bg-gray-100 dark:bg-gray-800 cursor-zoom-in" onClick={() => setLightboxIndex(socialProofs.indexOf(proof))}>
+                        <Image src={proof.imageUrl} alt={proof.caption || 'Customer feedback'} width={600} height={800} className="w-full h-auto object-contain" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
                       </div>
                       <div className="p-3 space-y-1.5">
                         {proof.caption && (
@@ -445,5 +452,74 @@ export default function ReviewsPageClient({
         </div>
       </div>
     </div>
+
+    {/* Lightbox Modal */}
+    {mounted && lightboxIndex !== null && createPortal(
+        <div
+          className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-black/95 animate-fade-in touch-none select-none"
+          onClick={() => setLightboxIndex(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxIndex(null)}
+            className="absolute top-4 right-4 z-20 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer shadow-md"
+            aria-label="Close lightbox"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {socialProofs.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(i => (i! - 1 + socialProofs.length) % socialProofs.length); }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          )}
+
+          <div
+            className="relative w-full max-w-3xl h-[65dvh] md:h-[80dvh] flex items-center justify-center overflow-hidden px-4 md:px-16"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-full h-full relative">
+              <Image
+                src={socialProofs[lightboxIndex].imageUrl}
+                alt={socialProofs[lightboxIndex].caption || 'Customer feedback'}
+                fill
+                sizes="90vw"
+                className="object-contain pointer-events-none"
+              />
+            </div>
+          </div>
+
+          {socialProofs.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(i => (i! + 1) % socialProofs.length); }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+              aria-label="Next image"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          )}
+
+          {socialProofs.length > 1 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+              {socialProofs.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setLightboxIndex(i); }}
+                  className={`w-2 h-2 rounded-full transition-all cursor-pointer ${i === lightboxIndex ? 'bg-white scale-125' : 'bg-white/40'}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
