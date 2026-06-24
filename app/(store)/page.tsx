@@ -6,6 +6,7 @@ import { getSettings } from '@/lib/services/settings';
 import { getTopReviews } from '@/lib/services/reviews';
 import { getTopSocialProofs } from '@/lib/services/socialProof';
 import { getHomepageSections } from '@/lib/services/sections';
+import { SocialProof } from '@/lib/types';
 
 import { getSiteUrl } from '@/lib/site-url-server';
 import { Metadata } from 'next';
@@ -50,14 +51,26 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function CatalogPage() {
-  const [products, categories, settings, reviews, socialProofs, sections] = await Promise.all([
+  const [products, categories, settings, reviews, sections] = await Promise.all([
     getProducts(),
     getCategories(),
     getSettings(),
     getTopReviews(3),
-    getTopSocialProofs(3),
-    getHomepageSections(true)
+    getHomepageSections(true),
   ]);
+
+  let socialProofs: SocialProof[] = [];
+  try {
+    const timeoutPromise = new Promise<[]>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 5000)
+    );
+    socialProofs = await Promise.race([
+      getTopSocialProofs(3),
+      timeoutPromise,
+    ]);
+  } catch {
+    // social proofs non-critical — silently skip
+  }
 
   return (
     <StoreFront

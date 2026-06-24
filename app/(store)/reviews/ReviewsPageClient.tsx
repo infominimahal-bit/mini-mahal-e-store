@@ -201,34 +201,21 @@ export default function ReviewsPageClient({
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 flex-wrap">
-              <span className="text-xs font-bold text-gray-400 mr-1">Filter by:</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-gray-400 shrink-0">Filter by:</span>
+            <div className="flex flex-row flex-nowrap overflow-x-auto scrollbar-none gap-2 pb-2 w-full">
               {[5, 4, 3, 2, 1].map((star) => (
                 <button
                   key={star}
                   onClick={() => handleRatingFilter(star)}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${
                     ratingFilter === star
-                      ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 shadow-sm'
-                      : 'bg-white dark:bg-white/5 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-white/10'
+                      ? 'bg-[#e94560] text-white border-none shadow-sm'
+                      : 'bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10'
                   }`}
                 >
-                  <div className="flex gap-0.5">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star
-                        key={s}
-                        className={`w-3 h-3 ${
-                          s <= star
-                            ? ratingFilter === star
-                              ? 'fill-amber-400 text-amber-400'
-                              : 'fill-gray-300 text-gray-300 dark:fill-gray-500 dark:text-gray-500'
-                            : 'text-gray-200 dark:text-gray-700'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  {star}
+                  <span className={ratingFilter === star ? 'text-white' : 'text-amber-400'}>★</span>
+                  <span>{star}</span>
                 </button>
               ))}
             </div>
