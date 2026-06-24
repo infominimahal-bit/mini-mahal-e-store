@@ -5,6 +5,7 @@ import { getCategories } from '@/lib/services/categories';
 import { getSettings } from '@/lib/services/settings';
 import { getTopReviews } from '@/lib/services/reviews';
 import { getHomepageSections } from '@/lib/services/sections';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { Metadata } from 'next';
 
 export const revalidate = 86400; // 24 hours — webhooks purge on admin save
@@ -55,6 +56,12 @@ export default async function CatalogPage() {
     getHomepageSections(true),
   ]);
 
+  const { count: socialProofCount } = await supabaseAdmin
+    .from('social_proof')
+    .select('id', { count: 'exact', head: true })
+    .eq('active', true)
+    .is('deleted_at', null);
+
   return (
     <StoreFront
       initialProducts={products}
@@ -62,6 +69,7 @@ export default async function CatalogPage() {
       settings={settings}
       reviews={reviews}
       sections={sections}
+      socialProofCount={socialProofCount ?? 0}
     />
   );
 }

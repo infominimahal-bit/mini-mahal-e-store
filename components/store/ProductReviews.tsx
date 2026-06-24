@@ -2,6 +2,7 @@
 
 import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Review, Product } from '@/lib/types';
 import StarRating from './StarRating';
 import ReviewsList from './ReviewsList';
@@ -11,27 +12,28 @@ interface ProductReviewsProps {
   product: Product;
   reviews: Review[];
   averageRating: { average: number; count: number };
+  socialProofCount?: number;
 }
 
 export default function ProductReviews({
   product,
   reviews,
-  averageRating
+  averageRating,
+  socialProofCount = 0,
 }: ProductReviewsProps) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const handleReviewSubmitted = () => {
-    // Force Next.js to revalidate server component data
     startTransition(() => {
       router.refresh();
     });
   };
 
-  const totalCount = reviews.length;
+  const totalCount = reviews.length + socialProofCount;
   const distribution = {
-    5: 0,
+    5: socialProofCount,
     4: 0,
     3: 0,
     2: 0,
@@ -46,20 +48,13 @@ export default function ProductReviews({
   });
 
   const getPercentage = (starNum: 5 | 4 | 3 | 2 | 1) => {
-    // If we have actual reviews in the DB, calculate percentages
     if (totalCount > 0) {
       return Math.round((distribution[starNum] / totalCount) * 100);
     }
-    
-    // Otherwise fallback/simulate based on product rating (fake rating)
     const rating = (averageRating.count > 0 ? averageRating.average : null) ?? product.rating ?? 5;
     const count = averageRating.count ?? product.reviewsCount ?? 0;
-    
     if (count === 0) return 0;
-    
-    if (rating === 5) {
-      return starNum === 5 ? 100 : 0;
-    }
+    if (rating === 5) return starNum === 5 ? 100 : 0;
     if (rating >= 4.8) {
       if (starNum === 5) return 88;
       if (starNum === 4) return 9;
@@ -79,7 +74,6 @@ export default function ProductReviews({
       if (starNum === 2) return 4;
       return 0;
     }
-    // Default fallback
     if (starNum === 5) return 45;
     if (starNum === 4) return 30;
     if (starNum === 3) return 15;
@@ -87,9 +81,8 @@ export default function ProductReviews({
     return 2;
   };
 
-  // Always prefer live averageRating count (only approved reviews)
   const displayRating = (averageRating && averageRating.count > 0) ? averageRating.average : (product.rating ?? 5);
-  const displayCount = averageRating ? averageRating.count : (product.reviewsCount ?? 0);
+  const displayCount = (averageRating ? averageRating.count : (product.reviewsCount ?? 0)) + socialProofCount;
 
   return (
     <div className="space-y-8 pt-8 border-t border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white">
@@ -108,6 +101,9 @@ export default function ProductReviews({
           <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
             Based on {displayCount} {displayCount === 1 ? 'rating' : 'ratings'}
           </span>
+          {socialProofCount > 0 && (
+            <span className="text-[10px] font-medium text-gray-400">(Includes Verified + Proof Wall)</span>
+          )}
         </div>
 
         {/* Middle: Bars */}
@@ -165,6 +161,17 @@ export default function ProductReviews({
       {/* Reviews List */}
       <div className="space-y-4">
         <ReviewsList reviews={reviews} loading={isPending} />
+      </div>
+
+      {/* View All Reviews link */}
+      <div className="w-full mt-4 flex justify-start items-center">
+        <Link
+          href="/reviews"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-orange-500 hover:text-orange-600 hover:underline transition-colors"
+        >
+          <span>↗</span>
+          <span>View All Reviews</span>
+        </Link>
       </div>
     </div>
   );

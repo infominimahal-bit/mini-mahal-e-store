@@ -34,11 +34,13 @@ export default async function ReviewsPage({ searchParams }: PageProps) {
 
   const socialProofs = await getSocialProofs();
 
+  const combinedTotal = total + socialProofs.length;
+
   // Generate JSON-LD aggregate schema
-  const aggregateRating = reviews.length > 0
+  const aggregateRating = reviews.length + socialProofs.length > 0
     ? {
-        average: reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length,
-        count: total,
+        average: (reviews.reduce((sum, r) => sum + r.rating, 0) + socialProofs.length * 5) / (reviews.length + socialProofs.length),
+        count: combinedTotal,
       }
     : null;
 

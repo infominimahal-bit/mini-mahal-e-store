@@ -25,6 +25,7 @@ interface StoreFrontProps {
   sections?: HomepageSection[];
   isPreview?: boolean;
   activeSectionId?: string | null;
+  socialProofCount?: number;
 }
 
 interface FlashSaleSectionProps {
@@ -789,7 +790,8 @@ export default function StoreFront({
   reviews = [],
   sections = [],
   isPreview = false,
-  activeSectionId = null
+  activeSectionId = null,
+  socialProofCount = 0,
 }: StoreFrontProps) {
   const searchQuery = useSearchStore((state) => state.searchQuery);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(undefined);
@@ -1044,9 +1046,9 @@ export default function StoreFront({
     if (!reviews || reviews.length === 0) return null;
 
     const approvedReviews = reviews.filter(r => r.approved !== false);
-    const totalReviewsCount = approvedReviews.length;
+    const totalReviewsCount = approvedReviews.length + socialProofCount;
     const averageStars = totalReviewsCount > 0 
-      ? Math.round((approvedReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviewsCount) * 10) / 10
+      ? Math.round(((approvedReviews.reduce((sum, r) => sum + r.rating, 0) + socialProofCount * 5) / totalReviewsCount) * 10) / 10
       : 5.0;
 
     const displayReviews = reviews.slice(0, 3);
@@ -1062,6 +1064,9 @@ export default function StoreFront({
             <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
               {averageStars.toFixed(1)} out of 5 based on {totalReviewsCount} {totalReviewsCount === 1 ? 'rating' : 'ratings'}
             </span>
+            {socialProofCount > 0 && (
+              <span className="text-[10px] font-medium text-gray-400">(Includes Verified + Proof Wall)</span>
+            )}
           </div>
         </div>
 

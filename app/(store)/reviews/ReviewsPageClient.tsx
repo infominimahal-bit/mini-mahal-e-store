@@ -51,11 +51,14 @@ export default function ReviewsPageClient({
 
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
+  const proofCount = socialProofs.length;
+
   const avgRating = useMemo(() => {
-    if (reviews.length === 0) return 0;
-    const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
-    return Math.round((sum / reviews.length) * 10) / 10;
-  }, [reviews]);
+    const totalItems = reviews.length + proofCount;
+    if (totalItems === 0) return 0;
+    const sum = reviews.reduce((acc, r) => acc + r.rating, 0) + proofCount * 5;
+    return Math.round((sum / totalItems) * 10) / 10;
+  }, [reviews, proofCount]);
 
   const updateUrl = useCallback((params: Record<string, string | number | undefined>) => {
     const sp = new URLSearchParams();
@@ -171,7 +174,7 @@ export default function ReviewsPageClient({
           <p className="mt-2 text-sm sm:text-base text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
             See what our customers are saying. Every review is from a real purchase.
           </p>
-          {total > 0 && (
+          {total + proofCount > 0 && (
             <div className="mt-4 flex flex-col items-center gap-2">
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -180,8 +183,11 @@ export default function ReviewsPageClient({
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 <span className="font-bold text-gray-900 dark:text-white">{avgRating}</span> out of 5 based on{' '}
-                <span className="font-semibold text-gray-900 dark:text-white">{total}</span> rating{total !== 1 ? 's' : ''}
+                <span className="font-semibold text-gray-900 dark:text-white">{total + proofCount}</span> rating{(total + proofCount) !== 1 ? 's' : ''}
               </p>
+              {proofCount > 0 && (
+                <span className="text-[10px] font-medium text-gray-400">(Includes Verified + Proof Wall)</span>
+              )}
             </div>
           )}
         </div>

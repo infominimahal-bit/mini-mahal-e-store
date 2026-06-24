@@ -137,6 +137,11 @@ export default async function ProductPage({ params }: PageProps) {
     getRelatedProducts(product.id, product.categoryId, 4)
   ]);
 
+  const { count: socialProofCount } = await supabaseAdmin
+    .from('social_proof_products')
+    .select('product_id', { count: 'exact', head: true })
+    .eq('product_id', product.id);
+
   const layout = settings.productPageLayout || ['details', 'ticker', 'reviews', 'related', 'recently_viewed', 'social_feed'];
 
   const siteUrl = await getSiteUrl(settings);
@@ -228,7 +233,7 @@ export default async function ProductPage({ params }: PageProps) {
         {layout.map((block: string) => {
           if (block === 'details') {
             return (
-              <ProductDetail key="details" product={product} settings={settings} averageRating={averageRating} />
+              <ProductDetail key="details" product={product} settings={settings} averageRating={averageRating} socialProofCount={socialProofCount ?? 0} />
             );
           }
           if (block === 'ticker') {
@@ -268,7 +273,7 @@ export default async function ProductPage({ params }: PageProps) {
           if (block === 'reviews') {
             return (
               <div key="reviews" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <ProductReviews product={product} reviews={reviews} averageRating={averageRating} />
+                <ProductReviews product={product} reviews={reviews} averageRating={averageRating} socialProofCount={socialProofCount ?? 0} />
               </div>
             );
           }

@@ -40,11 +40,12 @@ interface ProductDetailProps {
   product: Product;
   settings: StoreSettings;
   averageRating?: { average: number; count: number };
+  socialProofCount?: number;
 }
 
 const isHtml = (str: string) => /<[a-z][\s\S]*>/i.test(str);
 
-export default function ProductDetail({ product, settings, averageRating }: ProductDetailProps) {
+export default function ProductDetail({ product, settings, averageRating, socialProofCount = 0 }: ProductDetailProps) {
   const addItem = useCartStore(state => state.addItem);
   const sizeGuide = product.sizeGuide;
 
@@ -492,8 +493,9 @@ export default function ProductDetail({ product, settings, averageRating }: Prod
 
   // Ratings calculation — always prefer live averageRating (only approved reviews)
   // product.reviewsCount can be stale/0; averageRating is computed live from approved rows
+  // socialProofCount adds custom proof wall entries as 5-star ratings
   const displayRating = (averageRating && averageRating.count > 0) ? averageRating.average : (product.rating ?? 5);
-  const displayCount = averageRating ? averageRating.count : (product.reviewsCount ?? 0);
+  const displayCount = (averageRating ? averageRating.count : (product.reviewsCount ?? 0)) + socialProofCount;
 
   const handleModifierToggle = (modifier: ProductModifier) => {
     setSelectedModifiers(prev =>
