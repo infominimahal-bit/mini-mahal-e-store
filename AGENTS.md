@@ -88,4 +88,13 @@ This app runs across ANY domain (localhost, custom domain, production). Never ha
 2. Supports **many-to-many product association** via checkboxes (not single dropdown)
 3. If tagged product is deleted → show "Not Available" / "Deleted" badge, no broken link
 4. Storefront social proofs are fetched **client-side** (not SSR) to avoid blocking page render
+5. **Review count must ALWAYS merge store reviews + proof wall items.**  
+   Wherever a review count or rating summary is displayed (grid, header, product page, homepage, /reviews), use:
+   ```
+   totalCount = storeReviews.length + socialProofCount
+   avgRating  = (sum(storeReviews.rating) + socialProofCount * 5) / totalCount
+   ```
+   Each proof wall entry counts as a **5-star rating**. Append `"(Includes Verified + Proof Wall)"` annotation when `socialProofCount > 0`.
+   - Fetch `socialProofCount` server-side via `supabaseAdmin.from('social_proof_products').select('product_id', { count: 'exact', head: true }).eq('product_id', product.id)` for product pages, or `supabaseAdmin.from('social_proof').select('id', { count: 'exact', head: true }).eq('active', true).is('deleted_at', null)` for the homepage.
+   - On the `/reviews` page, use `socialProofs.length` (already in client).
 <!-- END:social-proof-guidelines -->
