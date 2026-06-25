@@ -2624,7 +2624,7 @@ export default function ProductCard({ product, currencySymbol = 'Rs.', settings 
         onTouchCancel={() => setTouchActive(false)}
         className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#16162a] shadow-sm hover:shadow-md transition-all duration-300"
       >
-        <div className={`relative ${aspectClass} w-full overflow-hidden bg-gray-55 dark:bg-black/10`}>
+        <div className={`relative ${aspectClass} w-full overflow-hidden bg-gray-50 dark:bg-black/10`}>
           <Image
             src={activeImage}
             alt={product.name}

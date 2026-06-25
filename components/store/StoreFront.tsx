@@ -1089,7 +1089,7 @@ export default function StoreFront({
             </div>
           )}
           {badge3Active && (
-            <div className="flex items-start gap-4 p-5 rounded-2xl bg-white dark:bg-[#16162a] border border-gray-250 dark:border-gray-800 shadow-sm">
+            <div className="flex items-start gap-4 p-5 rounded-2xl bg-white dark:bg-[#16162a] border border-gray-200 dark:border-gray-800 shadow-sm">
               <div className="flex-shrink-0 p-3 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 rounded-xl">
                 {renderBadgeIcon(settings.trustBadge3Icon || 'RefreshCw')}
               </div>
@@ -1100,7 +1100,7 @@ export default function StoreFront({
             </div>
           )}
           {badge4Active && (
-            <div className="flex items-start gap-4 p-5 rounded-2xl bg-white dark:bg-[#16162a] border border-gray-250 dark:border-gray-800 shadow-sm">
+            <div className="flex items-start gap-4 p-5 rounded-2xl bg-white dark:bg-[#16162a] border border-gray-200 dark:border-gray-800 shadow-sm">
               <div className="flex-shrink-0 p-3 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 rounded-xl">
                 {renderBadgeIcon(settings.trustBadge4Icon || 'Phone')}
               </div>

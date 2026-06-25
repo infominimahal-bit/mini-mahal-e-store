@@ -172,24 +172,6 @@ textarea::placeholder {
   color: var(--color-text-primary, #ffffff);
 }
 
-/* Force dark-mode backgrounds on white containers and cards */
-.dark .bg-white {
-  background-color: var(--color-surface, #16162a) !important;
-}
-
-/* Force dark-mode backgrounds on light page backgrounds */
-.dark .bg-gray-50 {
-  background-color: var(--color-background, #0f0f1b) !important;
-}
-
-.dark .bg-gray-50\/50 {
-  background-color: color-mix(in srgb, var(--color-background, #0f0f1b) 50%, transparent) !important;
-}
-
-.dark .bg-gray-100 {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-}
-
 /* Force dark-mode border colors */
 .dark .border-gray-100 {
   border-color: var(--color-border, rgba(255, 255, 255, 0.05)) !important;
@@ -201,7 +183,6 @@ textarea::placeholder {
 
 /* Force high contrast text colors in dark mode */
 .dark .text-gray-900,
-.dark .text-gray-955,
 .dark .text-gray-950 {
   color: var(--color-text-primary, #ffffff) !important;
 }

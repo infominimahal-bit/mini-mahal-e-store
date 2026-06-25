@@ -754,7 +754,7 @@ export default function ProductDetail({ product, settings, averageRating, social
               </div>
 
               {hasPriceRange && selectedVariant && (
-                <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[var(--color-primary)]/5 dark:bg-white/5 border border-gray-250 dark:border-gray-800 text-sm font-semibold mt-2.5 w-fit">
+                <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[var(--color-primary)]/5 dark:bg-white/5 border border-gray-200 dark:border-gray-800 text-sm font-semibold mt-2.5 w-fit">
                   <span className="text-gray-500 dark:text-gray-400">Selected option:</span>
                   <span className="product-price text-base font-black text-[#e94560] dark:text-[#e94560] leading-none">
                     {formatPrice(unitPrice, settings.currencySymbol)}
@@ -1010,10 +1010,10 @@ export default function ProductDetail({ product, settings, averageRating, social
                 {/* Delivery Estimate */}
                 {settings.deliveryEstimateText && (
                   <div className="flex gap-3">
-                    <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 bg-white dark:bg-white/5 border border-gray-100 dark:border-gray-850 rounded-xl text-gray-700 dark:text-gray-300">
+                    <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 bg-white dark:bg-white/5 border border-gray-100 dark:border-gray-800 rounded-xl text-gray-700 dark:text-gray-300">
                       <Package className="h-5 w-5" />
                     </div>
-                    <p className="text-xs text-gray-650 dark:text-gray-300 leading-relaxed font-semibold">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-semibold">
                       {settings.deliveryEstimateText}
                     </p>
                   </div>
@@ -1022,10 +1022,10 @@ export default function ProductDetail({ product, settings, averageRating, social
                 {/* Free Shipping */}
                 {settings.freeShippingText && (
                   <div className="flex gap-3">
-                    <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 bg-white dark:bg-white/5 border border-gray-100 dark:border-gray-850 rounded-xl text-gray-700 dark:text-gray-300">
+                    <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 bg-white dark:bg-white/5 border border-gray-100 dark:border-gray-800 rounded-xl text-gray-700 dark:text-gray-300">
                       <Truck className="h-5 w-5" />
                     </div>
-                    <p className="text-xs text-gray-650 dark:text-gray-300 leading-relaxed font-semibold">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed font-semibold">
                       {settings.freeShippingText}
                     </p>
                   </div>
@@ -1036,7 +1036,7 @@ export default function ProductDetail({ product, settings, averageRating, social
               {settings.promoCodeText && (
                 <div className="flex items-center gap-3 justify-center text-center">
                   <Tag className="h-4 w-4 text-[#e94560]" />
-                  <p className="text-xs text-gray-650 dark:text-gray-300 font-bold">
+                  <p className="text-xs text-gray-600 dark:text-gray-300 font-bold">
                     {settings.promoCodeText}
                   </p>
                 </div>
