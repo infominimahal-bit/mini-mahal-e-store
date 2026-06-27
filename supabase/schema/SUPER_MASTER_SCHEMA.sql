@@ -26,6 +26,18 @@ CREATE TABLE IF NOT EXISTS categories (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_slug ON categories (LOWER(slug));
 
+-- System "Shop" category for /shop route
+INSERT INTO public.categories (id, name, slug, description, sort_order, active)
+VALUES (
+  '00000000-0000-4000-8000-000000000099',
+  'Shop',
+  'shop',
+  'System category — automatically includes all products. Used for /shop route.',
+  -1,
+  true
+)
+ON CONFLICT (id) DO UPDATE SET name = 'Shop', slug = 'shop', sort_order = -1;
+
 -- ============================================================
 -- BADGES
 -- ============================================================
@@ -1438,6 +1450,7 @@ CREATE INDEX IF NOT EXISTS idx_reviews_deleted_at ON reviews (deleted_at);
 CREATE INDEX IF NOT EXISTS idx_orders_deleted_at ON orders (deleted_at);
 CREATE INDEX IF NOT EXISTS idx_customers_deleted_at ON customers (deleted_at);
 CREATE INDEX IF NOT EXISTS idx_media_library_deleted_at ON media_library (deleted_at);
+CREATE INDEX IF NOT EXISTS idx_media_library_sort_order ON media_library (sort_order);
 CREATE INDEX IF NOT EXISTS idx_whatsapp_subscribers_deleted_at ON whatsapp_subscribers (deleted_at);
 CREATE INDEX IF NOT EXISTS idx_email_subscribers_deleted_at ON email_subscribers (deleted_at);
 CREATE INDEX IF NOT EXISTS idx_size_guides_deleted_at ON size_guides (deleted_at);
