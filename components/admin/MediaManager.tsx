@@ -933,22 +933,27 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
   const handleBulkGenerate = async () => {
     if (!selectedIds.length) return;
     const CONCURRENCY = 3;
-    const itemsToGen = media.filter(m => selectedIds.includes(m.id));
+    const pendingItems = media.filter(m => selectedIds.includes(m.id) && !m.ai_generated);
+    const skippedCount = selectedIds.length - pendingItems.length;
+    if (pendingItems.length === 0) {
+      toast.info('All selected images are already tagged.');
+      return;
+    }
     setBulkGenerating(true);
-    setBulkTotal(itemsToGen.length);
+    setBulkTotal(pendingItems.length);
     setBulkCompletedIds([]);
     setBulkFailedIds([]);
-    const toastId = toast.loading(`Generating metadata for ${itemsToGen.length} files...`);
+    const toastId = toast.loading(`Generating metadata for ${pendingItems.length} files...`);
     let localDone = 0;
     let localFailed = 0;
     try {
-      for (let i = 0; i < itemsToGen.length; i += CONCURRENCY) {
-        const chunk = itemsToGen.slice(i, i + CONCURRENCY);
+      for (let i = 0; i < pendingItems.length; i += CONCURRENCY) {
+        const chunk = pendingItems.slice(i, i + CONCURRENCY);
         const processedBefore = i;
-        toast.loading(`Processing batch — (${processedBefore}/${itemsToGen.length}) done, starting next ${chunk.length}...`, { id: toastId });
+        toast.loading(`Processing batch — (${processedBefore}/${pendingItems.length}) done, starting next ${chunk.length}...`, { id: toastId });
         await Promise.allSettled(chunk.map(async (item, chunkIdx) => {
           setGeneratingId(item.id);
-          console.log(`[Vision AI] Processing (${i + chunkIdx + 1}/${itemsToGen.length}): ${item.original_filename}`);
+          console.log(`[Vision AI] Processing (${i + chunkIdx + 1}/${pendingItems.length}): ${item.original_filename}`);
           try {
             const res = await fetch('/api/media/ai-meta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_url: item.file_url, media_id: item.id }) });
             if (!res.ok) throw new Error(await res.text());
@@ -960,11 +965,14 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
             localFailed++;
           }
         }));
-        toast.loading(`Batch complete — (${localDone + localFailed}/${itemsToGen.length}) done (${localDone} ok, ${localFailed} failed)`, { id: toastId });
+        toast.loading(`Batch complete — (${localDone + localFailed}/${pendingItems.length}) done (${localDone} ok, ${localFailed} failed)`, { id: toastId });
         await new Promise(res => setTimeout(res, 300));
       }
       setGeneratingId(null);
-      toast.success(`Bulk vision metadata complete! (${localDone} succeeded, ${localFailed} failed)`, { id: toastId });
+      const msg = skippedCount > 0
+        ? `Processed ${localDone} pending images. ${skippedCount} were already tagged.`
+        : `Bulk vision metadata complete! (${localDone} succeeded, ${localFailed} failed)`;
+      toast.success(msg, { id: toastId });
       setSelectedIds([]);
       fetchMedia();
     } catch (e) {
@@ -1506,7 +1514,13 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
               </div>
               <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
                 {(['all', 'generated', 'pending'] as const).map(status => (
-                  <button type="button" key={status} onClick={() => setAiFilter(status)}
+                  <button type="button" key={status} onClick={() => {
+                    setAiFilter(status);
+                    if (status === 'pending') {
+                      const pendingIds = media.filter(m => !m.ai_generated).map(m => m.id);
+                      setSelectedIds(pendingIds);
+                    }
+                  }}
                     className={`px-4 py-2 rounded-xl text-xs font-semibold border min-h-[38px] flex-1 md:flex-none capitalize transition-all cursor-pointer ${aiFilter === status ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white dark:bg-[#16162a] border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                     {status === 'all' ? 'All' : status === 'generated' ? 'AI Tagged' : 'Pending'}
                   </button>
