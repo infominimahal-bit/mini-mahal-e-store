@@ -267,6 +267,21 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
 
   // Selected Variants State for Shopify-style Bulk Actions
   const [selectedVariantIndices, setSelectedVariantIndices] = useState<number[]>([]);
+  const [variantSearchTerm, setVariantSearchTerm] = useState('');
+
+  const filteredVariants = variantSearchTerm
+    ? variants.filter(v => {
+        const term = variantSearchTerm.toLowerCase();
+        const label = [v.color, v.size, v.material, v.customValue].filter(Boolean).join(' / ').toLowerCase();
+        return label.includes(term)
+          || (v.sku?.toLowerCase() || '').includes(term)
+          || (v.price?.toString() || '').includes(term)
+          || (v.comparePrice?.toString() || '').includes(term)
+          || (v.colorHex?.toLowerCase() || '').includes(term)
+          || (v.stock?.toString() || '').includes(term)
+          || (v.inventoryThreshold?.toString() || '').includes(term);
+      })
+    : variants;
 
   const handlePriceChange = (val: string) => {
     const newPrice = parseFloat(val) || 0;
@@ -826,7 +841,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl pb-16">
+      <form onSubmit={handleSubmit} className="space-y-8 w-full max-w-full pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
           {/* Left: Core Fields */}
@@ -1721,11 +1736,27 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                     </span>
                   </div>
 
+                  {/* Variant Search */}
+                  {variants.length > 0 && (
+                    <div className="w-full">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Search variants by name, SKU, color, or price..."
+                          value={variantSearchTerm}
+                          onChange={(e) => setVariantSearchTerm(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-[#0f0f1b] text-sm focus:outline-none focus:border-[#e94560] focus:bg-white dark:focus:bg-[#16162a] transition-all text-gray-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {/* Shopify-style Bulk Editor Actions Bar */}
                   {selectedVariantIndices.length > 0 && (
                     <div className="bg-white dark:bg-[#16162a] p-4 pb-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-3 animate-fade-in transition-all">
                       {/* Top Row: Selected info + Clear button, and Bulk Delete Button */}
-                      <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+                      <div className="flex items-center pb-3 border-b border-gray-100 dark:border-gray-800">
                         <div className="flex items-center gap-3">
                           <span className="text-xs font-bold bg-[#e94560]/10 text-[#e94560] px-3 py-1.5 rounded-full border border-[#e94560]/20">
                             {selectedVariantIndices.length} Selected
@@ -1739,14 +1770,16 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                           </button>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={handleBulkDelete}
-                          className="bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/45 text-red-600 dark:text-red-400 px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span>Delete Selected</span>
-                        </button>
+                        <div className="ml-auto pl-3 border-l border-gray-200 dark:border-gray-700">
+                          <button
+                            type="button"
+                            onClick={handleBulkDelete}
+                            className="bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-950/45 text-red-600 dark:text-red-400 px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span>Delete Selected</span>
+                          </button>
+                        </div>
                       </div>
 
                       {/* Inputs Row - Grid: stacks on mobile (1 col), 6 cols on large screens */}
@@ -1762,7 +1795,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                               type="number"
                               placeholder="Enter price"
                               style={{ borderWidth: 0 }}
-                              className="w-full min-w-0 bg-transparent text-xs text-gray-900 dark:text-white px-3 py-2 focus:outline-none"
+                              className="w-full min-w-[60px] bg-transparent text-xs text-gray-900 dark:text-white px-3 py-2 focus:outline-none"
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
@@ -1802,7 +1835,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                               type="number"
                               placeholder="Enter compare price"
                               style={{ borderWidth: 0 }}
-                              className="w-full min-w-0 bg-transparent text-xs text-gray-900 dark:text-white px-3 py-2 focus:outline-none"
+                              className="w-full min-w-[60px] bg-transparent text-xs text-gray-900 dark:text-white px-3 py-2 focus:outline-none"
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
@@ -1842,7 +1875,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                               type="number"
                               placeholder="Enter stock"
                               style={{ borderWidth: 0 }}
-                              className="w-full min-w-0 bg-transparent text-xs text-gray-900 dark:text-white px-3 py-2 focus:outline-none"
+                              className="w-full min-w-[60px] bg-transparent text-xs text-gray-900 dark:text-white px-3 py-2 focus:outline-none"
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
@@ -1882,7 +1915,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                               type="text"
                               placeholder="SKU prefix"
                               style={{ borderWidth: 0 }}
-                              className="w-full min-w-0 bg-transparent text-xs text-gray-900 dark:text-white px-3 py-2 focus:outline-none"
+                              className="w-full min-w-[60px] bg-transparent text-xs text-gray-900 dark:text-white px-3 py-2 focus:outline-none"
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
@@ -1918,7 +1951,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                               type="number"
                               placeholder="Enter threshold"
                               style={{ borderWidth: 0 }}
-                              className="w-full min-w-0 bg-transparent text-xs text-gray-900 dark:text-white px-3 py-2 focus:outline-none"
+                              className="w-full min-w-[60px] bg-transparent text-xs text-gray-900 dark:text-white px-3 py-2 focus:outline-none"
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
@@ -1982,12 +2015,14 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                             <th className="py-3 px-3 w-10">
                               <input
                                 type="checkbox"
-                                checked={selectedVariantIndices.length === variants.length && variants.length > 0}
+                                checked={filteredVariants.length > 0 && filteredVariants.every(v => selectedVariantIndices.includes(variants.indexOf(v)))}
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    setSelectedVariantIndices(variants.map((_, i) => i));
+                                    const newIndices = filteredVariants.map(v => variants.indexOf(v));
+                                    setSelectedVariantIndices(prev => [...new Set([...prev, ...newIndices])]);
                                   } else {
-                                    setSelectedVariantIndices([]);
+                                    const filteredIdxSet = new Set(filteredVariants.map(v => variants.indexOf(v)));
+                                    setSelectedVariantIndices(prev => prev.filter(i => !filteredIdxSet.has(i)));
                                   }
                                 }}
                                 className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-4 w-4 cursor-pointer"
@@ -2004,7 +2039,8 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                             <th className="py-3 px-3 w-[5%] text-center">Del</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70">{variants.map((variant, idx) => {
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800/70">{filteredVariants.map((variant) => {
+                            const idx = variants.indexOf(variant);
                             const label = [variant.color, variant.size, variant.material, variant.customValue].filter(Boolean).join(' / ') || `Var ${idx + 1}`;
                             const isSelected = selectedVariantIndices.includes(idx);
                             return (
@@ -2129,9 +2165,10 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                   )}
 
                   {/* Variants Cards - mobile */}
-                  {variants.length > 0 && (
+                  {filteredVariants.length > 0 && (
                     <div className="md:hidden space-y-3">
-                      {variants.map((variant, idx) => {
+                      {filteredVariants.map((variant) => {
+                        const idx = variants.indexOf(variant);
                         const label = [variant.color, variant.size, variant.material, variant.customValue].filter(Boolean).join(' / ') || `Var ${idx + 1}`;
                         const isSelected = selectedVariantIndices.includes(idx);
                         return (
