@@ -45,7 +45,44 @@ GitHub repo kholo: **https://github.com/totvoguepk-bot/zaynahsestore-tv**
 
 File already create kar di hai: `.github/workflows/keep_alive.yml`
 
-Bas `git push` karna hai mere commit ke baad.
+**Table used in workflow:** `categories` — kyunke ye hamesha exist karta hai aur lightweight hai.
+
+Agar khud banana ho to ye content hai:
+
+```yaml
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: '0 9 * * 1,4'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install @supabase/supabase-js
+      - name: Ping Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          node -e "
+          const { createClient } = require('@supabase/supabase-js');
+          const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+          (async () => {
+            const { data, error } = await supabase.from('categories').select('id').limit(1);
+            if (error) { console.error('Error:', error); process.exit(1); }
+            console.log('Pinged successfully:', data);
+          })();
+          "
+```
+
+> **Recommended table:** `categories` — sabse safe aur lightweight ping ke liye.
 
 ---
 
