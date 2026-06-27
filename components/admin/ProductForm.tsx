@@ -358,7 +358,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
   const [axisInputs, setAxisInputs] = useState<string[]>(() => initAxes().map(() => ''));
   const [presets, setPresets] = useState<VariantPreset[]>([]);
   const [collapsedAxes, setCollapsedAxes] = useState<boolean[]>(() => initAxes().map(() => false));
-  const [variantsSectionCollapsed, setVariantsSectionCollapsed] = useState(false);
+  const [variantsSectionCollapsed, setVariantsSectionCollapsed] = useState(true);
   const [axisOrderChanged, setAxisOrderChanged] = useState(false);
 
   useEffect(() => {
@@ -1250,12 +1250,12 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                   <button
                     type="button"
                     onClick={() => setVariantsSectionCollapsed(prev => !prev)}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:text-[#e94560] dark:hover:text-[#e94560] transition-all cursor-pointer bg-gray-100 dark:bg-[#1a1a30] px-3 py-1.5 rounded-lg"
                   >
                     {variantsSectionCollapsed ? (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-5 w-5" />
                     ) : (
-                      <ChevronUp className="h-4 w-4" />
+                      <ChevronUp className="h-5 w-5" />
                     )}
                     {variantsSectionCollapsed ? 'Expand All' : 'Collapse All'}
                   </button>
@@ -1274,10 +1274,10 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
 
               {hasVariants && !variantsSectionCollapsed && (
                 <div className="space-y-5 pt-1">
-                  <div className="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-[#0f0f1b]/50 border border-gray-200 dark:border-gray-800 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#0f0f1b]/50 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">Enable Visual Swatches</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">Show color circles and images instead of text button tags on storefront</span>
+                      <span className="text-base font-bold text-gray-900 dark:text-white">Enable Visual Swatches</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Show color circles and images instead of text button tags on storefront</span>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -1290,10 +1290,10 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-[#0f0f1b]/50 border border-gray-200 dark:border-gray-800 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#0f0f1b]/50 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm">
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold text-gray-900 dark:text-white">Show Swatches on Catalog Cards</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">Show variant color circles under the product image on the archive/catalog page</span>
+                      <span className="text-base font-bold text-gray-900 dark:text-white">Show Swatches on Catalog Cards</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Show variant color circles under the product image on the archive/catalog page</span>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
