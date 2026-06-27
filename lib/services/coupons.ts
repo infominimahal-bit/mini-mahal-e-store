@@ -108,7 +108,7 @@ export const deleteCoupon = async (id: string): Promise<void> => {
   }
 };
 
-export const validateCouponCode = async (code: string, subtotal: number): Promise<Coupon | null> => {
+export const validateCouponCode = async (code: string, subtotal: number): Promise<{ coupon: Coupon } | { error: string } | null> => {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
@@ -118,17 +118,17 @@ export const validateCouponCode = async (code: string, subtotal: number): Promis
       .eq('active', true)
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) return { error: 'Failed to validate coupon. Please try again.' };
     if (!data) return null;
 
     const coupon = mapCoupon(data);
     if (coupon.minCartAmount && subtotal < coupon.minCartAmount) {
-      throw new Error(`Minimum order amount of Rs. ${coupon.minCartAmount} is required for this coupon.`);
+      return { error: `Minimum order amount of Rs. ${coupon.minCartAmount} is required for this coupon.` };
     }
 
-    return coupon;
+    return { coupon };
   } catch (error: any) {
     console.error('[coupons] validateCouponCode failed:', error);
-    throw error;
+    return { error: 'Failed to validate coupon. Please try again.' };
   }
 };

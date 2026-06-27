@@ -122,6 +122,7 @@ export default function CartContainer({ settings }: CartContainerProps) {
 
   // Discount
   const [discountCode, setDiscountCode] = useState('');
+  const [couponError, setCouponError] = useState('');
   const [loading, setLoading] = useState(false);
   const [coordinates, setCoordinates] = useState('');
 
@@ -313,20 +314,19 @@ export default function CartContainer({ settings }: CartContainerProps) {
     if (!clean) return;
 
     setLoading(true);
-    try {
-      const coupon = await validateCouponCode(clean, subtotal);
-      if (coupon) {
-        applyCoupon(coupon);
-        setDiscountCode('');
-        toast.success(`Coupon "${coupon.code}" applied successfully!`);
-      } else {
-        toast.error('Invalid or expired coupon code');
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to validate coupon code');
-    } finally {
-      setLoading(false);
+    setCouponError('');
+    const result = await validateCouponCode(clean, subtotal);
+    if (result && 'coupon' in result) {
+      applyCoupon(result.coupon);
+      setDiscountCode('');
+      setCouponError('');
+      toast.success(`Coupon "${result.coupon.code}" applied successfully!`);
+    } else if (result && 'error' in result) {
+      setCouponError(result.error);
+    } else {
+      setCouponError('Invalid or expired coupon code');
     }
+    setLoading(false);
   };
 
   const handleOrderSubmit = async (e: React.FormEvent) => {
@@ -698,25 +698,32 @@ export default function CartContainer({ settings }: CartContainerProps) {
               </button>
             </div>
           ) : (
-            <div className="flex gap-2 w-full">
-              <div className="relative flex-1">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Discount code"
-                  value={discountCode}
-                  onChange={e => setDiscountCode(e.target.value.toUpperCase())}
-                  className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#16162a] text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 focus:border-[#e94560] focus:outline-none transition-all"
-                />
+            <div className="flex gap-2 w-full flex-col">
+              <div className="flex gap-2 w-full">
+                <div className="relative flex-1">
+                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Discount code"
+                    value={discountCode}
+                    onChange={e => { setDiscountCode(e.target.value.toUpperCase()); setCouponError(''); }}
+                    className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#16162a] text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 focus:border-[#e94560] focus:outline-none transition-all"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleApplyDiscount}
+                  disabled={!discountCode.trim()}
+                  className="px-4 py-2.5 rounded-xl bg-[#1a1a2e] hover:bg-[#e94560] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap"
+                >
+                  Apply
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleApplyDiscount}
-                disabled={!discountCode.trim()}
-                className="px-4 py-2.5 rounded-xl bg-[#1a1a2e] hover:bg-[#e94560] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap"
-              >
-                Apply
-              </button>
+              {couponError && (
+                <p className="text-[11px] font-semibold text-red-500 dark:text-red-400 flex items-center gap-1 ml-1">
+                  <span>!</span> {couponError}
+                </p>
+              )}
             </div>
           )}
         </div>
