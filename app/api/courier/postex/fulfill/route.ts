@@ -290,7 +290,7 @@ export async function POST(req: NextRequest) {
           <p style="color: #555; line-height: 1.6;">
             Your order <strong>#${order.order_number || orderId.slice(0, 8)}</strong> has been handed over to
             <strong>PostEx Logistics</strong> and is on its way. Please allow <strong>2-5 working days</strong>
-            for delivery. Keep your phone number active for the rider to reach you.
+            for delivery. Keep provided phone number active for the rider to reach you.
           </p>
 
           <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 16px 0; text-align: center;">
@@ -333,8 +333,8 @@ export async function POST(req: NextRequest) {
           </div>
 
           <div style="margin-top: 16px; padding: 12px; background: #fefce8; border: 1px solid #fde68a; border-radius: 6px; font-size: 12px; color: #92400e; line-height: 1.5;">
-            <strong>⚠️ Important:</strong> Orders take <strong>2-5 working days</strong> for delivery. Please ensure your
-            phone number remains active and switched on. The rider may call you before delivery.
+            <strong>⚠️ Important:</strong> Orders take <strong>2-5 working days</strong> for delivery. Please ensure the
+            provided phone number remains active and switched on. The rider may call you before delivery.
           </div>
         </div>
         <div style="text-align: center; padding: 16px; color: #999; font-size: 11px;">
@@ -385,7 +385,7 @@ export async function POST(req: NextRequest) {
                   </table>
                 ` : ''}
                 <div style="margin-top: 12px; padding: 10px; background: #fefce8; border: 1px solid #fde68a; border-radius: 6px; font-size: 11px; color: #92400e;">
-                  Delivery window: 2-5 working days. Keep customer phone active.
+                  Delivery window: 2-5 working days. Keep provided phone number active.
                 </div>
               </div>
               <div style="text-align: center; padding: 12px; color: #999; font-size: 10px;">
