@@ -307,7 +307,7 @@ export async function POST(req: NextRequest) {
               <table style="width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
                 <thead>
                   <tr style="background: #f9fafb;">
-                    <th style="text-align: left; padding: 8px; font-size: 11px; color: #6b7280; text-transform: uppercase;">Item</th>
+                    <th colspan="2" style="text-align: left; padding: 8px; font-size: 11px; color: #6b7280; text-transform: uppercase;">Item</th>
                     <th style="text-align: center; padding: 8px; font-size: 11px; color: #6b7280; text-transform: uppercase;">Qty</th>
                     <th style="text-align: right; padding: 8px; font-size: 11px; color: #6b7280; text-transform: uppercase;">Total</th>
                   </tr>
@@ -380,7 +380,7 @@ export async function POST(req: NextRequest) {
                 ${orderItemsHtml ? `
                   <h3 style="color: #1a1a2e; font-size: 14px; margin: 16px 0 8px;">Items</h3>
                   <table style="width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; font-size: 12px;">
-                    <thead><tr style="background: #f9fafb;"><th style="text-align: left; padding: 6px;">Item</th><th style="text-align: center; padding: 6px;">Qty</th><th style="text-align: right; padding: 6px;">Total</th></tr></thead>
+                    <thead><tr style="background: #f9fafb;"><th colspan="2" style="text-align: left; padding: 6px;">Item</th><th style="text-align: center; padding: 6px;">Qty</th><th style="text-align: right; padding: 6px;">Total</th></tr></thead>
                     <tbody>${orderItemsHtml}</tbody>
                   </table>
                 ` : ''}

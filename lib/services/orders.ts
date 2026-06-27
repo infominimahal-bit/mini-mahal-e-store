@@ -10,6 +10,7 @@ interface OrderRow {
   order_number: string;
   customer_name?: string | null;
   customer_phone?: string | null;
+  customer_email?: string | null;
   customer_id?: string | null;
   items?: unknown;
   subtotal?: string | number | null;
@@ -38,6 +39,7 @@ const mapOrder = (row: OrderRow): Order => ({
   orderNumber: row.order_number,
   customerName: row.customer_name || undefined,
   customerPhone: row.customer_phone || undefined,
+  customerEmail: row.customer_email || undefined,
   customerId: row.customer_id || undefined,
   items: (row.items || []) as CartItem[],
   subtotal: row.subtotal ? parseFloat(row.subtotal.toString()) : 0,
@@ -450,7 +452,7 @@ export const updateOrderDetails = async (
     if (statusChanged || trackingUpdated) {
       try {
         const { onOrderStatusChange } = await import('@/lib/email/triggers');
-        await onOrderStatusChange(mapped, { name: mapped.customerName, phone: mapped.customerPhone }, mapped.status);
+        await onOrderStatusChange(mapped, { email: mapped.customerEmail, name: mapped.customerName, phone: mapped.customerPhone }, mapped.status);
       } catch (err) {
         console.error('[Email Trigger] failed in updateOrderDetails:', err);
       }

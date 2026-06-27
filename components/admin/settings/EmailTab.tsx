@@ -43,6 +43,7 @@ const CUSTOMER_EMAILS = [
 
 const ADMIN_EMAILS = [
   { key: 'admin_new_order', label: 'New Order Placed Alert' },
+  { key: 'admin_order_cancelled', label: 'Order Cancelled Alert' },
   { key: 'admin_low_stock', label: 'Low Stock Alert Notification' },
   { key: 'admin_new_customer', label: 'New Customer Registered Alert' },
   { key: 'admin_new_review', label: 'New Review Submitted Notification' },

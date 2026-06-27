@@ -31,24 +31,24 @@ export function renderOrderItemsTable(items: CartItem[], currencySymbol = 'Rs.',
 
     return `
       <tr style="border-bottom: 1px solid #e5e7eb;">
-        <td style="padding: 12px 8px; vertical-align: top; width: 60px;">
+        <td width="20%" valign="middle" style="padding: 10px 15px 10px 0;">
           ${imgUrl
             ? productUrl
-              ? `<a href="${productUrl}" target="_blank"><img src="${imgUrl}" alt="${item.product.name}" width="50" height="50" style="border-radius: 8px; object-fit: cover;" /></a>`
-              : `<img src="${imgUrl}" alt="${item.product.name}" width="50" height="50" style="border-radius: 8px; object-fit: cover;" />`
-            : `<div style="width: 50px; height: 50px; border-radius: 8px; background-color: #f3f4f6;"></div>`}
+              ? `<a href="${productUrl}" target="_blank"><img src="${imgUrl}" alt="${item.product.name}" width="100%" style="max-width: 60px; border-radius: 6px; display: block;" /></a>`
+              : `<img src="${imgUrl}" alt="${item.product.name}" width="100%" style="max-width: 60px; border-radius: 6px; display: block;" />`
+            : `<div style="width: 60px; height: 60px; border-radius: 6px; background-color: #f3f4f6;"></div>`}
         </td>
-        <td style="padding: 12px 8px; vertical-align: top; text-align: left;">
+        <td width="50%" valign="middle" style="padding: 10px 8px;">
           ${productUrl
-            ? `<div style="font-weight: 600; font-size: 14px;"><a href="${productUrl}" target="_blank" style="color: #e94560; text-decoration: underline;">${item.product.name}</a></div>`
-            : `<div style="font-weight: 600; color: #1a1a2e; font-size: 14px;">${item.product.name}</div>`}
-          ${variantDetails ? `<div style="font-size: 12px; color: #6b7280; margin-top: 2px;">${variantDetails}</div>` : ''}
-          ${modifierDetails ? `<div style="font-size: 12px; color: #10b981; margin-top: 2px;">+ ${modifierDetails}</div>` : ''}
+            ? `<a href="${productUrl}" target="_blank" style="color: #1a1a1a; text-decoration: none; font-weight: 600; font-size: 14px; display: block;">${item.product.name}</a>`
+            : `<span style="font-weight: 600; color: #1a1a1a; font-size: 14px;">${item.product.name}</span>`}
+          ${variantDetails ? `<p style="margin: 4px 0 0; color: #666; font-size: 12px;">${variantDetails}</p>` : ''}
+          ${modifierDetails ? `<p style="margin: 2px 0 0; color: #10b981; font-size: 12px;">+ ${modifierDetails}</p>` : ''}
         </td>
-        <td style="padding: 12px 8px; vertical-align: top; text-align: center; color: #4b5563; font-size: 14px;">
+        <td width="10%" valign="middle" align="center" style="padding: 10px 8px; color: #444; font-size: 14px; white-space: nowrap;">
           x${item.quantity}
         </td>
-        <td style="padding: 12px 8px; vertical-align: top; text-align: right; font-weight: 700; color: #1a1a2e; font-size: 14px;">
+        <td width="20%" valign="middle" align="right" style="padding: 10px 0 10px 8px; font-weight: 700; color: #1a1a2e; font-size: 14px; white-space: nowrap;">
           ${formatPrice(item.total, currencySymbol)}
         </td>
       </tr>

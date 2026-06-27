@@ -340,6 +340,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
     order_refunded: true,
     review_request: true,
     admin_new_order: true,
+    admin_order_cancelled: true,
     admin_low_stock: true,
     admin_new_customer: true,
     admin_new_review: true,

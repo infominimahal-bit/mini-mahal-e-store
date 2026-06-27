@@ -501,18 +501,25 @@ export default function OrderDetailCanvas({ order: initialOrder, settings }: Ord
                   Unpaid
                 </span>
               )}
-              <span className={`inline-flex items-center gap-1.5 rounded-[6px] px-2 py-0.5 text-[13px] font-semibold ${
-                 order.status === 'pending' || order.status === 'placed' || order.status === 'confirmed'
-                 ? 'bg-[#fff4c4] text-[#7c5c00] dark:bg-[#fff4c4]/20 dark:text-[#d4c382]'
-                 : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
-              }`}>
-                {order.status === 'pending' || order.status === 'placed' || order.status === 'confirmed' ? (
-                  <span className="w-2.5 h-2.5 rounded-full border-2 border-[#b98900] dark:border-[#d4c382]" />
-                ) : (
-                  <Check className="h-3 w-3" />
-                )}
-                {order.status === 'pending' || order.status === 'placed' || order.status === 'confirmed' ? 'Unfulfilled' : 'Fulfilled'}
-              </span>
+              {order.status === 'cancelled' ? (
+                <span className="inline-flex items-center gap-1.5 rounded-[6px] px-2 py-0.5 text-[13px] font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 dark:bg-red-400" />
+                  Cancelled
+                </span>
+              ) : (
+                <span className={`inline-flex items-center gap-1.5 rounded-[6px] px-2 py-0.5 text-[13px] font-semibold ${
+                   order.status === 'pending' || order.status === 'placed' || order.status === 'confirmed'
+                   ? 'bg-[#fff4c4] text-[#7c5c00] dark:bg-[#fff4c4]/20 dark:text-[#d4c382]'
+                   : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                }`}>
+                  {order.status === 'pending' || order.status === 'placed' || order.status === 'confirmed' ? (
+                    <span className="w-2.5 h-2.5 rounded-full border-2 border-[#b98900] dark:border-[#d4c382]" />
+                  ) : (
+                    <Check className="h-3 w-3" />
+                  )}
+                  {order.status === 'pending' || order.status === 'placed' || order.status === 'confirmed' ? 'Unfulfilled' : 'Fulfilled'}
+                </span>
+              )}
             </div>
           </div>
           <div className="text-[13px] text-gray-500 dark:text-gray-400 ml-9">
@@ -646,18 +653,25 @@ export default function OrderDetailCanvas({ order: initialOrder, settings }: Ord
           <div className="bg-white dark:bg-[#16162a] rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
             <div className="px-4 py-3.5 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-[#16162a]">
               <div className="flex items-center gap-2">
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[13px] font-semibold ${
-                   order.status === 'pending' || order.status === 'placed' || order.status === 'confirmed'
-                   ? 'bg-[#fff4c4] text-[#7c5c00] dark:bg-[#fff4c4]/20 dark:text-[#d4c382]'
-                   : 'bg-[#d4edda] text-[#2d6a4f] dark:bg-[#d4edda]/20 dark:text-[#a0dcb3]'
-                }`}>
-                  {order.status === 'pending' || order.status === 'placed' || order.status === 'confirmed' ? (
-                    <span className="w-3.5 h-3.5 rounded-full border-2 border-[#b98900] dark:border-[#d4c382]" />
-                  ) : (
-                    <Check className="h-4 w-4" />
-                  )}
-                  {order.status === 'pending' || order.status === 'placed' || order.status === 'confirmed' ? 'Unfulfilled' : 'Fulfilled'} ({order.items.length})
-                </span>
+                {order.status === 'cancelled' ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[13px] font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800">
+                    <span className="w-3.5 h-3.5 rounded-full bg-red-500 dark:bg-red-400" />
+                    Cancelled ({order.items.length})
+                  </span>
+                ) : (
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[13px] font-semibold ${
+                     order.status === 'pending' || order.status === 'placed' || order.status === 'confirmed'
+                     ? 'bg-[#fff4c4] text-[#7c5c00] dark:bg-[#fff4c4]/20 dark:text-[#d4c382]'
+                     : 'bg-[#d4edda] text-[#2d6a4f] dark:bg-[#d4edda]/20 dark:text-[#a0dcb3]'
+                  }`}>
+                    {order.status === 'pending' || order.status === 'placed' || order.status === 'confirmed' ? (
+                      <span className="w-3.5 h-3.5 rounded-full border-2 border-[#b98900] dark:border-[#d4c382]" />
+                    ) : (
+                      <Check className="h-4 w-4" />
+                    )}
+                    {order.status === 'pending' || order.status === 'placed' || order.status === 'confirmed' ? 'Unfulfilled' : 'Fulfilled'} ({order.items.length})
+                  </span>
+                )}
               </div>
               <div className="relative">
                 <button 

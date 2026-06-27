@@ -1054,7 +1054,12 @@ export default function OrderLog({ initialOrders, settings }: OrderLogProps) {
                     {visibleColumns.includes('fulfillmentStatus') && (
                       <td className="block md:table-cell py-1 px-4 md:py-3">
                         <span className="md:hidden font-semibold text-gray-400 mr-2">Fulfillment:</span>
-                        {['pending', 'placed', 'confirmed'].includes(order.status) ? (
+                        {order.status === 'cancelled' ? (
+                          <span className="inline-flex items-center gap-1.5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded px-2 py-0.5 text-[12px] font-bold border border-red-200 dark:border-red-800">
+                            <span className="w-2.5 h-2.5 rounded-full bg-red-500 dark:bg-red-400 flex-shrink-0" />
+                            Cancelled
+                          </span>
+                        ) : ['pending', 'placed', 'confirmed'].includes(order.status) ? (
                           <span className="inline-flex items-center gap-1.5 bg-[#fff4c4] text-[#7c5c00] rounded px-2 py-0.5 text-[12px] font-bold">
                             <span className="w-2.5 h-2.5 rounded-full border-[1.5px] border-[#b98900] flex items-center justify-center flex-shrink-0">
                               <span className="text-[7px] leading-none text-[#b98900] font-normal">○</span>

@@ -66,7 +66,7 @@ function getOrderSummary(vars: Record<string, any>): string {
     <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-collapse: collapse; margin-top: 16px;">
       <thead>
         <tr style="border-bottom: 2px solid #e5e7eb; text-align: left; font-size: 14px; color: #6b7280;">
-          <th style="padding-bottom: 8px;">Item</th>
+          <th colspan="2" style="padding-bottom: 8px;">Item</th>
           <th style="padding-bottom: 8px; text-align: center;">Qty</th>
           <th style="padding-bottom: 8px; text-align: right;">Price</th>
         </tr>
@@ -211,9 +211,11 @@ export function getDefaultTemplate(emailType: string, vars: Record<string, any>)
       content = `
         <h2 style="color: #ef4444; margin-top: 0;">Order Cancelled</h2>
         <p>Hi ${vars.customer_name},</p>
-        <p>Your order <strong>#${vars.order_id}</strong> was cancelled.</p>
-        ${vars.cancel_reason ? `<p><strong>Reason for cancellation:</strong> ${vars.cancel_reason}</p>` : ''}
-        <p>If you have questions, please reply to this email or contact customer support.</p>
+        <p>Your order <strong>#${vars.order_id}</strong> has been cancelled.</p>
+        ${vars.cancel_reason ? `<div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 12px; margin: 16px 0; color: #991b1b; font-size: 14px; border-radius: 4px;"><strong>Reason:</strong> ${vars.cancel_reason}</div>` : ''}
+        <p>If you did not request this cancellation, or if there was an issue with your payment or verification, please reply to this email or contact us on WhatsApp. We are here to help!</p>
+        ${getOrderSummary(vars)}
+        ${getCTAButton('Continue Shopping', `${vars.site_url || '#'}`)}
       `;
       break;
 

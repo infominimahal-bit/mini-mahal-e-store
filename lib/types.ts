@@ -549,6 +549,7 @@ export interface Order {
   courierName?: string;
   trackingUrl?: string;
   cancelReason?: string;
+  customerEmail?: string;
   refundAmount?: number;
   deletedAt?: string;
   createdAt: string;
