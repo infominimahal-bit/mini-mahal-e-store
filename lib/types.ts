@@ -117,6 +117,7 @@ export interface StoreSettings {
   currency: string;
   currencySymbol: string;
   orderPrefix: string;
+  nextOrderSequence: number;
   logoUrl?: string;
   logoWidth: number;
   bannerUrl?: string;

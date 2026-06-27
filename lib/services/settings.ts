@@ -24,6 +24,7 @@ interface SettingsRow {
   currency?: string | null;
   currency_symbol?: string | null;
   order_prefix?: string | null;
+  next_order_sequence?: number | null;
   logo_url?: string | null;
   logo_width?: number | null;
   banner_url?: string | null;
@@ -303,6 +304,7 @@ const mapSettings = (row: SettingsRow): StoreSettings => ({
   currency: row.currency ?? 'PKR',
   currencySymbol: row.currency_symbol ?? 'Rs.',
   orderPrefix: row.order_prefix ?? 'ZE-',
+  nextOrderSequence: row.next_order_sequence ?? 1,
   logoUrl: row.logo_url || undefined,
   logoWidth: row.logo_width ?? 120,
   bannerUrl: row.banner_url || undefined,
@@ -652,6 +654,7 @@ export const updateSettings = async (settings: Partial<StoreSettings>): Promise<
     if (settings.currency !== undefined) updatePayload.currency = settings.currency;
     if (settings.currencySymbol !== undefined) updatePayload.currency_symbol = settings.currencySymbol;
     if (settings.orderPrefix !== undefined) updatePayload.order_prefix = settings.orderPrefix;
+    if (settings.nextOrderSequence !== undefined) updatePayload.next_order_sequence = settings.nextOrderSequence;
     if (settings.logoUrl !== undefined) updatePayload.logo_url = settings.logoUrl;
     if (settings.logoWidth !== undefined) updatePayload.logo_width = settings.logoWidth;
     if (settings.bannerUrl !== undefined) updatePayload.banner_url = settings.bannerUrl;

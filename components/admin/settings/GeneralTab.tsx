@@ -16,6 +16,8 @@ interface GeneralTabProps {
   setCurrencySymbol: (val: string) => void;
   orderPrefix: string;
   setOrderPrefix: (val: string) => void;
+  nextOrderSequence: number;
+  setNextOrderSequence: (val: number) => void;
   tagline: string;
   setTagline: (val: string) => void;
   address: string;
@@ -52,6 +54,8 @@ export default function GeneralTab({
   setCurrencySymbol,
   orderPrefix,
   setOrderPrefix,
+  nextOrderSequence,
+  setNextOrderSequence,
   tagline,
   setTagline,
   address,
@@ -144,8 +148,21 @@ export default function GeneralTab({
               value={orderPrefix}
               onChange={(e) => setOrderPrefix(e.target.value)}
               className="mt-1.5 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0f0f1b]/50 px-4 py-2.5 text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-[#1a1a2e] dark:focus:border-[#e94560] focus:bg-white dark:focus:bg-[#16162a] focus:outline-none transition-all"
-              placeholder="ZE-"
+              placeholder="TV-"
             />
+            <p className="mt-1 text-xs text-gray-400">Static prefix only (letters + dash). No numbers.</p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Next Order Serial Number</label>
+            <input
+              type="number"
+              value={nextOrderSequence}
+              onChange={(e) => setNextOrderSequence(parseInt(e.target.value) || 1)}
+              className="mt-1.5 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0f0f1b]/50 px-4 py-2.5 text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-[#1a1a2e] dark:focus:border-[#e94560] focus:bg-white dark:focus:bg-[#16162a] focus:outline-none transition-all"
+              min="1"
+            />
+            <p className="mt-1 text-xs text-gray-400">Auto-increments after each order. System will zero-pad (e.g. 1 → 0001).</p>
           </div>
 
           <div>

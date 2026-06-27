@@ -221,6 +221,7 @@ CREATE TABLE IF NOT EXISTS store_settings (
   currency TEXT DEFAULT 'PKR',
   currency_symbol TEXT DEFAULT 'Rs.',
   order_prefix TEXT DEFAULT 'ZE-',
+  next_order_sequence INTEGER DEFAULT 1,
   logo_url TEXT,
   logo_width INTEGER DEFAULT 120,
   banner_url TEXT,
@@ -610,13 +611,17 @@ CREATE OR REPLACE FUNCTION generate_order_number()
 RETURNS TRIGGER AS $$
 DECLARE
   prefix TEXT;
+  seq_val INTEGER;
 BEGIN
-  SELECT order_prefix INTO prefix FROM store_settings LIMIT 1;
-  IF prefix IS NOT NULL AND prefix != '' THEN
-    NEW.order_number := prefix;
-  ELSE
-    NEW.order_number := 'ZE-' || LPAD(nextval('order_number_seq')::TEXT, 4, '0');
+  SELECT order_prefix, next_order_sequence INTO prefix, seq_val FROM store_settings LIMIT 1;
+  IF prefix IS NULL OR prefix = '' THEN
+    prefix := 'ZE-';
   END IF;
+  IF seq_val IS NULL THEN
+    seq_val := 1;
+  END IF;
+  NEW.order_number := prefix || LPAD(seq_val::TEXT, 4, '0');
+  UPDATE store_settings SET next_order_sequence = seq_val + 1;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
