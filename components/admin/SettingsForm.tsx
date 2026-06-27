@@ -60,6 +60,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   const [currencySymbol, setCurrencySymbol] = useState(initialSettings.currencySymbol);
   const [orderPrefix, setOrderPrefix] = useState(initialSettings.orderPrefix);
   const [nextOrderSequence, setNextOrderSequence] = useState(initialSettings.nextOrderSequence ?? 1);
+  const [nextOrderSequenceDirty, setNextOrderSequenceDirty] = useState(false);
   const [logoUrl, setLogoUrl] = useState(initialSettings.logoUrl || '');
   const [logoWidth, setLogoWidth] = useState(initialSettings.logoWidth ?? 120);
   const [bannerUrl, setBannerUrl] = useState(initialSettings.bannerUrl || '');
@@ -781,7 +782,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
         storeName: storeName.trim(),
         storeUrl: storeUrl.trim(),
         orderPrefix: orderPrefix.trim(),
-        nextOrderSequence: nextOrderSequence,
+        ...(nextOrderSequenceDirty ? { nextOrderSequence } : {}),
         whatsappNumber: cleanPhone,
         currency: currency.trim(),
         currencySymbol: currencySymbol.trim(),
@@ -1022,6 +1023,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
       };
 
       await updateSettings(payload);
+      setNextOrderSequenceDirty(false);
       toast.success('Settings updated successfully!');
       router.refresh();
     } catch (err: any) {
@@ -1313,6 +1315,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
           setOrderPrefix={setOrderPrefix}
           nextOrderSequence={nextOrderSequence}
           setNextOrderSequence={setNextOrderSequence}
+          setNextOrderSequenceDirty={setNextOrderSequenceDirty}
           tagline={tagline}
           setTagline={setTagline}
           address={address}

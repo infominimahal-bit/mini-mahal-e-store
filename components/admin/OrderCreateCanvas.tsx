@@ -419,13 +419,28 @@ export default function OrderCreateCanvas({ isOpen, onClose, onOrderCreated, set
         updated_at: new Date().toISOString()
       };
 
-      const { data: newRow, error: insertErr } = await supabase
-        .from('orders')
-        .insert(orderPayload)
-        .select('*')
-        .single();
-
-      if (insertErr) throw insertErr;
+      let newRow: any;
+      let insertAttempt = 0;
+      const MAX_ATTEMPTS = 3;
+      while (insertAttempt < MAX_ATTEMPTS) {
+        insertAttempt++;
+        const { data: result, error: err } = await supabase
+          .from('orders')
+          .insert(orderPayload)
+          .select('*')
+          .single();
+        if (err) {
+          const pgCode = (err as any)?.code;
+          if (pgCode === '23505' && insertAttempt < MAX_ATTEMPTS) {
+            console.warn(`[OrderCreate] 23505 duplicate order_number, retry ${insertAttempt}/${MAX_ATTEMPTS}`);
+            await new Promise(r => setTimeout(r, 150));
+            continue;
+          }
+          throw err;
+        }
+        newRow = result;
+        break;
+      }
 
       // 4. Update Stock Levels
       for (const item of selectedItems) {

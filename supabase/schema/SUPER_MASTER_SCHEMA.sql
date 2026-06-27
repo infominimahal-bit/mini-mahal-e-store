@@ -1,6 +1,6 @@
 -- ============================================================
 -- ZAYNAHS E-STORE — SUPER MASTER SCHEMA
--- Version: 2.1.0
+-- Version: 2.2.0
 -- Updated: 2026-06-27
 -- ============================================================
 
@@ -611,12 +611,16 @@ CREATE TABLE IF NOT EXISTS orders (
 -- Auto increment order number
 CREATE SEQUENCE IF NOT EXISTS order_number_seq START 1;
 
+-- NOTE: This exact function is also mirrored in migration:
+-- supabase/migrations/20260627200000_auto_skip_duplicate_order_number.sql
 CREATE OR REPLACE FUNCTION generate_order_number()
 RETURNS TRIGGER SECURITY DEFINER AS $$
 DECLARE
   prefix TEXT;
   seq_val INTEGER;
   settings_id UUID;
+  max_attempts INTEGER := 1000;
+  attempt INTEGER := 0;
 BEGIN
   SELECT id, order_prefix, next_order_sequence INTO settings_id, prefix, seq_val FROM store_settings FOR UPDATE;
   IF prefix IS NULL OR prefix = '' THEN
@@ -625,7 +629,17 @@ BEGIN
   IF seq_val IS NULL THEN
     seq_val := 1;
   END IF;
-  NEW.order_number := prefix || LPAD(seq_val::TEXT, 4, '0');
+
+  LOOP
+    attempt := attempt + 1;
+    IF attempt > max_attempts THEN
+      RAISE EXCEPTION 'generate_order_number: could not find free order_number after % attempts', max_attempts;
+    END IF;
+    NEW.order_number := prefix || LPAD(seq_val::TEXT, 4, '0');
+    EXIT WHEN NOT EXISTS (SELECT 1 FROM orders WHERE order_number = NEW.order_number);
+    seq_val := seq_val + 1;
+  END LOOP;
+
   UPDATE store_settings SET next_order_sequence = seq_val + 1 WHERE id = settings_id;
   RETURN NEW;
 END;

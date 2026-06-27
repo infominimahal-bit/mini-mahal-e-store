@@ -227,23 +227,40 @@ export const createOrder = async (order: {
       });
     }
 
-    const { data, error } = await supabase
-      .from('orders')
-      .insert({
-        customer_name: order.customerName,
-        customer_phone: order.customerPhone,
-        customer_id: customerId,
-        items: order.items,
-        subtotal: order.subtotal,
-        total: order.total,
-        notes: order.notes,
-        status: 'pending',
-        status_logs: initialLogs
-      })
-      .select('*')
-      .single();
+    // Retry up to 3 times on 23505 (duplicate order_number)
+    let data: any;
+    let insertAttempt = 0;
+    const MAX_ATTEMPTS = 3;
+    while (insertAttempt < MAX_ATTEMPTS) {
+      insertAttempt++;
+      const { data: result, error: insertError } = await supabase
+        .from('orders')
+        .insert({
+          customer_name: order.customerName,
+          customer_phone: order.customerPhone,
+          customer_id: customerId,
+          items: order.items,
+          subtotal: order.subtotal,
+          total: order.total,
+          notes: order.notes,
+          status: 'pending',
+          status_logs: initialLogs
+        })
+        .select('*')
+        .single();
 
-    if (error) throw error;
+      if (insertError) {
+        const pgCode = (insertError as any)?.code;
+        if (pgCode === '23505' && insertAttempt < MAX_ATTEMPTS) {
+          console.warn(`[orders] 23505 duplicate order_number, retry ${insertAttempt}/${MAX_ATTEMPTS}`);
+          await new Promise(r => setTimeout(r, 150));
+          continue;
+        }
+        throw insertError;
+      }
+      data = result;
+      break;
+    }
     const mapped = mapOrder(data);
 
     // Await the email dispatch so the serverless function does not exit/freeze before delivery completes
