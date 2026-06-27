@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
                   ${settings.abandonedCartEmailTemplate
                     .replace(/{{customer_name}}/g, cart.customerName?.split(' ')[0] || 'Customer')
                     .replace(/{{name}}/g, cart.customerName?.split(' ')[0] || 'Customer')
-                    .replace(/{{checkout_url}}/g, `<br/><a href="${cart.checkoutUrl || `${process.env.NEXT_PUBLIC_SITE_URL}/cart?step=checkout`}" style="display: inline-block; background-color: #e94560; color: #ffffff; padding: 12px 24px; border-radius: 12px; font-weight: bold; text-decoration: none; margin-top: 12px; margin-bottom: 12px;">Complete Checkout →</a><br/>`)
+                    .replace(/{{checkout_url}}/g, `<br/><a href="${cart.checkoutUrl || `${siteUrl}/cart?step=checkout`}" style="display: inline-block; background-color: #e94560; color: #ffffff; padding: 12px 24px; border-radius: 12px; font-weight: bold; text-decoration: none; margin-top: 12px; margin-bottom: 12px;">Complete Checkout →</a><br/>`)
                     .replace(/{{store_name}}/g, settings.storeName || "Zaynah's E-Store")
                     .replace(/\n/g, '<br />')}
                 </div>

@@ -2,7 +2,7 @@ import { getSiteUrl } from '@/lib/site-url-server';
 import { formatPrice } from '@/lib/utils/whatsapp';
 import { CartItem } from '@/lib/types';
 
-export function renderOrderItemsTable(items: CartItem[], currencySymbol = 'Rs.'): string {
+export function renderOrderItemsTable(items: CartItem[], currencySymbol = 'Rs.', siteUrl = ''): string {
   if (!items || items.length === 0) return '';
   return items.map(item => {
     // Get product thumbnail
@@ -10,7 +10,6 @@ export function renderOrderItemsTable(items: CartItem[], currencySymbol = 'Rs.')
     if (item.selectedVariant?.imageUrl) {
       imgUrl = item.selectedVariant.imageUrl;
     } else if (item.product.images && item.product.images.length > 0) {
-      // Find primary image or use first one
       const primary = item.product.images.find(img => img.isPrimary);
       imgUrl = primary ? primary.url : item.product.images[0].url;
     }
@@ -28,13 +27,21 @@ export function renderOrderItemsTable(items: CartItem[], currencySymbol = 'Rs.')
       ? item.selectedModifiers.map(m => m.name).join(', ')
       : '';
 
+    const productUrl = siteUrl && item.product.slug ? `${siteUrl}/product/${item.product.slug}` : '';
+
     return `
       <tr style="border-bottom: 1px solid #e5e7eb;">
         <td style="padding: 12px 8px; vertical-align: top; width: 60px;">
-          ${imgUrl ? `<img src="${imgUrl}" alt="${item.product.name}" width="50" height="50" style="border-radius: 8px; object-fit: cover;" />` : `<div style="width: 50px; height: 50px; border-radius: 8px; background-color: #f3f4f6;"></div>`}
+          ${imgUrl
+            ? productUrl
+              ? `<a href="${productUrl}" target="_blank"><img src="${imgUrl}" alt="${item.product.name}" width="50" height="50" style="border-radius: 8px; object-fit: cover;" /></a>`
+              : `<img src="${imgUrl}" alt="${item.product.name}" width="50" height="50" style="border-radius: 8px; object-fit: cover;" />`
+            : `<div style="width: 50px; height: 50px; border-radius: 8px; background-color: #f3f4f6;"></div>`}
         </td>
         <td style="padding: 12px 8px; vertical-align: top; text-align: left;">
-          <div style="font-weight: 600; color: #1a1a2e; font-size: 14px;">${item.product.name}</div>
+          ${productUrl
+            ? `<div style="font-weight: 600; font-size: 14px;"><a href="${productUrl}" target="_blank" style="color: #e94560; text-decoration: underline;">${item.product.name}</a></div>`
+            : `<div style="font-weight: 600; color: #1a1a2e; font-size: 14px;">${item.product.name}</div>`}
           ${variantDetails ? `<div style="font-size: 12px; color: #6b7280; margin-top: 2px;">${variantDetails}</div>` : ''}
           ${modifierDetails ? `<div style="font-size: 12px; color: #10b981; margin-top: 2px;">+ ${modifierDetails}</div>` : ''}
         </td>

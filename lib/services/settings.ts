@@ -23,6 +23,7 @@ interface SettingsRow {
   whatsapp_number?: string | null;
   currency?: string | null;
   currency_symbol?: string | null;
+  order_prefix?: string | null;
   logo_url?: string | null;
   logo_width?: number | null;
   banner_url?: string | null;
@@ -301,6 +302,7 @@ const mapSettings = (row: SettingsRow): StoreSettings => ({
   whatsappNumber: row.whatsapp_number ?? '',
   currency: row.currency ?? 'PKR',
   currencySymbol: row.currency_symbol ?? 'Rs.',
+  orderPrefix: row.order_prefix ?? 'ZE-',
   logoUrl: row.logo_url || undefined,
   logoWidth: row.logo_width ?? 120,
   bannerUrl: row.banner_url || undefined,
@@ -649,6 +651,7 @@ export const updateSettings = async (settings: Partial<StoreSettings>): Promise<
     if (settings.whatsappNumber !== undefined) updatePayload.whatsapp_number = settings.whatsappNumber;
     if (settings.currency !== undefined) updatePayload.currency = settings.currency;
     if (settings.currencySymbol !== undefined) updatePayload.currency_symbol = settings.currencySymbol;
+    if (settings.orderPrefix !== undefined) updatePayload.order_prefix = settings.orderPrefix;
     if (settings.logoUrl !== undefined) updatePayload.logo_url = settings.logoUrl;
     if (settings.logoWidth !== undefined) updatePayload.logo_width = settings.logoWidth;
     if (settings.bannerUrl !== undefined) updatePayload.banner_url = settings.bannerUrl;
@@ -946,6 +949,7 @@ export const updateSettings = async (settings: Partial<StoreSettings>): Promise<
       table: 'store_settings',
       action: 'UPDATE'
     }, error);
-    throw error;
+    const message = (error as any)?.message || (error as any)?.toString() || 'Failed to update settings';
+    throw new Error(String(message));
   }
 };

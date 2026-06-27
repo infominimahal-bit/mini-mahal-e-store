@@ -35,7 +35,7 @@ export async function sendTemplatedEmail(
 
     // 5. Pre-render order items table if items are present
     if (data.order?.items) {
-      variables.order_items_html = renderOrderItemsTable(data.order.items, settings.currencySymbol);
+      variables.order_items_html = renderOrderItemsTable(data.order.items, settings.currencySymbol, variables.site_url);
     }
 
     // 6. Resolve Subject Line

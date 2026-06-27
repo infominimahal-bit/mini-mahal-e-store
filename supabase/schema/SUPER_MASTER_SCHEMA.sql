@@ -220,6 +220,7 @@ CREATE TABLE IF NOT EXISTS store_settings (
   whatsapp_number TEXT DEFAULT '',         -- format: 923001234567 (no + or spaces)
   currency TEXT DEFAULT 'PKR',
   currency_symbol TEXT DEFAULT 'Rs.',
+  order_prefix TEXT DEFAULT 'ZE-',
   logo_url TEXT,
   logo_width INTEGER DEFAULT 120,
   banner_url TEXT,
@@ -607,8 +608,11 @@ CREATE SEQUENCE IF NOT EXISTS order_number_seq START 1;
 
 CREATE OR REPLACE FUNCTION generate_order_number()
 RETURNS TRIGGER AS $$
+DECLARE
+  prefix TEXT;
 BEGIN
-  NEW.order_number := 'ZE-' || LPAD(nextval('order_number_seq')::TEXT, 4, '0');
+  SELECT COALESCE(order_prefix, 'ZE-') INTO prefix FROM store_settings LIMIT 1;
+  NEW.order_number := prefix || LPAD(nextval('order_number_seq')::TEXT, 4, '0');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

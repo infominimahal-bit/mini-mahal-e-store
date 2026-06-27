@@ -58,6 +58,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   const [whatsappNumber, setWhatsappNumber] = useState(initialSettings.whatsappNumber);
   const [currency, setCurrency] = useState(initialSettings.currency);
   const [currencySymbol, setCurrencySymbol] = useState(initialSettings.currencySymbol);
+  const [orderPrefix, setOrderPrefix] = useState(initialSettings.orderPrefix);
   const [logoUrl, setLogoUrl] = useState(initialSettings.logoUrl || '');
   const [logoWidth, setLogoWidth] = useState(initialSettings.logoWidth ?? 120);
   const [bannerUrl, setBannerUrl] = useState(initialSettings.bannerUrl || '');
@@ -778,6 +779,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
       const payload: Partial<StoreSettings> = {
         storeName: storeName.trim(),
         storeUrl: storeUrl.trim(),
+        orderPrefix: orderPrefix.trim(),
         whatsappNumber: cleanPhone,
         currency: currency.trim(),
         currencySymbol: currencySymbol.trim(),
@@ -1305,6 +1307,8 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
           setCurrency={setCurrency}
           currencySymbol={currencySymbol}
           setCurrencySymbol={setCurrencySymbol}
+          orderPrefix={orderPrefix}
+          setOrderPrefix={setOrderPrefix}
           tagline={tagline}
           setTagline={setTagline}
           address={address}

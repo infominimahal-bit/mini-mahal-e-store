@@ -262,7 +262,7 @@ export async function POST(req: NextRequest) {
     const currencySymbol = s.currency_symbol || 'Rs.';
 
     const items = Array.isArray(order.items) ? order.items : [];
-    const orderItemsHtml = renderOrderItemsTable(items, currencySymbol);
+    const orderItemsHtml = renderOrderItemsTable(items, currencySymbol, storeUrl);
     const orderTotal = formatPrice(parseFloat(order.total) || 0, currencySymbol);
 
     // Shipping address from order notes

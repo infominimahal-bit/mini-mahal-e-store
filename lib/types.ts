@@ -116,6 +116,7 @@ export interface StoreSettings {
   whatsappNumber: string;
   currency: string;
   currencySymbol: string;
+  orderPrefix: string;
   logoUrl?: string;
   logoWidth: number;
   bannerUrl?: string;

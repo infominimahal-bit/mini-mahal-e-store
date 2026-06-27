@@ -14,6 +14,8 @@ interface GeneralTabProps {
   setCurrency: (val: string) => void;
   currencySymbol: string;
   setCurrencySymbol: (val: string) => void;
+  orderPrefix: string;
+  setOrderPrefix: (val: string) => void;
   tagline: string;
   setTagline: (val: string) => void;
   address: string;
@@ -48,6 +50,8 @@ export default function GeneralTab({
   setCurrency,
   currencySymbol,
   setCurrencySymbol,
+  orderPrefix,
+  setOrderPrefix,
   tagline,
   setTagline,
   address,
@@ -131,6 +135,17 @@ export default function GeneralTab({
                 className="mt-1.5 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0f0f1b]/50 px-4 py-2.5 text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-[#1a1a2e] dark:focus:border-[#e94560] focus:bg-white dark:focus:bg-[#16162a] focus:outline-none transition-all"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Order Serial Prefix</label>
+            <input
+              type="text"
+              value={orderPrefix}
+              onChange={(e) => setOrderPrefix(e.target.value)}
+              className="mt-1.5 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0f0f1b]/50 px-4 py-2.5 text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-[#1a1a2e] dark:focus:border-[#e94560] focus:bg-white dark:focus:bg-[#16162a] focus:outline-none transition-all"
+              placeholder="ZE-"
+            />
           </div>
 
           <div>

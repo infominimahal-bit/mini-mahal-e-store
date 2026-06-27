@@ -2,9 +2,10 @@ import { replaceVariables } from '../variables';
 
 function wrapLayout(content: string, vars: Record<string, any>, title: string): string {
   const brandName = vars.brand_name || 'Zaynahs E-Store';
+  const siteUrl = vars.site_url || '';
   const logoHtml = vars.logo_url 
-    ? `<img src="${vars.logo_url}" alt="${brandName}" style="max-height: 50px; margin-bottom: 20px;" />` 
-    : `<h1 style="margin: 0; color: #1a1a2e; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">${brandName}</h1>`;
+    ? `<a href="${siteUrl}" target="_blank"><img src="${vars.logo_url}" alt="${brandName}" style="max-height: 50px; margin-bottom: 20px; border: 0;" /></a>` 
+    : `<a href="${siteUrl}" target="_blank" style="color: #1a1a2e; text-decoration: none;"><h1 style="margin: 0; color: #1a1a2e; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">${brandName}</h1></a>`;
   
   return `
     <!DOCTYPE html>
@@ -35,6 +36,7 @@ function wrapLayout(content: string, vars: Record<string, any>, title: string): 
                 <tr>
                   <td style="padding: 24px 32px 32px 32px; border-top: 1px solid #f3f4f6; background-color: #f9fafb; text-align: center; color: #6b7280; font-size: 13px;">
                     <p style="margin: 0 0 8px 0; font-weight: 600; color: #1a1a2e;">${brandName}</p>
+                    <p style="margin: 0 0 12px 0;">${siteUrl ? `<a href="${siteUrl}" target="_blank" style="color: #e94560; text-decoration: underline; font-weight: 600;">Visit Store →</a>` : ''}</p>
                     <p style="margin: 0 0 16px 0;">If you have any questions, contact us at <a href="mailto:${vars.contact_email}" style="color: #e94560; text-decoration: none;">${vars.contact_email}</a></p>
                     <p style="margin: 0; font-size: 11px; color: #9ca3af;">&copy; ${vars.current_year || new Date().getFullYear()} ${brandName}. All rights reserved.</p>
                   </td>
