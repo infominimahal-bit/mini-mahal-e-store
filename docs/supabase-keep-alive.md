@@ -61,11 +61,11 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: '20'
-      - run: npm install @supabase/supabase-js
+          node-version: '22'
+      - run: npm install @supabase/supabase-js ws --force
       - name: Ping Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -73,7 +73,10 @@ jobs:
         run: |
           node -e "
           const { createClient } = require('@supabase/supabase-js');
-          const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+          const ws = require('ws');
+          const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY, {
+            realtime: { transport: ws }
+          });
           (async () => {
             const { data, error } = await supabase.from('categories').select('id').limit(1);
             if (error) { console.error('Error:', error); process.exit(1); }
