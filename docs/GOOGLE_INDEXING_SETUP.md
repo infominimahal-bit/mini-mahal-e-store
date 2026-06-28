@@ -195,32 +195,91 @@ rs256Sign() → base64 string → base64UrlEncode() → Buffer.from(str).toStrin
 
 ## 🧪 All Tests (Terminal + Manual)
 
-### SEO Health (Browser)
-```
-https://YOUR_DOMAIN/api/seo/test
-```
-Check: `googleIndexingTest.status` → `ok`
+### 1. Full SEO Health Check
 
-### Single URL Submit
 ```bash
-curl -X POST https://YOUR_DOMAIN/api/indexing \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://YOUR_DOMAIN/", "type": "URL_UPDATED"}'
+curl -s https://YOUR_DOMAIN/api/seo/test | python3 -m json.tool
 ```
 
-### Batch Submit (max 200)
+### 2. XML Sitemap Tests
+
 ```bash
-curl -X POST https://YOUR_DOMAIN/api/indexing/batch \
-  -H "Content-Type: application/json" \
+# Fetch and parse sitemap
+curl -s https://YOUR_DOMAIN/sitemap.xml | python3 -c "
+import sys, xml.etree.ElementTree as ET
+tree = ET.parse(sys.stdin)
+ns = {'s': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
+urls = tree.findall('.//s:url', ns)
+print(f'Total URLs in sitemap: {len(urls)}')
+for u in urls[:20]:
+    loc = u.find('s:loc', ns).text
+    pri = u.find('s:priority', ns)
+    print(f'  {loc} (priority: {pri.text if pri is not None else \"N/A\"})')
+if len(urls) > 20:
+    print(f'  ... and {len(urls)-20} more')
+"
+```
+
+```bash
+# Quick sitemap count only
+curl -s https://YOUR_DOMAIN/sitemap.xml | python3 -c "
+import sys, xml.etree.ElementTree as ET
+print(f'URL count: {len(ET.parse(sys.stdin).findall(\".//{http://www.sitemaps.org/schemas/sitemap/0.9}loc\"))}')"
+```
+
+```bash
+# Sitemap HTTP headers
+curl -sI https://YOUR_DOMAIN/sitemap.xml | head -15
+```
+
+### 3. Robots.txt Test
+
+```bash
+curl -s https://YOUR_DOMAIN/robots.txt
+```
+
+### 4. IndexNow Key File Test
+
+```bash
+# Valid key → should return key text with HTTP 200
+curl -s -w '\nHTTP %{http_code}' https://YOUR_DOMAIN/INDEXNOW_API_KEY.txt
+
+# Invalid key → should return HTTP 404
+curl -s -o /dev/null -w 'HTTP %{http_code}\n' https://YOUR_DOMAIN/wrong-key.txt
+```
+
+### 5. IndexNow Ping Test
+
+```bash
+curl -s -X POST https://YOUR_DOMAIN/api/indexnow \
+  -H 'Content-Type: application/json' \
   -d '{"urls": ["https://YOUR_DOMAIN/", "https://YOUR_DOMAIN/shop"]}'
 ```
 
-### Check Logs (Supabase)
+### 6. Google Indexing — Single URL Submit
+
+```bash
+curl -s -X POST https://YOUR_DOMAIN/api/indexing \
+  -H 'Content-Type: application/json' \
+  -d '{"url": "https://YOUR_DOMAIN/", "type": "URL_UPDATED"}'
+```
+
+### 7. Google Indexing — Batch Submit (max 200)
+
+```bash
+curl -s -X POST https://YOUR_DOMAIN/api/indexing/batch \
+  -H 'Content-Type: application/json' \
+  -d '{"urls": ["https://YOUR_DOMAIN/", "https://YOUR_DOMAIN/shop"]}'
+```
+
+### 8. Check Logs (Supabase)
+
 ```sql
 SELECT * FROM indexing_log ORDER BY created_at DESC LIMIT 10;
 ```
 
-### Auto-Indexing Test
+### 9. Auto-Indexing Test
+
 ```
 1. Admin mein product edit/save karo
 2. Webhook trigger → notifyGoogleIndexing()
@@ -228,12 +287,19 @@ SELECT * FROM indexing_log ORDER BY created_at DESC LIMIT 10;
 4. Search Console → URL Inspection → product URL
 ```
 
-### All-in-One Quick Test
+### 10. All-in-One Quick Status
+
 ```bash
 curl -s https://YOUR_DOMAIN/api/seo/test | python3 -c "
-import sys,json; d=json.load(sys.stdin)
+import sys,json
+d=json.load(sys.stdin)
 r=d['results']
-print(f'Google: {r[\"googleIndexing\"][\"status\"]} | Test: {r[\"googleIndexingTest\"][\"status\"]}')"
+for k,v in r.items():
+    s=v.get('status','?')
+    icon = '✅' if s=='ok' else '⚠️' if s=='skipped' else '❌'
+    extra = f' ({v.get(\"storeUrl\",\"\")})' if 'storeUrl' in v else ''
+    print(f'{icon} {k}: {s}{extra}')
+print(f'\nSummary: {d[\"summary\"]}')"
 ```
 
 ### Console Links

@@ -35,17 +35,21 @@
 
 ### 2.2 Google Indexing API (Optional — for instant Google crawl)
 ```
-1. Jaao: https://console.cloud.google.com
-2. Project banao ya select karo
-3. Search "Indexing API" → Enable karo
-4. Credentials → Create Service Account → JSON key download karo
-5. JSON file se ye do values .env.local mein daalo:
+1. Jaao: https://console.cloud.google.com/apis/library/indexing.googleapis.com
+2. "Web Search Indexing API" → Enable karo
+3. Jaao: https://console.cloud.google.com/iam-admin/serviceaccounts
+4. + CREATE SERVICE ACCOUNT → Name: `my-store-indexing` → Create
+5. Keys tab → Add Key → Create New Key → JSON → Download
+6. JSON file se private_key aur client_email copy karo
+7. Jaao: https://search.google.com/search-console
+8. Settings → Users → ADD USER → Service account email → Permission: "Owner"
+9. .env.local mein daalo:
    GOOGLE_INDEXING_SA_EMAIL=your-sa@project.iam.gserviceaccount.com
-   GOOGLE_INDEXING_SA_KEY="-----BEGIN PRIVATE KEY-----\nMIIEv...\n-----END PRIVATE KEY-----"
-6. Search Console jaao:
-   https://search.google.com/search-console → Settings → Users
-   → Add User → Service Account email daalo → Permission: "Owner"
+   GOOGLE_INDEXING_SA_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
 ```
+> **Critical:** JSON key single-line `\n` format mein ho. 
+> Double base64 encoding bug tha — fix: `rs256Sign()` raw `Buffer` return kare, base64 nahi.
+> Details: `docs/GOOGLE_INDEXING_LEARNINGS.md`
 
 ### 2.3 AI Provider Keys (Admin Panel)
 ```
