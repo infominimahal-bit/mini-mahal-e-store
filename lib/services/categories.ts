@@ -103,8 +103,8 @@ export const getAllCategories = async (): Promise<Category[]> => {
     if (error) throw error;
     return (data ?? []).map(mapCategory);
   } catch (error) {
-    console.error('[categories] getAllCategories failed:', error);
-    throw error;
+    console.error('[categories] getAllCategories failed, returning fallback list:', error);
+    return [];
   }
 };
 

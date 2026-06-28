@@ -641,8 +641,8 @@ export const getProductById = async (id: string): Promise<Product | null> => {
 
     return product;
   } catch (error) {
-    console.error('[products] getProductById failed:', error);
-    throw error;
+    console.error('[products] getProductById failed, returning null fallback:', error);
+    return null;
   }
 };
 
@@ -695,8 +695,8 @@ export const getAllProductsAdmin = async (): Promise<Product[]> => {
 
     return products;
   } catch (error) {
-    console.error('[products] getAllProductsAdmin failed:', error);
-    throw error;
+    console.error('[products] getAllProductsAdmin failed, returning empty fallback list:', error);
+    return [];
   }
 };
 
