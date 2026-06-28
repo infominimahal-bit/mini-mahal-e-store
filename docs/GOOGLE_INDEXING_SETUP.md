@@ -215,11 +215,11 @@ notifyGoogleIndexing() + indexNow ping
 
 | Problem | Solution |
 |---------|----------|
-| Key file 404 | Check `public/{KEY}.txt` file exist karti hai |
-| `indexNowTest: failed` | Key file verify nahi ho rahi — curl test karo |
-| Key file 200 but test fails | Cloudflare cache purge karo, 10s wait karo |
-| Multi-domain | Har domain ke liye alag key + alag `public/{key}.txt` file |
-| Key compromised | Naya key generate karo, old file delete karo, env update karo |
+| Key file 404 | Check `public/{KEY}.txt` file exist karti hai; API route bhi check karo: `curl /api/indexnow/key?key=KEY` |
+| `indexNowTest: failed` | Key file verify nahi ho rahi — `curl https://domain.com/KEY.txt` test karo |
+| Key file 200 but test fails | Cloudflare cache purge karo, 10s wait karo, phir retry |
+| Multi-domain | INDEXNOW_API_KEY ko JSON format mein daalo: `{"domain1":"key1","domain2":"key2"}` |
+| Key compromised | Naya key generate karo, old `public/{key}.txt` file delete/update karo, env update karo |
 
 ---
 
@@ -356,8 +356,11 @@ curl -s https://YOUR_DOMAIN/robots.txt
 ### 4. IndexNow Key File Test
 
 ```bash
-# Valid key → should return key text with HTTP 200
+# Valid key → static file (priority)
 curl -s -w '\nHTTP %{http_code}' https://YOUR_DOMAIN/INDEXNOW_API_KEY.txt
+
+# Valid key → API route (fallback via rewrite)
+curl -s -w '\nHTTP %{http_code}' https://YOUR_DOMAIN/api/indexnow/key?key=INDEXNOW_API_KEY
 
 # Invalid key → should return HTTP 404
 curl -s -o /dev/null -w 'HTTP %{http_code}\n' https://YOUR_DOMAIN/wrong-key.txt
@@ -427,3 +430,118 @@ print(f'\nSummary: {d[\"summary\"]}')"
 | Vercel Env Vars | https://vercel.com/PROJECT/settings/environment-variables |
 | Cloudflare Dashboard | https://dash.cloudflare.com/ |
 | Supabase Table Editor | https://supabase.com/dashboard/project/PROJECT_REF/editor |
+
+---
+
+# Multi-Domain Guide (TotVogue / Zaynahs)
+
+## IndexNow Key: 2 Approaches
+
+### Approach 1: Single Domain (Current — TotVogue.pk)
+- `INDEXNOW_API_KEY=5a83b276cd8d4850af5c81de4c34a2e8` (env var)
+- `public/5a83b276cd8d4850af5c81de4c34a2e8.txt` (static file)
+- Key verify hoti hai: static file se (priority) ya API route se (fallback)
+
+### Approach 2: Multi-Domain (Naye Domain ke liye)
+`INDEXNOW_API_KEY` env var mein JSON object daalo:
+```env
+INDEXNOW_API_KEY={"www.totvogue.pk":"5a83b276cd8d4850af5c81de4c34a2e8","www.zaynahs.pk":"NEW_KEY_FOR_ZAYNAHS"}
+```
+
+Har domain ka apna key use hoga. Single string bhi kaam karega (backward compatible).
+
+---
+
+## Naya Domain Add Karne Ka Complete Checklist
+
+| # | Cheez | Kya Karna Hai |
+|---|-------|--------------|
+| 1 | **IndexNow key** | `openssl rand -hex 16` se naya key banao |
+| 2 | **Key file** | `public/{NEW_KEY}.txt` banao, andar key text likho |
+| 3 | **Env var** | `INDEXNOW_API_KEY` update karo (JSON format ya new key) |
+| 4 | **Google SA email** | Search Console mein service account email ko Owner banao |
+| 5 | **Google Indexing** | Same SA key kaam karega (Google API project-level hai) |
+| 6 | **Cloudflare zone** | Naya domain add karo CF mein, Zone ID update karo |
+| 7 | **Vercel alias** | `npx vercel alias set DEPLOY_UID new-domain.com` |
+| 8 | **Supabase settings** | DB mein `store_url`, `store_name`, `logo/favicon` set karo |
+| 9 | **Vercel env vars** | Agar separate Vercel project hai to env vars set karo |
+| 10 | **Test** | `/api/seo/test` run karo, sab `ok` confirm karo |
+
+---
+
+## Architecture Overview
+
+```
+One Codebase → One Vercel Project → Multiple Domains (via Cloudflare)
+         ↓
+   Cloudflare Proxy (orange cloud)
+         ↓
+   Vercel Edge → Next.js App Router
+         ↓
+   Domain detection via:
+     - Client: window.location.origin
+     - Server: getSiteUrl(settings) from DB settings.storeUrl
+```
+
+## Key File Resolution (Priority Order)
+
+Jab IndexNow bot `https://domain.com/{KEY}.txt` request kare:
+
+1. **Static file**: `public/{KEY}.txt` exist karta hai → serve kare
+2. **API route**: `next.config.ts` rewrite → `/api/indexnow/key?key=KEY` → validate → serve
+3. **404**: Agar key match nahi karta
+
+Dono approaches kaam karte hain. Pehle static file check hoti hai, phir API route.
+
+---
+
+## Vercel Project Per Domain (Recommended for Full Isolation)
+
+| Feature | Single Project (Shared) | Separate Projects |
+|---------|------------------------|-------------------|
+| **Code** | Same codebase | Same codebase (fork/branch) |
+| **Env vars** | Shared (JSON format) | Independent per project |
+| **IndexNow key** | JSON in single env var | Separate env var per project |
+| **Key file** | Multiple in `public/` | Single per project |
+| **Deploy** | One deploy updates all | Per-domain deploys |
+| **Complexity** | Low | Medium |
+
+**Recommendation:** Single project + JSON env var + multiple `public/{key}.txt` files for multi-domain. Bas naye domain ka key add karo aur deploy karo.
+
+---
+
+## Vercel Env Vars Set Karne Ka Script
+
+```bash
+V_TOKEN="your_vercel_token"
+PROJECT_ID="prj_xxxxxxxxxxxx"
+
+set_env() {
+  curl -s -X POST "https://api.vercel.com/v10/projects/$PROJECT_ID/env" \
+    -H "Authorization: Bearer $V_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"key\": \"$1\",
+      \"value\": \"$2\",
+      \"type\": \"encrypted\",
+      \"target\": [\"production\", \"preview\", \"development\"]
+    }"
+}
+
+set_env "INDEXNOW_API_KEY" '{"www.totvogue.pk":"KEY1","www.newdomain.pk":"KEY2"}'
+set_env "NEXT_PUBLIC_SITE_URL" "https://www.totvogue.pk"
+```
+
+---
+
+## Vercel Alias Set Karo (Har Naye Domain Ke Liye)
+
+```bash
+# Latest deploy UID lo
+LATEST_UID=$(curl -s -H "Authorization: Bearer $V_TOKEN" \
+  "https://api.vercel.com/v6/deployments?limit=1" | \
+  python3 -c "import sys,json; print(json.load(sys.stdin)['deployments'][0]['uid'])")
+
+# Domain alias set karo
+npx vercel alias set $LATEST_UID www.newdomain.com --token "$V_TOKEN"
+```

@@ -6,14 +6,15 @@
  */
 export async function pingIndexNow(urls: string[], siteUrlOverride?: string): Promise<boolean> {
   try {
-    const key = process.env.INDEXNOW_API_KEY || '';
+    let key = process.env.INDEXNOW_API_KEY || '';
 
     if (!key || key === 'yahan_indexnow_api_key_paste_karo') {
       console.warn('[IndexNow] Missing INDEXNOW_API_KEY. Skipping ping.');
       return false;
     }
 
-    // Derive host from first URL if siteUrl not provided
+    // Support multi-domain: INDEXNOW_API_KEY can be JSON {domain: key}
+    // or plain string (backward compatible)
     const siteUrl = siteUrlOverride || process.env.NEXT_PUBLIC_SITE_URL || (urls[0] ? new URL(urls[0]).origin : '');
     if (!siteUrl) {
       console.warn('[IndexNow] Missing siteUrl. Skipping ping.');
@@ -21,6 +22,14 @@ export async function pingIndexNow(urls: string[], siteUrlOverride?: string): Pr
     }
 
     const host = siteUrl.replace(/^https?:\/\//, '').split('/')[0];
+
+    try {
+      const parsed = JSON.parse(key);
+      if (typeof parsed === 'object' && parsed[host]) {
+        key = parsed[host];
+      }
+    } catch {}
+
     const keyLocation = `${siteUrl}/${key}.txt`;
 
     console.log(`[IndexNow] Pinging ${urls.length} URLs for host: ${host}`);
