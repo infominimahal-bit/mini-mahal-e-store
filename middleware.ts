@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -30,7 +30,12 @@ export async function proxy(request: NextRequest) {
   if (pathname === '/' && searchParams.get('code')) {
     const url = request.nextUrl.clone();
     url.pathname = '/admin/reset-password';
-    return NextResponse.redirect(url);
+    const redirectRes = NextResponse.redirect(url);
+    // Preserve cookies set by supabase (if any)
+    supabaseResponse.cookies.getAll().forEach((c) => {
+      redirectRes.cookies.set(c.name, c.value);
+    });
+    return redirectRes;
   }
 
   // Public admin paths — no auth required
@@ -45,33 +50,24 @@ export async function proxy(request: NextRequest) {
 
   // Only protect /admin/* routes
   if (pathname.startsWith('/admin/')) {
-    // Debug: log auth cookie status
-    const allCookieNames = request.cookies.getAll().map((c) => c.name);
-    const authCookieName = allCookieNames.find(
-      (n) => n.startsWith('sb-') && n.endsWith('-auth-token')
-    );
-    if (authCookieName) {
-      const authCookie = request.cookies.get(authCookieName);
-      console.log(
-        `[proxy] Auth cookie found: ${authCookieName} (length: ${authCookie?.value?.length || 0})`
-      );
-    } else {
-      console.log(
-        `[proxy] No auth cookie found. Available cookies: ${allCookieNames.join(', ') || '(none)'}`
-      );
-    }
-
     const { data, error } = await supabase.auth.getUser();
 
     if (error) {
-      console.log(`[proxy] getUser() error: ${error.message}`);
+      console.log(`[middleware] getUser() error: ${error.message}`);
     }
 
     if (!data?.user) {
-      console.log('[proxy] No user — redirecting to /admin/login');
+      console.log('[middleware] No user — redirecting to /admin/login');
       const url = request.nextUrl.clone();
       url.pathname = '/admin/login';
-      return NextResponse.redirect(url);
+      const redirectRes = NextResponse.redirect(url);
+      
+      // Preserve any cookie updates from createServerClient (e.g. chunking refresh)
+      supabaseResponse.cookies.getAll().forEach((c) => {
+        redirectRes.cookies.set(c.name, c.value);
+      });
+      
+      return redirectRes;
     }
   }
 
