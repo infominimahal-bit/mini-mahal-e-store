@@ -30,14 +30,11 @@ export async function GET() {
     envKeys: Object.keys(process.env).filter(k => k.includes('INDEX') || k.includes('SITE') || k.includes('BRAND')),
   };
 
-  let pingResult: any = 'not_tested';
   try {
-    pingResult = await pingIndexNow(['https://www.totvogue.pk/']);
+    (info as any).pingResult = await pingIndexNow(['https://www.totvogue.pk/']);
   } catch (e: any) {
-    pingResult = 'error: ' + e.message;
+    (info as any).pingResult = 'error: ' + e.message;
   }
-
-  info.pingResult = pingResult;
 
   return NextResponse.json(info);
 }
