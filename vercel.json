@@ -8,5 +8,11 @@
       "path": "/api/cron/abandoned-cart",
       "schedule": "0 12 * * *"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)\\.txt",
+      "destination": "/api/indexnow/key?key=$1"
+    }
   ]
 }
