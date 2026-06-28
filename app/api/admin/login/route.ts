@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
   try {
@@ -12,8 +13,28 @@ export async function POST(request: Request) {
       );
     }
 
-    const { createClient } = await import('@/lib/supabase/server');
-    const supabase = await createClient();
+    const cookieStore = await cookies();
+    const response = NextResponse.json({ success: true });
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              // Set internal next/headers cookie store
+              cookieStore.set(name, value, options);
+              // Explicitly attach to the outgoing response to guarantee delivery
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
 
     // Authenticate via Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -38,7 +59,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true });
+    return response;
   } catch (err) {
     const message =
       err instanceof Error ? err.message : 'Internal server error';

@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -53,19 +53,25 @@ export async function middleware(request: NextRequest) {
     const { data, error } = await supabase.auth.getUser();
 
     if (error) {
-      console.log(`[middleware] getUser() error: ${error.message}`);
+      console.log(`[proxy] getUser() error: ${error.message}`);
     }
 
     if (!data?.user) {
-      console.log('[middleware] No user — redirecting to /admin/login');
+      console.log('[proxy] No user — redirecting to /admin/login');
       const url = request.nextUrl.clone();
       url.pathname = '/admin/login';
+      url.searchParams.set('_nocache', Date.now().toString()); // Bypass Cloudflare cache
+      
       const redirectRes = NextResponse.redirect(url);
       
       // Preserve any cookie updates from createServerClient (e.g. chunking refresh)
       supabaseResponse.cookies.getAll().forEach((c) => {
         redirectRes.cookies.set(c.name, c.value);
       });
+      
+      // Prevent Cloudflare from caching the redirect itself
+      redirectRes.headers.set('cdn-cache-control', 'no-store, no-cache, must-revalidate');
+      redirectRes.headers.set('cache-control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       
       return redirectRes;
     }
