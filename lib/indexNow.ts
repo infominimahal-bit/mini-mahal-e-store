@@ -7,19 +7,19 @@
 export async function pingIndexNow(urls: string[], siteUrlOverride?: string): Promise<boolean> {
   try {
     const key = process.env.INDEXNOW_API_KEY || '';
-    const siteUrl = siteUrlOverride || process.env.NEXT_PUBLIC_SITE_URL || '';
 
     if (!key || key === 'yahan_indexnow_api_key_paste_karo') {
       console.warn('[IndexNow] Missing INDEXNOW_API_KEY. Skipping ping.');
       return false;
     }
 
+    // Derive host from first URL if siteUrl not provided
+    const siteUrl = siteUrlOverride || process.env.NEXT_PUBLIC_SITE_URL || (urls[0] ? new URL(urls[0]).origin : '');
     if (!siteUrl) {
       console.warn('[IndexNow] Missing siteUrl. Skipping ping.');
       return false;
     }
 
-    // Extract hostname (e.g., "zaynahs.pk" from "https://zaynahs.pk")
     const host = siteUrl.replace(/^https?:\/\//, '').split('/')[0];
     const keyLocation = `${siteUrl}/${key}.txt`;
 

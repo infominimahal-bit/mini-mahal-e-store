@@ -108,6 +108,121 @@ within minutes/hours
 
 ---
 
+# IndexNow Setup Guide
+
+> IndexNow ek protocol hai jo Bing, Yandex aur ab Google ko turant bata deta hai ke URLs change ho gaye hain. Free hai, unlimited URL submissions.
+
+---
+
+## Step 1 — Key Generate Karo
+
+Koi bhi random 32+ character alphanumeric string banao:
+
+```bash
+openssl rand -hex 16
+```
+
+Output:
+```
+5a83b276cd8d4850af5c81de4c34a2e8
+```
+
+---
+
+## Step 2 — Key File Host Karo
+
+`public/{KEY}.txt` file banao:
+
+```bash
+echo "5a83b276cd8d4850af5c81de4c34a2e8" > public/5a83b276cd8d4850af5c81de4c34a2e8.txt
+```
+
+**Important:** Vercel `public/` folder se static files serve karta hai. Kisi rewrite/route ki zaroorat nahi.
+
+Verify locally:
+```bash
+curl http://localhost:3000/5a83b276cd8d4850af5c81de4c34a2e8.txt
+# → 5a83b276cd8d4850af5c81de4c34a2e8
+```
+
+---
+
+## Step 3 — ENV Variable Set Karo
+
+`.env.local` mein daalo:
+```env
+INDEXNOW_API_KEY=5a83b276cd8d4850af5c81de4c34a2e8
+```
+
+Vercel production ke liye bhi env var set karo.
+
+---
+
+## Step 4 — IndexNow API Ping
+
+Manual test:
+```bash
+curl -X POST https://YOUR_DOMAIN/api/indexnow \
+  -H 'Content-Type: application/json' \
+  -d '{"urls": ["https://YOUR_DOMAIN/", "https://YOUR_DOMAIN/shop"]}'
+```
+
+---
+
+## Step 5 — Verify
+
+Check key file:
+```bash
+curl -s -w '\nHTTP %{http_code}' https://YOUR_DOMAIN/INDEXNOW_API_KEY.txt
+# → HTTP 200, key text
+```
+
+Wrong key → HTTP 404:
+```bash
+curl -s -o /dev/null -w 'HTTP %{http_code}\n' https://YOUR_DOMAIN/wrong-key.txt
+```
+
+SEO health check:
+```bash
+curl -s https://YOUR_DOMAIN/api/seo/test | python3 -c "
+import sys,json; d=json.load(sys.stdin)
+for k,v in d['results'].items():
+    print(f'  {k}: {v.get(\"status\",\"?\")}')"
+```
+
+`indexNow` status `ok` aana chahiye.
+
+---
+
+## Flow
+
+```
+Product Save/Update
+       |
+       v
+/api/revalidate (webhook)
+       |
+       v
+notifyGoogleIndexing() + indexNow ping
+       |
+       ├──→ Google Indexing API (200/day)
+       └──→ IndexNow API (unlimited) → Bing, Yandex
+```
+
+---
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Key file 404 | Check `public/{KEY}.txt` file exist karti hai |
+| `indexNowTest: failed` | Key file verify nahi ho rahi — curl test karo |
+| Key file 200 but test fails | Cloudflare cache purge karo, 10s wait karo |
+| Multi-domain | Har domain ke liye alag key + alag `public/{key}.txt` file |
+| Key compromised | Naya key generate karo, old file delete karo, env update karo |
+
+---
+
 ## Available API Endpoints
 
 | Endpoint | Method | Body | Use |

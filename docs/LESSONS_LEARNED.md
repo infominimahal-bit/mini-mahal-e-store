@@ -1066,6 +1066,96 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE/purge_cache" \
 
 ---
 
+# Masla 12: IndexNow Key File 404 — Static File Missing (June 2026)
+
+---
+
+## Pehle Kya Tha (Symptom)
+
+```
+curl https://www.totvogue.pk/{KEY}.txt
+→ Not Found / HTTP 404
+```
+
+SEO health test mein `indexNowTest: failed` aa raha tha. IndexNow key file verify nahi ho rahi thi, isliye Bing/Yandex IndexNow API ping accept nahi kar rahe thay.
+
+---
+
+## Issue Kya Tha (Root Cause)
+
+**Static file `public/{KEY}.txt` exist nahi karti thi.**
+
+```
+Jo log hua:
+1. Humne API route banaya /api/indexnow/key/route.ts ✓
+2. vercel.json mein rewrite likha: "/(.*)\\\.txt" → "/api/indexnow/key?key=$1" ✓
+3. Lekin vercel.json rewrite Vercel production par kaam nahi kiya (Next.js 16 compatibility issue)
+4. middleware.ts bhi kaam nahi kiya (Vercel Next.js 16 par deploy nahi hota)
+5. next.config.ts rewrite bhi kaam nahi kiya
+6. public/ folder mein .txt file hi nahi thi — yahi asli wajah thi
+```
+
+**Teen alag approaches fail hui (vercel.json rewrite, middleware, next.config.ts rewrite) — lekin asli masla yeh tha ke koi bhi approach try karne se pehle, `public/` folder mein static file hi mojood nahi thi.**
+
+Vercel hamesha `public/` folder ki static files ko pehle serve karta hai, kisi rewrite/route ki zaroorat nahi. Agar file hoti to kaam karti.
+
+---
+
+## Fix Kaise Hua
+
+Ek simple static file banayi:
+
+```bash
+# public/5a83b276cd8d4850af5c81de4c34a2e8.txt
+Content: 5a83b276cd8d4850af5c81de4c34a2e8
+```
+
+Bas itna kafi tha. Vercel ne turant serve karna shuru kar diya — HTTP 200 with key text.
+
+---
+
+## Next Time Yeh Na Aaye — Rules
+
+```
+✅ RULE: Pehle sabse simple solution try karo — static file public/ folder mein daalo
+   ❌ vercel.json rewrite → ❌ middleware → ❌ next.config.ts rewrite → ✅ public/file.txt
+
+✅ RULE: Vercel static files (public/) bina kisi route/rewrite ke serve karta hai
+   .txt, .xml, .json, .html sab kaam karte hain
+
+✅ RULE: IndexNow key file ke liye sirf 2 cheezein chahiye:
+   1. public/{KEY}.txt — key text ke saath
+   2. INDEXNOW_API_KEY env var mein same key
+
+✅ RULE: Debugging sequence jab koi file 404 ho:
+   1. public/ folder mein file exist karti hai?
+   2. curl locally check karo (npm run dev)
+   3. curl production check karo
+   4. Phir rewrite/route approach try karo
+```
+
+### Checklist — IndexNow / Key File Setup:
+
+```
+☐ public/{KEY}.txt file banayi? (sabse important)
+☐ INDEXNOW_API_KEY env var set kiya?
+☐ Dono ki value SAME hai?
+☐ curl se verify kiya: curl https://domain.com/{KEY}.txt → HTTP 200?
+☐ Invalid key par HTTP 404 aata hai?
+```
+
+---
+
+## Files Jo Fix Hueen
+
+- [`public/5a83b276cd8d4850af5c81de4c34a2e8.txt`](file:///Users/shoaib/Documents/zaynahsestore-tv-main/public/5a83b276cd8d4850af5c81de4c34a2e8.txt) — IndexNow key static file (NEW)
+
+---
+
+> **Ek line mein:** "IndexNow key file 404 de rahi hai? Pehle check karo ke `public/{KEY}.txt` file exist karti hai ya nahi — 90% masla yahi hota hai." 🔑
+
+---
+
 ## Fix Prompt (Copy-Paste for Any Project)
 
 Jab bhi kisi bhi project mein duplicate product ka 23505 error aaye, ye prompt kisi bhi AI agent ko de do:
