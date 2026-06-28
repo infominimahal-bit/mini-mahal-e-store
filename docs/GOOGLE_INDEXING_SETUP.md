@@ -1,5 +1,7 @@
 # Google Indexing API Setup Guide
 
+> **Agent Note:** Yeh guide complete hai. Naye domain ke liye sirf "Naya Domain Setup" section follow karo. Tests section mein saare curl commands hain jo maine verify kiye hain.
+
 > Ye setup Google ko automatically notify karta hai jab bhi koi product/page add ya update ho — faster indexing milti hai Google Search mein.
 
 ---
@@ -545,3 +547,240 @@ LATEST_UID=$(curl -s -H "Authorization: Bearer $V_TOKEN" \
 # Domain alias set karo
 npx vercel alias set $LATEST_UID www.newdomain.com --token "$V_TOKEN"
 ```
+
+---
+
+# Naya Domain Setup — Step by Step
+
+Yeh exact steps hain jo maine TotVogue.pk ke liye kiye. Naye domain ke liye bhi same sequence follow karo.
+
+## Phase 1: Keys & Credentials
+
+### 1. IndexNow Key Banao
+```bash
+openssl rand -hex 16
+# Output: a3f82c91bd4e6071dc38f50a92b17e43
+```
+
+### 2. Google Service Account Key
+- Pehle wala SA key reuse kar sakte ho (same Google Cloud project)
+- Agar naya chahiye: https://console.cloud.google.com/iam-admin/serviceaccounts → Create → JSON download
+
+## Phase 2: Code Changes
+
+### 3. Key File Banao
+```bash
+echo "a3f82c91bd4e6071dc38f50a92b17e43" > public/a3f82c91bd4e6071dc38f50a92b17e43.txt
+git add public/a3f82c91bd4e6071dc38f50a92b17e43.txt
+git commit -m "feat: add IndexNow key for new-domain.com"
+git push
+```
+
+### 4. Multi-Domain Key (Agar ek hi deployment mein do domain)
+`INDEXNOW_API_KEY` env var ko JSON karo:
+```json
+{
+  "www.totvogue.pk": "5a83b276cd8d4850af5c81de4c34a2e8",
+  "www.newdomain.pk": "a3f82c91bd4e6071dc38f50a92b17e43"
+}
+```
+
+Single-line format:
+```
+INDEXNOW_API_KEY={"www.totvogue.pk":"5a83b276cd8d4850af5c81de4c34a2e8","www.newdomain.pk":"a3f82c91bd4e6071dc38f50a92b17e43"}
+```
+
+### 5. Search Console Mein Owner Add Karo
+1. Jaao: https://search.google.com/search-console
+2. New domain add karo → property verify karo
+3. Settings → Users → Add user
+4. Email: `zaynahs-estore@gen-lang-client-0610294147.iam.gserviceaccount.com`
+5. Permission: **Owner**
+
+## Phase 3: Vercel Deploy
+
+### 6. Vercel Env Vars Update
+```bash
+V_TOKEN="vcp_..."
+PROJECT_ID="prj_EUI9K4GBEl5jDnHj5LxfWVPZuFU2"
+
+# Pehle delete karo purani value
+ENV_ID=$(curl -s -H "Authorization: Bearer $V_TOKEN" \
+  "https://api.vercel.com/v9/projects/$PROJECT_ID/env" \
+  | python3 -c "import sys,json; d=json.load(sys.stdin); [print(e.get('id','')) for e in d.get('envs',[]) if e['key']=='INDEXNOW_API_KEY']")
+curl -s -X DELETE -H "Authorization: Bearer $V_TOKEN" \
+  "https://api.vercel.com/v9/projects/$PROJECT_ID/env/$ENV_ID"
+sleep 2
+
+# Naya value set karo
+curl -s -X POST "https://api.vercel.com/v10/projects/$PROJECT_ID/env" \
+  -H "Authorization: Bearer $V_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "key": "INDEXNOW_API_KEY",
+    "value": "{\"www.totvogue.pk\":\"5a83b276cd8d4850af5c81de4c34a2e8\",\"www.newdomain.pk\":\"NEW_KEY\"}",
+    "type": "encrypted",
+    "target": ["production", "preview", "development"]
+  }'
+```
+
+### 7. Deploy Trigger
+```bash
+git commit --allow-empty -m "ci: deploy with new domain keys"
+git push
+```
+
+### 8. Wait + Alias Set
+```bash
+# Wait for READY
+for i in 1 2 3 4 5 6 7 8; do
+  STATE=$(curl -s -H "Authorization: Bearer $V_TOKEN" \
+    "https://api.vercel.com/v6/deployments?limit=1" \
+    | python3 -c "import sys,json; print(json.load(sys.stdin)['deployments'][0].get('state','?'))")
+  echo "$(date +%H:%M:%S) $STATE"
+  if [ "$STATE" = "READY" ]; then break; fi
+  sleep 30
+done
+
+# Alias set
+LATEST_UID=$(curl -s -H "Authorization: Bearer $V_TOKEN" \
+  "https://api.vercel.com/v6/deployments?limit=1" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['deployments'][0]['uid'])")
+npx vercel alias set $LATEST_UID www.newdomain.com --token "$V_TOKEN"
+```
+
+## Phase 4: Test
+
+### 9. Cloudflare Purge
+```bash
+ZONE="e4aceeacdc4f6a1677e92823df1651fd" # Naye domain ka zone ID
+CFTOKEN="cfut_..."
+curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE/purge_cache" \
+  -H "Authorization: Bearer $CFTOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"purge_everything":true}'
+sleep 10
+```
+
+### 10. Complete Test Suite
+```bash
+# 1. SEO Health
+curl -s https://www.newdomain.com/api/seo/test | python3 -m json.tool
+
+# 2. Key File (static)
+curl -s -w '\nHTTP %{http_code}' https://www.newdomain.com/KEY.txt
+
+# 3. Key File (API route)
+curl -s -w '\nHTTP %{http_code}' https://www.newdomain.com/api/indexnow/key?key=KEY
+
+# 4. Invalid key
+curl -s -o /dev/null -w 'HTTP %{http_code}\n' https://www.newdomain.com/wrong-key.txt
+
+# 5. IndexNow Ping
+curl -s -w '\nHTTP %{http_code}' -X POST https://www.newdomain.com/api/indexnow \
+  -H 'Content-Type: application/json' \
+  -d '{"urls":["https://www.newdomain.com/","https://www.newdomain.com/shop"]}'
+
+# 6. Google Indexing
+curl -s -X POST https://www.newdomain.com/api/indexing \
+  -H 'Content-Type: application/json' \
+  -d '{"url":"https://www.newdomain.com/","type":"URL_UPDATED"}'
+
+# 7. Quick Status
+curl -s https://www.newdomain.com/api/seo/test | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+for k,v in d['results'].items():
+    s=v.get('status','?')
+    icon='✅' if s=='ok' else '⚠️' if s=='skipped' else '❌'
+    print(f'{icon} {k}: {s}')
+print(f'All Passed: {d.get(\"allPassed\",\"?\")}')
+"
+```
+
+### Expected Output (Sab Correct)
+```
+✅  settings: ok
+✅  products: ok
+✅  categories: ok
+✅  indexNow: ok
+✅  googleIndexing: ok
+✅  cloudflare: ok
+✅  indexNowTest: ok
+✅  googleIndexingTest: ok
+All Passed: True
+```
+
+---
+
+# Debugging Guide — Issues Jo Mainne Face Kiye
+
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| `indexNowTest: failed` | INDEXNOW_API_KEY env var Vercel par set nahi ya wrong value | Delete + re-set env var, deploy again |
+| Key file 404 | `public/{KEY}.txt` exist nahi karta | File banao, commit karo, deploy karo |
+| API route returns 404 | env var value `yahan_indexnow_api_key_paste_karo` (placeholder) | Correct value set karo, deploy karo |
+| `vercel.json` rewrite not working | Vercel Next.js 16 issue | File-based approach use karo (`public/` folder) |
+| `next.config.ts` rewrite not working on Vercel | Same issue | Static file `public/{KEY}.txt` is the reliable fallback |
+| Google Indexing `not configured` | Vercel env vars set nahi | GOOGLE_INDEXING_SA_EMAIL + GOOGLE_INDEXING_SA_KEY set karo |
+| Env var set but deploy shows old value | Deploy env var change ke PEHLE build hua | Dobara deploy karo (empty commit) |
+| Vercel alias `not ready` | Deployment abhi build ho raha | Wait for READY state, phir alias set karo |
+
+---
+
+# Agent / Developer Quick Reference
+
+## Multi-Domain Checklist (Copy-Paste)
+
+```markdown
+## New Domain: [domain.com]
+
+### Keys
+- [ ] IndexNow key: `openssl rand -hex 16` → `NEW_KEY`
+- [ ] Google SA email: `zaynahs-estore@gen-lang-client-0610294147.iam.gserviceaccount.com`
+- [ ] Search Console: Add SA email as Owner
+
+### Code
+- [ ] `public/NEW_KEY.txt` file banayi (key text inside)
+- [ ] `INDEXNOW_API_KEY` env var update kiya (JSON format)
+- [ ] Commit + push kiya
+
+### Vercel
+- [ ] Deploy ready hai
+- [ ] Alias set: `npx vercel alias set DEPLOY_UID www.domain.com`
+- [ ] Domain DNS → Cloudflare → Vercel (orange cloud)
+
+### Supabase DB
+- [ ] `store_settings` mein `store_url` = `https://www.domain.com`
+- [ ] `store_name`, `logo_url`, `favicon_url` set hai
+
+### Test
+- [ ] `curl /api/seo/test` → All 8 passed
+- [ ] `curl /api/indexnow/key?key=KEY` → HTTP 200
+- [ ] `curl /api/indexnow` → {"success":true}
+- [ ] `curl /api/indexing` → {"success":true}
+```
+
+## Files That Need Changes For New Domain
+
+| File | Change |
+|------|--------|
+| `public/{NEW_KEY}.txt` | **Create** — key text |
+| Vercel env: `INDEXNOW_API_KEY` | **Update** — add new domain's key to JSON |
+| Vercel env: `NEXT_PUBLIC_SITE_URL` | **Update** — new domain URL |
+| Vercel alias | **Set** — domain → latest deploy |
+| Cloudflare DNS | **Add** — domain proxied to Vercel |
+| Supabase `store_settings` | **Update** — store_url, store_name, logo, favicon |
+| Search Console | **Add** — domain + service account as Owner |
+
+## No Changes Needed (Already Multi-Domain)
+
+- `lib/googleIndexing.ts` — same SA key works for all domains
+- `lib/indexNow.ts` — auto-detects host, picks correct key from JSON
+- `app/api/indexnow/key/route.ts` — reads from env var
+- `next.config.ts` — rewrites already configured
+- `vercel.json` — no changes needed
+
+---
+
+> **Ek line mein:** "Naye domain ke liye sirf: key banao → file banao → env var update karo → deploy karo → alias set karo → test karo." 🔑
