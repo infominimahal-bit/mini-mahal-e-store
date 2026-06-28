@@ -15,8 +15,10 @@ export function middleware(request: NextRequest) {
     }
     return new NextResponse('Not Found', { status: 404 });
   }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: '/:path(.+\\.txt)',
+  matcher: ['/((?!api|_next|static|fonts|favicon.ico|robots.txt|sitemap.xml|manifest.json).*)'],
 };
