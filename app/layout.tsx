@@ -104,11 +104,16 @@ export async function generateMetadata(): Promise<Metadata> {
       verification: {
         google: process.env.GOOGLE_SITE_VERIFICATION || '',
       },
+      other: {
+        'og:locale': 'en_US',
+      },
       openGraph: {
         type: 'website',
         title: title + suffix,
         description: description,
+        url: siteUrl,
         siteName: storeName,
+        locale: 'en_US',
         images: [{ url: ogImage, width: 1200, height: 630, alt: storeName }],
       },
       twitter: {
@@ -116,6 +121,7 @@ export async function generateMetadata(): Promise<Metadata> {
         title: title + suffix,
         description: description,
         images: [ogImage],
+        site: settings.twitter_handle || process.env.NEXT_PUBLIC_TWITTER_HANDLE || '',
         creator: settings.twitter_handle || process.env.NEXT_PUBLIC_TWITTER_HANDLE || '',
       }
     };
@@ -130,7 +136,10 @@ export async function generateMetadata(): Promise<Metadata> {
       },
       verification: {
         google: process.env.GOOGLE_SITE_VERIFICATION || '',
-      }
+      },
+      other: {
+        'og:locale': 'en_US',
+      },
     };
   }
 }
@@ -207,6 +216,41 @@ export default async function RootLayout({
               `,
             }}
           />
+          {/* JSON-LD Schema — WebSite + Organization */}
+          {settings && (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                  '@context': 'https://schema.org',
+                  '@graph': [
+                    {
+                      '@type': 'WebSite',
+                      name: settings.storeName || 'Zaynahs E-Store',
+                      url: settings.storeUrl || '',
+                      description: settings.metaDescription || settings.tagline || '',
+                      potentialAction: {
+                        '@type': 'SearchAction',
+                        target: {
+                          '@type': 'EntryPoint',
+                          urlTemplate: `${settings.storeUrl || ''}/search?q={search_term_string}`,
+                        },
+                        'query-input': 'required name=search_term_string',
+                      },
+                    },
+                    {
+                      '@type': 'Organization',
+                      name: settings.storeName || 'Zaynahs E-Store',
+                      url: settings.storeUrl || '',
+                      logo: settings.logoUrl || '',
+                      image: settings.bannerUrl || settings.logoUrl || '',
+                      description: settings.metaDescription || settings.tagline || '',
+                    },
+                  ],
+                }, null, 2),
+              }}
+            />
+          )}
         </ThemeProvider>
       </body>
     </html>

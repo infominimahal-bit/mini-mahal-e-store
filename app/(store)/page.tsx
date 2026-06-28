@@ -29,15 +29,26 @@ export async function generateMetadata(): Promise<Metadata> {
       metadataBase: new URL(siteUrl),
       title: title,
       description: desc,
+      alternates: { canonical: siteUrl },
+      other: {
+        'og:locale': 'en_US',
+      },
       openGraph: {
         title: title,
         description: desc,
-        images: [{ url: banner }],
+        url: siteUrl,
+        siteName: brandName,
+        type: 'website',
+        locale: 'en_US',
+        images: [{ url: banner, width: 1200, height: 630, alt: brandName }],
       },
       twitter: {
+        card: 'summary_large_image',
         title: title,
         description: desc,
         images: [banner],
+        site: settings.twitter_handle || process.env.NEXT_PUBLIC_TWITTER_HANDLE || '',
+        creator: settings.twitter_handle || process.env.NEXT_PUBLIC_TWITTER_HANDLE || '',
       }
     };
   } catch (err) {
