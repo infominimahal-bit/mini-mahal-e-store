@@ -1,5 +1,7 @@
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { getSiteUrl } from '@/lib/site-url-server';
+import { notifyGoogleIndexing } from '@/lib/googleIndexing';
+import { pingIndexNow } from '@/lib/indexNow';
 
 const CLOUDFLARE_ZONE_ID = process.env.CLOUDFLARE_ZONE_ID;
 const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
@@ -80,25 +82,33 @@ async function purgeCloudflareEverything() {
   }
 }
 
-export async function revalidateProduct(slug: string) {
+export async function revalidateProduct(slug: string, action: 'UPDATED' | 'DELETED' = 'UPDATED') {
   try {
-    // Correct single-arg revalidateTag — cast to any per GEMINI.md TS rule
     (revalidateTag as any)(`product-${slug}`);
     (revalidateTag as any)('products');
     (revalidateTag as any)('homepage');
     (revalidateTag as any)('reviews');
 
-    // Purge Full Route Cache of relevant paths
     revalidatePath('/');
     revalidatePath('/shop');
-    revalidatePath(`/product/${slug}`);
+    if (action !== 'DELETED') revalidatePath(`/product/${slug}`);
 
-    // Purge ALL Cloudflare edge cache (static assets are content-hashed — safe)
     await purgeCloudflareEverything();
-    console.log(`[revalidate] Product revalidated: ${slug}`);
+
+    // Notify search engines for instant indexing
+    const siteUrl = await resolveSiteUrl();
+    const productUrl = `${siteUrl}/product/${slug}`;
+
+    if (action === 'DELETED') {
+      await notifyGoogleIndexing(productUrl, 'URL_DELETED');
+    } else {
+      await notifyGoogleIndexing(productUrl, 'URL_UPDATED');
+    }
+
+    await pingIndexNow([productUrl], siteUrl);
+    console.log(`[revalidate] Product ${action}: ${slug}`);
   } catch (error) {
     console.error(`Error in revalidateProduct for ${slug}:`, error);
-    throw error;
   }
 }
 
@@ -127,22 +137,31 @@ export async function revalidateBanner() {
   }
 }
 
-export async function revalidateCategory(slug: string) {
+export async function revalidateCategory(slug: string, action: 'UPDATED' | 'DELETED' = 'UPDATED') {
   try {
     (revalidateTag as any)(`category-${slug}`);
     (revalidateTag as any)('categories');
     (revalidateTag as any)('products');
 
-    // Purge page routing cache
     revalidatePath('/');
     revalidatePath('/shop');
-    revalidatePath(`/category/${slug}`);
+    if (action !== 'DELETED') revalidatePath(`/category/${slug}`);
 
     await purgeCloudflareEverything();
-    console.log(`[revalidate] Category revalidated: ${slug}`);
+
+    const siteUrl = await resolveSiteUrl();
+    const categoryUrl = `${siteUrl}/shop?category=${slug}`;
+
+    if (action === 'DELETED') {
+      await notifyGoogleIndexing(categoryUrl, 'URL_DELETED');
+    } else {
+      await notifyGoogleIndexing(categoryUrl, 'URL_UPDATED');
+    }
+
+    await pingIndexNow([categoryUrl], siteUrl);
+    console.log(`[revalidate] Category ${action}: ${slug}`);
   } catch (error) {
     console.error(`Error in revalidateCategory for ${slug}:`, error);
-    throw error;
   }
 }
 
@@ -151,21 +170,23 @@ export async function revalidateHomepage() {
     (revalidateTag as any)('homepage');
     (revalidateTag as any)('products');
 
-    // Purge page routing cache
     revalidatePath('/');
     revalidatePath('/shop');
 
     const dynamicSiteUrl = await resolveSiteUrl();
     const urls = [
       `${dynamicSiteUrl}/`,
-      `${dynamicSiteUrl}`,
       `${dynamicSiteUrl}/shop`,
     ];
     await purgeCloudflareUrls(urls);
+
+    for (const url of urls) {
+      await notifyGoogleIndexing(url, 'URL_UPDATED');
+    }
+    await pingIndexNow(urls, dynamicSiteUrl);
     console.log('[revalidate] Homepage revalidated');
   } catch (error) {
     console.error('Error in revalidateHomepage:', error);
-    throw error;
   }
 }
 
