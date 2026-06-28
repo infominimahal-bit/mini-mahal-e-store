@@ -147,7 +147,7 @@ function AdminLayoutContent({
     reviews: true,
     trash: true,
     reporting: true,
-    settings: true,
+    settings: false,
   });
 
   const toggleSection = (key: string) => {
@@ -297,7 +297,7 @@ function AdminLayoutContent({
               {section.label && (
                 <button
                   onClick={() => toggleSection(section.key)}
-                  className="flex items-center justify-between w-full px-4 py-2 text-[10px] font-black text-current opacity-60 uppercase tracking-widest cursor-pointer hover:opacity-90 transition-opacity"
+                  className={`flex items-center justify-between w-full px-4 py-2 text-[10px] font-black uppercase tracking-widest cursor-pointer transition-opacity ${section.key === 'settings' ? 'text-[#e94560]/80 border-l-2 border-[#e94560] pl-3 opacity-100' : 'text-current opacity-60 hover:opacity-90'}`}
                 >
                   <span>{section.label}</span>
                   <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expandedSections[section.key] ? 'rotate-0' : '-rotate-90'}`} />
@@ -360,7 +360,7 @@ function AdminLayoutContent({
               {section.label && (
                 <button
                   onClick={() => toggleSection(section.key)}
-                  className="flex items-center justify-between w-full px-4 py-1.5 text-[10px] font-black text-current opacity-60 uppercase tracking-widest cursor-pointer hover:opacity-90 transition-opacity"
+                  className={`flex items-center justify-between w-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest cursor-pointer transition-opacity ${section.key === 'settings' ? 'text-[#e94560]/80 border-l-2 border-[#e94560] pl-3 opacity-100' : 'text-current opacity-60 hover:opacity-90'}`}
                 >
                   <div className="flex items-center gap-2">
                     <span>{section.label}</span>

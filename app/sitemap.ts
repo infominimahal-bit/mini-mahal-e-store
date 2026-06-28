@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from('products')
     .select('slug, updated_at, name')
     .is('deleted_at', null)
-    .eq('active', true);
+    .eq('is_active', true);
 
   const { data: categories } = await supabaseAdmin
     .from('categories')
