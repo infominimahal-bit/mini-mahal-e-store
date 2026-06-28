@@ -41,6 +41,9 @@ async function getAccessToken(): Promise<string | null> {
     return null;
   }
 
+  // Handle escaped newlines from .env / Vercel env vars
+  const normalizedKey = privateKey.replace(/\\n/g, '\n');
+
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: 'RS256', typ: 'JWT' };
   const claimSet = {
@@ -53,7 +56,7 @@ async function getAccessToken(): Promise<string | null> {
 
   const jwtHeader = base64UrlEncode(JSON.stringify(header));
   const jwtClaim = base64UrlEncode(JSON.stringify(claimSet));
-  const signature = base64UrlEncode(rs256Sign(`${jwtHeader}.${jwtClaim}`, privateKey));
+  const signature = base64UrlEncode(rs256Sign(`${jwtHeader}.${jwtClaim}`, normalizedKey));
   const jwt = `${jwtHeader}.${jwtClaim}.${signature}`;
 
   try {

@@ -66,7 +66,7 @@ export async function GET() {
   try {
     const testUrl = results.settings?.storeUrl || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const indexNowResult = await pingIndexNow([`${testUrl}/`], testUrl);
-    results.indexNowTest = { status: indexNowResult ? 'ok' : 'failed' };
+    results.indexNowTest = { status: indexNowResult ? 'ok' : 'failed', note: indexNowResult ? '' : 'ping returned false (check logs)' };
   } catch (e: any) {
     results.indexNowTest = { status: 'fail', error: e.message };
   }
@@ -75,8 +75,10 @@ export async function GET() {
   if (process.env.GOOGLE_INDEXING_SA_EMAIL && process.env.GOOGLE_INDEXING_SA_KEY) {
     try {
       const testUrl = results.settings?.storeUrl || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-      const googleResult = await notifyGoogleIndexing(`${testUrl}/`, 'URL_UPDATED');
-      results.googleIndexingTest = { status: googleResult ? 'ok' : 'failed' };
+      results.googleIndexingTest = await notifyGoogleIndexing(`${testUrl}/`, 'URL_UPDATED').then(
+        ok => ({ status: ok ? 'ok' : 'failed' }),
+        err => ({ status: 'failed', error: err.message })
+      );
     } catch (e: any) {
       results.googleIndexingTest = { status: 'fail', error: e.message };
     }
