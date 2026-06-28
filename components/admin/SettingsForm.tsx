@@ -1866,6 +1866,9 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
           setMetaTitle={setMetaTitle}
           metaDescription={metaDescription}
           setMetaDescription={setMetaDescription}
+          storeName={storeName || ''}
+          storeUrl={storeUrl || ''}
+          faviconUrl={faviconUrl || ''}
         />
       )}
 
