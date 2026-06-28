@@ -163,7 +163,9 @@ After DB setup, **auth settings must be configured** otherwise password reset fl
 **Manual (Supabase Dashboard):**
 - Go to Authentication → URL Configuration
 - Set `Site URL` to your domain (e.g. `https://yourdomain.pk`)
-- Add `Redirect URLs`: `https://yourdomain.pk/admin/reset-password`
+- Add `Redirect URLs`:
+  - `https://yourdomain.pk/auth/callback`
+  - `https://yourdomain.pk/admin/reset-password`
 - Disable "Supabase OAuth Server" toggle (removes `/oauth/consent` 404)
 - Enable "Require reauthentication on password change"
 
@@ -174,7 +176,7 @@ curl -X PATCH "https://api.supabase.com/v1/projects/{REF}/config/auth" \
   -H "Content-Type: application/json" \
   -d '{
     "site_url": "https://yourdomain.pk",
-    "uri_allow_list": "https://yourdomain.pk/admin/reset-password,https://www.yourdomain.pk/admin/reset-password",
+    "uri_allow_list": "https://yourdomain.pk/admin/reset-password,https://www.yourdomain.pk/admin/reset-password,https://yourdomain.pk/auth/callback,https://www.yourdomain.pk/auth/callback",
     "oauth_server_enabled": false,
     "oauth_server_authorization_path": "/oauth/consent",
     "security_update_password_require_reauthentication": true
@@ -191,9 +193,19 @@ curl -s "https://api.supabase.com/v1/projects/{REF}/config/auth" \
 Expected output:
 ```
 site_url: https://yourdomain.pk
-uri_allow_list: https://yourdomain.pk/admin/reset-password,https://www.yourdomain.pk/admin/reset-password
+uri_allow_list: https://yourdomain.pk/admin/reset-password,https://www.yourdomain.pk/admin/reset-password,https://yourdomain.pk/auth/callback,https://www.yourdomain.pk/auth/callback
 oauth_server_enabled: False
 ```
+
+### 3.5 Auth Callback Route (Frontend)
+
+A dedicated server-side route handler at `/auth/callback` handles the PKCE code exchange after password reset email click. This must exist in the codebase:
+
+| File | Purpose |
+|------|---------|
+| `app/auth/callback/route.ts` | Exchanges `?code=` for session via server client, redirects to `/admin/reset-password` |
+
+The forgot-password page sends `redirectTo: \`\${origin}/auth/callback?next=/admin/reset-password\`` so Supabase redirects here after the email link is verified.
 
 ---
 
@@ -737,7 +749,8 @@ Agent Supabase SQL Editor API use kare ga:
 Agent Supabase Management API se auth settings configure kare ga:
 
 ✅ site_url → https://[domain]
-✅ uri_allow_list → https://[domain]/admin/reset-password, https://www.[domain]/admin/reset-password
+✅ uri_allow_list → https://[domain]/admin/reset-password, https://www.[domain]/admin/reset-password,
+                      https://[domain]/auth/callback, https://www.[domain]/auth/callback
 ✅ oauth_server_enabled → false (/oauth/consent 404 fix)
 ✅ security_update_password_require_reauthentication → true
 
