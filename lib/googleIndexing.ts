@@ -16,7 +16,7 @@
 const GOOGLE_OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_INDEXING_API = 'https://indexing.googleapis.com/v3/urlNotifications:publish';
 
-function base64UrlEncode(str: string): string {
+function base64UrlEncode(str: string | Buffer): string {
   return Buffer.from(str)
     .toString('base64')
     .replace(/=/g, '')
@@ -24,12 +24,12 @@ function base64UrlEncode(str: string): string {
     .replace(/\//g, '_');
 }
 
-function rs256Sign(data: string, privateKey: string): string {
+function rs256Sign(data: string, privateKey: string): Buffer {
   const crypto = require('crypto');
   const sign = crypto.createSign('RSA-SHA256');
   sign.update(data);
   sign.end();
-  return sign.sign(privateKey, 'base64');
+  return sign.sign(privateKey);
 }
 
 async function getAccessToken(): Promise<string | null> {
