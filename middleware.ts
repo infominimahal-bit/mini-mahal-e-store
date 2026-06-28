@@ -10,7 +10,7 @@ export function middleware(request: NextRequest) {
     if (key === expectedKey) {
       return new NextResponse(key, {
         status: 200,
-        headers: { 'Content-Type': 'text/plain' },
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
       });
     }
     return new NextResponse('Not Found', { status: 404 });

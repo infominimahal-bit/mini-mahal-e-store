@@ -135,6 +135,14 @@ const nextConfig: NextConfig = {
 
     return rules;
   },
+  async rewrites() {
+    return [
+      {
+        source: '/:key.txt',
+        destination: '/api/indexnow/key?key=:key',
+      },
+    ];
+  },
   async redirects() {
     return [
       {
