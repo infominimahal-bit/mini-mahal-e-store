@@ -1,28 +1,42 @@
-export function getDomainName(hostOrUrl: string): string {
-  let host = hostOrUrl;
+export const domainMap: Record<string, { name: string; tagline: string }> = {
+  "totvogue.pk":     { name: "TotVogue.pk",     tagline: "#1 Kids Clothing Brand In Pakistan" },
+  "www.totvogue.pk": { name: "TotVogue.pk",     tagline: "#1 Kids Clothing Brand In Pakistan" },
+  "zaynahs.pk":      { name: "Zaynahs E-Store", tagline: "Premium Kids Fashion in Pakistan" },
+  "www.zaynahs.pk":  { name: "Zaynahs E-Store", tagline: "Premium Kids Fashion in Pakistan" },
+  "localhost:3000":  { name: "TotVogue.pk",     tagline: "#1 Kids Clothing Brand In Pakistan" },
+}
+
+export function getDomainConfig(hostOrUrl: string): { name: string; tagline: string } {
+  let host = hostOrUrl
 
   try {
     if (host.startsWith('http')) {
-      host = new URL(host).hostname;
+      host = new URL(host).hostname
     }
   } catch {}
 
-  host = host.replace(/:\d+$/, '').replace(/^www\./, '').toLowerCase();
-
-  const parts = host.split('.');
-  let mainPart: string;
-  if (parts.length >= 2) {
-    mainPart = parts[parts.length - 2];
-  } else {
-    mainPart = parts[0];
+  // Normalize: lowercase, strip port (except localhost:3000)
+  host = host.toLowerCase()
+  if (host !== 'localhost:3000') {
+    host = host.replace(/:\d+$/, '')
   }
 
-  const words = mainPart.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-
-  if (parts.length >= 2) {
-    const tld = parts.slice(parts.length - 1)[0];
-    return words + '.' + tld;
+  // Direct match
+  if (domainMap[host]) {
+    return domainMap[host]
   }
 
-  return words || 'Store';
+  // Try without www.
+  const withoutWww = host.replace(/^www\./, '')
+  if (domainMap[withoutWww]) {
+    return domainMap[withoutWww]
+  }
+
+  // Fallback to first entry
+  return Object.values(domainMap)[0]
+}
+
+// Legacy — kept for backward compatibility in non-metadata contexts
+export function getDomainName(hostOrUrl: string): string {
+  return getDomainConfig(hostOrUrl).name
 }

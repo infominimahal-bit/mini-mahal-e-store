@@ -1,11 +1,11 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { getGlobalReviews } from '@/lib/services/reviews';
 import { getSocialProofs } from '@/lib/services/socialProof';
 import { getSettings } from '@/lib/services/settings';
 import { getSiteUrl } from '@/lib/site-url-server';
-import { getDomainName } from '@/lib/config/domains';
+import { getDomainConfig } from '@/lib/config/domains';
+import { getDomainBrand } from '@/lib/utils/getDomainBrand';
 import ReviewsPageClient from './ReviewsPageClient';
 
 interface PageProps {
@@ -14,19 +14,10 @@ interface PageProps {
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
-    const settings = await getSettings();
-    const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
-    let host: string;
-    try {
-      const hdrs = await headers();
-      host = hdrs.get('host') || siteUrl || 'localhost:3000';
-    } catch {
-      host = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000';
-    }
-    const brandName = getDomainName(host);
+    const brand = await getDomainBrand();
     return {
-      title: `Customer Reviews | ${brandName}`,
-      description: 'Read authentic customer reviews and ratings. See what our customers are saying about our products.',
+      title: `Customer Reviews | ${brand.name}`,
+      description: `Read authentic customer reviews and ratings at ${brand.name}. See what our customers are saying about our products.`,
     };
   } catch {
     return {
@@ -51,7 +42,7 @@ export default async function ReviewsPage({ searchParams }: PageProps) {
 
   const socialProofs = await getSocialProofs();
 
-  const storeName = getDomainName(siteUrl || 'localhost:3000');
+  const storeName = getDomainConfig(siteUrl || 'localhost:3000').name;
 
   const combinedTotal = total + socialProofs.length;
 

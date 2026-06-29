@@ -434,7 +434,7 @@ function AdminLayoutContent({
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Unified Mobile/Desktop Header with Hamburger Trigger */}
-        <header className="h-16 flex-shrink-0 bg-white dark:bg-[#16162a] border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 md:px-8">
+        <header className="fixed md:relative top-0 left-0 right-0 z-30 md:z-auto h-16 flex-shrink-0 bg-white dark:bg-[#16162a] border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 md:px-8">
           <div className="flex items-center gap-3">
             {/* 📱 Hamburger Menu Toggle Button */}
             <button
@@ -456,7 +456,7 @@ function AdminLayoutContent({
           </div>
         </header>
 
-        <main id="admin-main-content" className="flex-1 p-6 md:p-8 pb-20 md:pb-8 overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-[#0f0f1b] transition-colors duration-200">
+        <main id="admin-main-content" className="flex-1 px-6 md:px-8 pt-16 md:pt-8 pb-16 md:pb-8 overflow-y-auto overflow-x-hidden bg-gray-50 dark:bg-[#0f0f1b] transition-colors duration-200">
           {children}
         </main>
       </div>

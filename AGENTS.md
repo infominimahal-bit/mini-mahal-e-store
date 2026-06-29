@@ -182,6 +182,52 @@ Jab bhi koi **purana / existing project clone kare** (already Supabase, Cloudfla
    - In the storefront layout/navbar, reset the `window` scroll position (`window.scrollTo({ top: 0, behavior: 'instant' })`) inside a `useEffect` on pathname/searchParams changes, EXCEPT when a scroll restoration is scheduled (`store_scroll_restore` exists in sessionStorage).
 <!-- END:navigation-scroll-rule -->
 
+<!-- BEGIN:multi-domain-og-rule -->
+## MULTI-DOMAIN OG RULE — MANDATORY FOR ALL PAGES
+
+This is a multi-domain system. totvogue.pk and zaynahs.pk are separate brands.
+
+**RULE: Every page that has `generateMetadata()` MUST follow this exact pattern:**
+
+```ts
+import { getDomainBrand } from '@/lib/utils/getDomainBrand'
+
+export async function generateMetadata() {
+  const brand = await getDomainBrand()
+  return {
+    title: '[Page Name] - ' + brand.name,
+    description: '[Page description] at ' + brand.name,
+    openGraph: {
+      siteName: brand.name,
+      title: '[Page Name] - ' + brand.name,
+      description: '[Page description] at ' + brand.name,
+    },
+    twitter: {
+      title: '[Page Name] - ' + brand.name,
+      description: '[Page description] at ' + brand.name,
+    }
+  }
+}
+```
+
+**NEVER:**
+- Hardcode "TotVogue" or "Zaynahs" in any `generateMetadata()`
+- Use `settings.storeName` in `generateMetadata()`
+- Use `settings.tagline` in `generateMetadata()`
+- Skip `generateMetadata()` on any new page
+
+**ALWAYS:**
+- Import `getDomainBrand` from `@/lib/utils/getDomainBrand`
+- Call it at the top of every `generateMetadata()`
+- Use `brand.name` for ALL title and OG name fields
+- Use `brand.tagline` for ALL description fields when no specific description
+
+When adding a new page, category, or route:
+- Copy `generateMetadata()` pattern from an existing working page
+- Never write brand name as a string literal
+- `getDomainBrand()` handles everything automatically
+<!-- END:multi-domain-og-rule -->
+
 <!-- BEGIN:middleware-rsc-rule -->
 # Middleware and RSC JSON Cache Rule
 

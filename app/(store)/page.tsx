@@ -6,34 +6,20 @@ import { getSettings } from '@/lib/services/settings';
 import { getTopReviews } from '@/lib/services/reviews';
 import { getHomepageSections } from '@/lib/services/sections';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { headers } from 'next/headers';
-import { getDomainName } from '@/lib/config/domains';
+import { getDomainBrand } from '@/lib/utils/getDomainBrand';
 import { Metadata } from 'next';
 
 export const revalidate = 86400; // 24 hours — webhooks purge on admin save
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
+    const brand = await getDomainBrand();
     const settings = await getSettings();
     const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
 
-    let host: string;
-    try {
-      const hdrs = await headers();
-      host = hdrs.get('host') || siteUrl || 'localhost:3000';
-    } catch {
-      host = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000';
-    }
-
-    const brandName = getDomainName(host);
-    const tagline = settings.tagline || `Shop premium products at ${brandName}`;
     const banner = settings.bannerUrl || settings.logoUrl || settings.faviconUrl || '';
-
-    // Respect custom metaTitle or default to "BrandName - Tagline / Description"
-    const title = settings.metaTitle || `${brandName} - ${tagline}`;
-
-    // Respect custom metaDescription or fallback
-    const desc = (settings.metaDescription || tagline).slice(0, 160);
+    const title = settings.metaTitle || `${brand.name} - ${brand.tagline}`;
+    const desc = (settings.metaDescription || brand.tagline).slice(0, 160);
 
     return {
       metadataBase: new URL(siteUrl),
@@ -49,10 +35,10 @@ export async function generateMetadata(): Promise<Metadata> {
         title: title,
         description: desc,
         url: siteUrl,
-        siteName: brandName,
+        siteName: brand.name,
         type: 'website',
         locale: 'en_US',
-        images: [{ url: banner, width: 1200, height: 630, alt: brandName }],
+        images: [{ url: banner, width: 1200, height: 630, alt: brand.name }],
       },
       twitter: {
         card: 'summary_large_image',

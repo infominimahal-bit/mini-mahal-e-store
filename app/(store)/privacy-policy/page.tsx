@@ -1,26 +1,17 @@
 import React from 'react';
 import { getSettings } from '@/lib/services/settings';
-import { headers } from 'next/headers';
-import { getDomainName } from '@/lib/config/domains';
+import { getDomainBrand } from '@/lib/utils/getDomainBrand';
+import { getDomainConfig } from '@/lib/config/domains';
 import { Metadata } from 'next';
 
 export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
-    const settings = await getSettings();
-    const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
-    let host: string;
-    try {
-      const hdrs = await headers();
-      host = hdrs.get('host') || siteUrl || 'localhost:3000';
-    } catch {
-      host = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000';
-    }
-    const brandName = getDomainName(host);
+    const brand = await getDomainBrand();
     return {
-      title: `Privacy Policy | ${brandName}`,
-      description: `Read our privacy policy to understand how ${brandName} collects, uses, and protects your personal data.`,
+      title: `Privacy Policy | ${brand.name}`,
+      description: `Read our privacy policy to understand how ${brand.name} collects, uses, and protects your personal data.`,
     };
   } catch {
     return {
@@ -33,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PrivacyPolicyPage() {
   const settings = await getSettings();
   const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000';
-  const storeName = getDomainName(siteUrl);
+  const storeName = getDomainConfig(siteUrl).name;
   
   let supportEmail = settings.headerTopBarEmail;
   if (!supportEmail) {

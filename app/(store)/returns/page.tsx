@@ -1,26 +1,16 @@
 import React from 'react';
 import { getSettings } from '@/lib/services/settings';
-import { headers } from 'next/headers';
-import { getDomainName } from '@/lib/config/domains';
+import { getDomainBrand } from '@/lib/utils/getDomainBrand';
 import { Metadata } from 'next';
 
 export const revalidate = 60; // Cache for 1 minute
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
-    const settings = await getSettings();
-    const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
-    let host: string;
-    try {
-      const hdrs = await headers();
-      host = hdrs.get('host') || siteUrl || 'localhost:3000';
-    } catch {
-      host = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000';
-    }
-    const brandName = getDomainName(host);
+    const brand = await getDomainBrand();
     return {
-      title: `Return & Exchange Policy | ${brandName}`,
-      description: 'Read our return and exchange policy. We offer easy exchanges and returns to ensure you have the best experience.',
+      title: `Return & Exchange Policy | ${brand.name}`,
+      description: `Read our return and exchange policy at ${brand.name}. We offer easy exchanges and returns to ensure you have the best experience.`,
     };
   } catch {
     return {

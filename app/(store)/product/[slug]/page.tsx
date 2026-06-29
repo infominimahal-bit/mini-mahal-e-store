@@ -12,8 +12,8 @@ import SocialFeedRibbon from '@/components/store/SocialFeedRibbon';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { getSiteUrl } from '@/lib/site-url-server';
 import { cleanLocalhostUrls } from '@/lib/site-url';
-import { headers } from 'next/headers';
-import { getDomainName } from '@/lib/config/domains';
+import { getDomainBrand } from '@/lib/utils/getDomainBrand';
+import { getDomainConfig } from '@/lib/config/domains';
 import { Metadata } from 'next';
 import Breadcrumb from '@/components/Breadcrumb';
 
@@ -51,6 +51,7 @@ function cleanMetaDescription(htmlText: string, siteUrl: string): string {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {
+    const brand = await getDomainBrand();
     const { slug } = await params;
     const product = await getProductBySlug(slug);
     if (!product) return {};
@@ -65,19 +66,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const settings = await getSettings();
     const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
 
-    let host: string;
-    try {
-      const hdrs = await headers();
-      host = hdrs.get('host') || siteUrl || 'localhost:3000';
-    } catch {
-      host = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000';
-    }
-
-    const brandName = getDomainName(host);
-
-    const title = seoMeta?.seo_title || `${product.name} | ${brandName}`;
+    const title = seoMeta?.seo_title || `${product.name} | ${brand.name}`;
     
-    // Clean description: strip HTML tags first, then truncate safely to 160 characters
     const rawDescription = seoMeta?.meta_description || cleanMetaDescription(product.description || '', siteUrl);
     const description = rawDescription.length > 160 ? `${rawDescription.slice(0, 157)}...` : rawDescription;
 
@@ -160,9 +150,8 @@ export default async function ProductPage({ params }: PageProps) {
   
   let schemaBrandName = 'Store';
   try {
-    const hdrs = await headers();
-    const host = hdrs.get('host') || siteUrl || 'localhost:3000';
-    schemaBrandName = getDomainName(host);
+    const brand = await getDomainBrand();
+    schemaBrandName = brand.name;
   } catch {}
 
   const productSchema: any = {

@@ -20,8 +20,8 @@ const outfit = Outfit({
 
 import ThemeStyleRegistry from '@/components/common/ThemeStyleRegistry';
 import { getSettings } from '@/lib/services/settings';
-import { headers } from 'next/headers';
-import { getDomainName } from '@/lib/config/domains';
+import { getDomainConfig } from '@/lib/config/domains';
+import { getDomainBrand } from '@/lib/utils/getDomainBrand';
 import Pixels from '@/components/Pixels';
 import ChunkErrorListener from '@/components/common/ChunkErrorListener';
 
@@ -37,39 +37,27 @@ const getFaviconType = (url: string) => {
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
+    const brand = await getDomainBrand();
     const settings = await getSettings();
     const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
 
-    let host: string;
-    try {
-      const hdrs = await headers();
-      host = hdrs.get('host') || siteUrl || 'localhost:3000';
-    } catch {
-      host = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000';
-    }
-
-    const storeName = getDomainName(host);
-    const tagline = settings.tagline || `Shop premium products at ${storeName}`;
-    const description = settings.metaDescription || settings.tagline || `Discover amazing deals at ${storeName}. Quality items with fast delivery.`;
-    const title = settings.metaTitle || settings.tagline || tagline;
+    const description = settings.metaDescription || brand.tagline || `Discover amazing deals at ${brand.name}. Quality items with fast delivery.`;
+    const title = settings.metaTitle || brand.tagline || brand.name;
 
     const timestamp = settings.updatedAt ? new Date(settings.updatedAt).getTime() : Date.now();
 
-    // Dynamic favicon — always points to /favicon.ico route which reads from settings
     const fav = settings.faviconUrl
       ? `${settings.faviconUrl}?v=${timestamp}`
       : settings.logoUrl
         ? `${settings.logoUrl}?v=${timestamp}`
         : `/favicon.ico?v=${timestamp}`;
 
-    // Apple touch icon — prefer logo (larger), fallback to favicon, then dynamic route
     const appleTouchIcon = settings.logoUrl
       ? `${settings.logoUrl}?v=${timestamp}`
       : settings.faviconUrl
         ? `${settings.faviconUrl}?v=${timestamp}`
         : `/favicon.ico?v=${timestamp}`;
 
-    // OG/Social sharing image — prefer banner, then logo, then favicon (all from settings)
     const ogImage = settings.bannerUrl
       ? settings.bannerUrl
       : settings.logoUrl
@@ -82,7 +70,7 @@ export async function generateMetadata(): Promise<Metadata> {
       metadataBase: new URL(siteUrl),
       title: {
         default: title,
-        template: `%s - ${storeName}`
+        template: `%s - ${brand.name}`
       },
       description,
       appleWebApp: {
@@ -121,9 +109,9 @@ export async function generateMetadata(): Promise<Metadata> {
         title,
         description,
         url: siteUrl,
-        siteName: storeName,
+        siteName: brand.name,
         locale: 'en_US',
-        images: [{ url: ogImage, width: 1200, height: 630, alt: storeName }],
+        images: [{ url: ogImage, width: 1200, height: 630, alt: brand.name }],
       },
       twitter: {
         card: 'summary_large_image',
@@ -186,10 +174,9 @@ export default async function RootLayout({
   let storeName = 'Store';
   let description = 'Premium online store.';
   try {
-    const hdrs = await headers();
-    const host = hdrs.get('host') || siteUrl || 'localhost:3000';
-    storeName = getDomainName(host);
-    description = settings.metaDescription || settings.tagline || `Discover amazing deals at ${storeName}.`;
+    const brand = await getDomainBrand();
+    storeName = brand.name;
+    description = settings.metaDescription || brand.tagline || `Discover amazing deals at ${storeName}.`;
   } catch {
     // Fallback already set above
   }

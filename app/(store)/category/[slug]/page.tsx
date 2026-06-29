@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { getSettings } from '@/lib/services/settings';
-import { headers } from 'next/headers';
-import { getDomainName } from '@/lib/config/domains';
+import { getDomainBrand } from '@/lib/utils/getDomainBrand';
 import { Metadata } from 'next';
 
 export const revalidate = 300; // Cache redirect for 5 minutes
@@ -15,9 +14,9 @@ interface CategoryPageProps {
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   try {
+    const brand = await getDomainBrand();
     const { slug } = await params;
     
-    // Fetch category
     const { data: category } = await supabaseAdmin
       .from('categories')
       .select('id, name, description, image_url')
@@ -26,7 +25,6 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
     if (!category) return {};
 
-    // Fetch SEO metadata
     const { data: seoMeta } = await supabaseAdmin
       .from('seo_meta')
       .select('*')
@@ -37,17 +35,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     const settings = await getSettings();
     const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
 
-    let host: string;
-    try {
-      const hdrs = await headers();
-      host = hdrs.get('host') || siteUrl || 'localhost:3000';
-    } catch {
-      host = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000';
-    }
-
-    const brandName = getDomainName(host);
-
-    const title = seoMeta?.seo_title || `${category.name} | ${brandName}`;
+    const title = seoMeta?.seo_title || `${category.name} | ${brand.name}`;
     const description = seoMeta?.meta_description || category.description || '';
     const imageUrl = category.image_url || settings.logoUrl || settings.faviconUrl || '';
 

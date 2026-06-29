@@ -3,8 +3,7 @@ import ShopPage from '@/components/store/ShopPage';
 import { getProducts } from '@/lib/services/products';
 import { getCategories, getCategoryBySlug } from '@/lib/services/categories';
 import { getSettings } from '@/lib/services/settings';
-import { headers } from 'next/headers';
-import { getDomainName } from '@/lib/config/domains';
+import { getDomainBrand } from '@/lib/utils/getDomainBrand';
 import { Metadata } from 'next';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
@@ -16,29 +15,19 @@ interface PageProps {
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   try {
+    const brand = await getDomainBrand();
     const { category: categorySlug } = await searchParams;
     const settings = await getSettings();
     const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
 
-    let host: string;
-    try {
-      const hdrs = await headers();
-      host = hdrs.get('host') || siteUrl || 'localhost:3000';
-    } catch {
-      host = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000';
-    }
-
-    const brandName = getDomainName(host);
-    const tagline = settings.tagline || `Shop premium products at ${brandName}`;
-    let title = `Shop Products | ${brandName}`;
-    let description = (settings.metaDescription || tagline).slice(0, 160);
+    let title = `Shop Products | ${brand.name}`;
+    let description = (settings.metaDescription || brand.tagline).slice(0, 160);
     let imageUrl = settings.logoUrl || settings.faviconUrl || '';
     let canonicalUrl = `${siteUrl}/shop`;
 
     if (categorySlug) {
       const category = await getCategoryBySlug(categorySlug);
       if (category) {
-        // Fetch SEO metadata if it exists
         const { data: seoMeta } = await supabaseAdmin
           .from('seo_meta')
           .select('*')
@@ -46,8 +35,8 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
           .eq('entity_id', category.id)
           .maybeSingle();
 
-        title = seoMeta?.seo_title || `${category.name} | ${brandName}`;
-        description = seoMeta?.meta_description || category.description || `Explore our ${category.name} collection at ${brandName}.`;
+        title = seoMeta?.seo_title || `${category.name} | ${brand.name}`;
+        description = seoMeta?.meta_description || category.description || `Explore our ${category.name} collection at ${brand.name}.`;
         imageUrl = category.imageUrl || imageUrl;
         canonicalUrl = `${siteUrl}/shop?category=${categorySlug}`;
       }

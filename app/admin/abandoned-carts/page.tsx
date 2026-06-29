@@ -524,7 +524,7 @@ export default function AbandonedCartsPage() {
                               if (item.selectedVariant?.size) variantParts.push(item.selectedVariant.size);
                               const variantStr = variantParts.length ? ` (${variantParts.join(', ')})` : '';
                               return (
-                                <div key={idx} className="text-xs font-semibold text-gray-600 dark:text-gray-400 line-clamp-1">
+                                <div key={idx} className="text-xs font-semibold text-gray-600 dark:text-gray-400 line-clamp-2">
                                   • {item.product?.name || 'Product'}{variantStr} x{item.quantity}
                                 </div>
                               );
@@ -734,7 +734,7 @@ export default function AbandonedCartsPage() {
 
                             {/* Item details */}
                             <div className="flex-1 min-w-0">
-                              <h4 className="text-xs font-bold text-gray-900 dark:text-white truncate">
+                              <h4 className="text-xs font-bold text-gray-900 dark:text-white line-clamp-2">
                                 {item.product?.name || 'Product'}
                               </h4>
                               {variantStr && (
