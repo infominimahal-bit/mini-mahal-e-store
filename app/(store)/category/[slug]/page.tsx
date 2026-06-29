@@ -37,8 +37,14 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     const settings = await getSettings();
     const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
 
-    const hdrs = await headers();
-    const host = hdrs.get('host') || siteUrl || 'localhost:3000';
+    let host: string;
+    try {
+      const hdrs = await headers();
+      host = hdrs.get('host') || siteUrl || 'localhost:3000';
+    } catch {
+      host = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000';
+    }
+
     const brandName = getDomainName(host);
 
     const title = seoMeta?.seo_title || `${category.name} | ${brandName}`;
@@ -58,9 +64,10 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
         images: [{ url: imageUrl }]
       }
     };
-  } catch (err) {
+  } catch {
     return {
-      title: 'Shop Category'
+      title: 'Shop',
+      description: 'Browse our products.',
     };
   }
 }

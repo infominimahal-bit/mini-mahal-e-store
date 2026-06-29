@@ -4,6 +4,21 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { triggerTrafficUpdate } from '@/lib/traffic/pusher-server';
 import { normalizeCity } from '@/lib/utils/normalizeCity';
 
+const COUNTRY_NAMES: Record<string, string> = {
+  PK: 'Pakistan', AE: 'United Arab Emirates', SA: 'Saudi Arabia',
+  US: 'United States', GB: 'United Kingdom', CA: 'Canada', AU: 'Australia',
+  IN: 'India', BD: 'Bangladesh', LK: 'Sri Lanka', NP: 'Nepal', CN: 'China',
+  MY: 'Malaysia', SG: 'Singapore', ID: 'Indonesia', PH: 'Philippines',
+  DE: 'Germany', FR: 'France', IT: 'Italy', ES: 'Spain', NL: 'Netherlands',
+  SE: 'Sweden', NO: 'Norway', DK: 'Denmark', FI: 'Finland', CH: 'Switzerland',
+  AT: 'Austria', BE: 'Belgium', IE: 'Ireland', PT: 'Portugal', GR: 'Greece',
+  TR: 'Türkiye', QA: 'Qatar', KW: 'Kuwait', BH: 'Bahrain', OM: 'Oman',
+  JO: 'Jordan', LB: 'Lebanon', EG: 'Egypt', MA: 'Morocco', NG: 'Nigeria',
+  ZA: 'South Africa', KE: 'Kenya', BR: 'Brazil', MX: 'Mexico', AR: 'Argentina',
+  RU: 'Russia', JP: 'Japan', KR: 'South Korea', HK: 'Hong Kong', TW: 'Taiwan',
+  TH: 'Thailand', VN: 'Vietnam', IL: 'Israel', NZ: 'New Zealand',
+};
+
 const RANGE_MS: Record<string, number> = {
   '1h': 3600000,
   '24h': 86400000,
@@ -87,7 +102,6 @@ async function fetchCloudflareCountryData(range: string) {
         ) {
           dimensions {
             date
-            clientCountryName
             clientCountryCode
           }
           sum {
@@ -134,7 +148,7 @@ async function fetchCloudflareCountryData(range: string) {
 
     for (const g of groups) {
       const code = g.dimensions?.clientCountryCode || 'XX';
-      const name = g.dimensions?.clientCountryName || 'Unknown';
+      const name = COUNTRY_NAMES[code] || 'Unknown';
       const visitors = g.uniq?.uniques || 0;
       const pageviews = g.sum?.pageViews || 0;
 

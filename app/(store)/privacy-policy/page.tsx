@@ -7,15 +7,27 @@ import { Metadata } from 'next';
 export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSettings();
-  const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
-  const hdrs = await headers();
-  const host = hdrs.get('host') || siteUrl || 'localhost:3000';
-  const brandName = getDomainName(host);
-  return {
-    title: `Privacy Policy | ${brandName}`,
-    description: `Read our privacy policy to understand how ${brandName} collects, uses, and protects your personal data.`,
-  };
+  try {
+    const settings = await getSettings();
+    const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
+    let host: string;
+    try {
+      const hdrs = await headers();
+      host = hdrs.get('host') || siteUrl || 'localhost:3000';
+    } catch {
+      host = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000';
+    }
+    const brandName = getDomainName(host);
+    return {
+      title: `Privacy Policy | ${brandName}`,
+      description: `Read our privacy policy to understand how ${brandName} collects, uses, and protects your personal data.`,
+    };
+  } catch {
+    return {
+      title: 'Privacy Policy',
+      description: 'Read our privacy policy.',
+    };
+  }
 }
 
 export default async function PrivacyPolicyPage() {

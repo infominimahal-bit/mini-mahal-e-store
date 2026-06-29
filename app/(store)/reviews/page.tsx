@@ -13,15 +13,27 @@ interface PageProps {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSettings();
-  const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
-  const hdrs = await headers();
-  const host = hdrs.get('host') || siteUrl || 'localhost:3000';
-  const brandName = getDomainName(host);
-  return {
-    title: `Customer Reviews | ${brandName}`,
-    description: 'Read authentic customer reviews and ratings. See what our customers are saying about our products.',
-  };
+  try {
+    const settings = await getSettings();
+    const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
+    let host: string;
+    try {
+      const hdrs = await headers();
+      host = hdrs.get('host') || siteUrl || 'localhost:3000';
+    } catch {
+      host = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000';
+    }
+    const brandName = getDomainName(host);
+    return {
+      title: `Customer Reviews | ${brandName}`,
+      description: 'Read authentic customer reviews and ratings. See what our customers are saying about our products.',
+    };
+  } catch {
+    return {
+      title: 'Customer Reviews',
+      description: 'Read authentic customer reviews and ratings.',
+    };
+  }
 }
 
 export default async function ReviewsPage({ searchParams }: PageProps) {

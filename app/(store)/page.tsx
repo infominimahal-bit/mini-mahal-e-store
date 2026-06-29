@@ -17,8 +17,14 @@ export async function generateMetadata(): Promise<Metadata> {
     const settings = await getSettings();
     const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
 
-    const hdrs = await headers();
-    const host = hdrs.get('host') || siteUrl || 'localhost:3000';
+    let host: string;
+    try {
+      const hdrs = await headers();
+      host = hdrs.get('host') || siteUrl || 'localhost:3000';
+    } catch {
+      host = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000';
+    }
+
     const brandName = getDomainName(host);
     const tagline = settings.tagline || `Shop premium products at ${brandName}`;
     const banner = settings.bannerUrl || settings.logoUrl || settings.faviconUrl || '';
@@ -59,7 +65,20 @@ export async function generateMetadata(): Promise<Metadata> {
     };
   } catch {
     return {
-      title: 'Store'
+      title: 'Store',
+      description: 'Premium online store.',
+      openGraph: {
+        type: 'website',
+        title: 'Store',
+        description: 'Premium online store.',
+        images: [{ url: '/favicon.ico' }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: 'Store',
+        description: 'Premium online store.',
+        images: ['/favicon.ico'],
+      }
     };
   }
 }
