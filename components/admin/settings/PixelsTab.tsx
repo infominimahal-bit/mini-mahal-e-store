@@ -269,11 +269,11 @@ export default function PixelsTab({
                 type="text"
                 value={metaTitle}
                 onChange={(e) => setMetaTitle(e.target.value)}
-                placeholder="e.g. Zaynahs E-Store | Kids Premium Clothing"
+                placeholder="e.g. OurStore E-Store | Kids Premium Clothing"
                 className="mt-1.5 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0f0f1b]/50 px-4 py-2.5 text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-[#1a1a2e] dark:focus:border-[#e94560] focus:bg-white dark:focus:bg-[#16162a] focus:outline-none transition-all"
               />
               <span className="text-[10px] text-gray-450 dark:text-gray-500 mt-1 block">
-                Leave blank to default to Store Name (e.g. "{metaTitle || storeName || 'TotVogue.pk'}").
+                Leave blank to default to Store Name (e.g. "{metaTitle || storeName || 'OurStore'}").
               </span>
             </div>
 
@@ -314,7 +314,7 @@ export default function PixelsTab({
             <div>
               <div className="flex items-center gap-1.5">
                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Meta Title Suffix (e.g. " | Zaynahs")
+                  Meta Title Suffix (e.g. " | OurStore")
                 </label>
                 <div className="relative group inline-block text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help">
                   <HelpCircle className="w-3.5 h-3.5" />
@@ -327,7 +327,7 @@ export default function PixelsTab({
                 type="text"
                 value={metaTitleSuffix}
                 onChange={(e) => setMetaTitleSuffix(e.target.value)}
-                placeholder="e.g.  | Zaynahs"
+                placeholder="e.g.  | OurStore"
                 className="mt-1.5 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0f0f1b]/50 px-4 py-2.5 text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-[#1a1a2e] dark:focus:border-[#e94560] focus:bg-white dark:focus:bg-[#16162a] focus:outline-none transition-all"
               />
             </div>

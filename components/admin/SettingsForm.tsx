@@ -159,7 +159,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   // Editable Shopify Footer columns
   const [footerCol1Title, setFooterCol1Title] = useState(initialSettings.footerCol1Title || 'About Our Store');
   const [footerCol2Title, setFooterCol2Title] = useState(initialSettings.footerCol2Title || 'Customer Support');
-  const [footerCol2Text, setFooterCol2Text] = useState(initialSettings.footerCol2Text || 'Call/WhatsApp: 0328-4114551\nEmail: Totvoguepk@gmail.com\nTimings: 10 AM - 10 PM');
+  const [footerCol2Text, setFooterCol2Text] = useState(initialSettings.footerCol2Text || 'Call/WhatsApp: 0328-4114551\nEmail: contact@store.com\nTimings: 10 AM - 10 PM');
   const [footerCol3Title, setFooterCol3Title] = useState(initialSettings.footerCol3Title || 'Quick Links');
   const [footerCol4Title, setFooterCol4Title] = useState(initialSettings.footerCol4Title || 'Newsletter');
   const [footerCol4Text, setFooterCol4Text] = useState(initialSettings.footerCol4Text || 'Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.');
@@ -175,7 +175,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   const [headerStickyMobile, setHeaderStickyMobile] = useState(initialSettings.headerStickyMobile ?? true);
   const [headerShowTopBar, setHeaderShowTopBar] = useState(initialSettings.headerShowTopBar ?? true);
   const [headerTopBarPhone, setHeaderTopBarPhone] = useState(initialSettings.headerTopBarPhone ?? '0328-4114551');
-  const [headerTopBarEmail, setHeaderTopBarEmail] = useState(initialSettings.headerTopBarEmail ?? 'Totvoguepk@gmail.com');
+  const [headerTopBarEmail, setHeaderTopBarEmail] = useState(initialSettings.headerTopBarEmail ?? 'contact@store.com');
   const [headerShowNewsletter, setHeaderShowNewsletter] = useState(initialSettings.headerShowNewsletter ?? true);
   const [floatingSnapchatEnabled, setFloatingSnapchatEnabled] = useState(initialSettings.floatingSnapchatEnabled ?? false);
   const [floatingTwitterEnabled, setFloatingTwitterEnabled] = useState(initialSettings.floatingTwitterEnabled ?? false);
@@ -263,7 +263,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   const [socialFeedsHomepageEnabled, setSocialFeedsHomepageEnabled] = useState(initialSettings.social_feeds_homepage_enabled ?? true);
   const [socialFeedsProductEnabled, setSocialFeedsProductEnabled] = useState(initialSettings.social_feeds_product_enabled ?? true);
   const [socialFeedsTitle, setSocialFeedsTitle] = useState(initialSettings.social_feeds_title ?? 'Follow Us On Instagram');
-  const [socialFeedsSubtitle, setSocialFeedsSubtitle] = useState(initialSettings.social_feeds_subtitle ?? '@Zaynahs.pk');
+  const [socialFeedsSubtitle, setSocialFeedsSubtitle] = useState(initialSettings.social_feeds_subtitle ?? '@OurStore');
   const [socialFeedsDesc, setSocialFeedsDesc] = useState(initialSettings.social_feeds_desc ?? 'Tag us in your post to get featured on our page');
   const [socialFeedsItems, setSocialFeedsItems] = useState<any[]>(
     Array.isArray(initialSettings.social_feeds_items)

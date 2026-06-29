@@ -248,7 +248,7 @@ export default function FooterTab({
               value={footerBottomText}
               onChange={(e) => setFooterBottomText(e.target.value)}
               className="mt-1.5 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0f0f1b]/50 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-white focus:outline-none focus:border-[#e94560]"
-              placeholder={`e.g. © ${new Date().getFullYear()} ${storeName || 'Zaynahs E-Store'}. All rights reserved.`}
+              placeholder={`e.g. © ${new Date().getFullYear()} ${storeName || 'OurStore E-Store'}. All rights reserved.`}
             />
             <p className="text-[10px] text-gray-400 dark:text-gray-500 font-semibold mt-1">This will edit the entire copyright text at the bottom of the page.</p>
           </div>

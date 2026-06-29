@@ -12,6 +12,7 @@ import PaymentBadges from './PaymentBadges';
 
 interface FooterProps {
   settings: StoreSettings;
+  brandName?: string;
 }
 
 function NewsletterForm() {
@@ -60,7 +61,7 @@ function NewsletterForm() {
   );
 }
 
-export default function Footer({ settings }: FooterProps) {
+export default function Footer({ settings, brandName }: FooterProps) {
   const [mounted, setMounted] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
   const [footerAccordionOpen, setFooterAccordionOpen] = useState<Record<string, boolean>>({});
@@ -176,7 +177,7 @@ export default function Footer({ settings }: FooterProps) {
                 </p>
               )}
               <p className="text-sm font-semibold leading-relaxed max-w-md text-gray-500 dark:text-gray-400">
-                {settings.footerText || `Welcome to ${settings.storeName}. We provide premium quality products delivered right to your doorstep. Confirm your orders instantly via WhatsApp.`}
+                {settings.footerText || `Welcome to ${brandName || settings.storeName || 'our store'}. We provide premium quality products delivered right to your doorstep. Confirm your orders instantly via WhatsApp.`}
               </p>
               {settings.address && (
                 <p className="text-xs font-bold text-gray-400 dark:text-gray-500 leading-relaxed">
@@ -192,7 +193,7 @@ export default function Footer({ settings }: FooterProps) {
               {settings.footerCol2Title || 'Customer Support'}
             </h3>
             <p className="text-sm font-semibold leading-relaxed whitespace-pre-line text-gray-500 dark:text-gray-400">
-              {settings.footerCol2Text || 'Call/WhatsApp: 0328-4114551\nEmail: Totvoguepk@gmail.com\nTimings: 10 AM - 10 PM'}
+              {settings.footerCol2Text || 'Call/WhatsApp: 0328-4114551\nEmail: contact@store.com\nTimings: 10 AM - 10 PM'}
             </p>
           </div>
 
@@ -394,7 +395,7 @@ export default function Footer({ settings }: FooterProps) {
         {/* Footer Bottom (Divider & Copyright) */}
         <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-            {settings.footerBottomText ? settings.footerBottomText : `© ${currentYear} ${settings.storeName || 'Zaynahs E-Store'}. All rights reserved.`}
+            {settings.footerBottomText ? settings.footerBottomText : `© ${currentYear} ${brandName || settings.storeName || 'Our Store'}. All rights reserved.`}
           </p>
           {showPayments && settings.enableTrustBadges && settings.safeCheckoutMethods && settings.safeCheckoutMethods.length > 0 && (
             <PaymentBadges methods={settings.safeCheckoutMethods} className="flex flex-wrap items-center gap-1.5 justify-end" />

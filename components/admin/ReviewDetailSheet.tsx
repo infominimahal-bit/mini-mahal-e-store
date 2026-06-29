@@ -57,7 +57,7 @@ export default function ReviewDetailSheet({ review, onClose, onApprove, onHide, 
     review.comment ? `Your Review: '${review.comment}'` : '',
     '',
     'Best regards,',
-    storeName || 'Zaynahs E-Store Team'
+    storeName || 'Our Store Team'
   ].filter(Boolean).join('%0D%0A');
 
   const mailtoHref = `mailto:${review.customerEmail}?subject=${encodeURIComponent(mailSubject)}&body=${mailBody}`;
@@ -168,7 +168,7 @@ export default function ReviewDetailSheet({ review, onClose, onApprove, onHide, 
                 <p className="text-gray-900 dark:text-white flex items-center gap-1.5">
                   <span className="text-gray-400 font-medium">&bull; WhatsApp:</span>
                    <a
-                    href={`https://wa.me/${cleanWhatsAppPhone(review.customerPhone)}?text=${encodeURIComponent(`Hi ${review.customerName},%0D%0A%0D%0AThank you for your review on ${review.productName || 'our product'}.%0D%0A%0D%0A${review.comment ? `Your feedback: '${review.comment}'%0D%0A%0D%0A` : ''}Best regards,%0D%0A${storeName || 'Zaynahs E-Store Team'}`)}`}
+                    href={`https://wa.me/${cleanWhatsAppPhone(review.customerPhone)}?text=${encodeURIComponent(`Hi ${review.customerName},%0D%0A%0D%0AThank you for your review on ${review.productName || 'our product'}.%0D%0A%0D%0A${review.comment ? `Your feedback: '${review.comment}'%0D%0A%0D%0A` : ''}Best regards,%0D%0A${storeName || 'Our Store Team'}`)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="text-[#10b981] hover:underline font-semibold flex items-center gap-1"

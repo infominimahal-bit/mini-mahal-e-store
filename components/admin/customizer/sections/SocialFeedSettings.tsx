@@ -48,7 +48,7 @@ export default function SocialFeedSettings({
           type="text"
           value={contentData.subtitle || ''}
           onChange={e => handleContentChange('subtitle', e.target.value)}
-          placeholder="@Zaynahs.pk"
+          placeholder="@OurStore"
           className="w-full px-3 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#e94560] text-gray-900 dark:text-white"
         />
       </div>

@@ -23,7 +23,7 @@ export function SEOPreviewModal({ isOpen, onClose, entity_type, entity_name, seo
     ? storeUrl.replace(/^https?:\/\//i, '').replace(/\/$/, '')
     : getClientSiteUrl().replace(/^https?:\/\//i, '').replace(/\/$/, '');
 
-  const brandName = storeName || process.env.NEXT_PUBLIC_BRAND_NAME || 'Zaynahs';
+  const brandName = storeName || process.env.NEXT_PUBLIC_BRAND_NAME || 'OurStore';
   const displaySlug = entity_name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
   const titleLength = seoData.seo_title?.length || 0;

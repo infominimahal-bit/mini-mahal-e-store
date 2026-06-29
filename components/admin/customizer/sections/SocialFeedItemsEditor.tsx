@@ -237,7 +237,7 @@ export default function SocialFeedItemsEditor({
             <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase block">Username / Account Name</label>
             <input
               type="text"
-              placeholder="e.g. Zaynahs.pk"
+              placeholder="e.g. OurStore"
               value={tempFeedUsername}
               onChange={(e) => setTempFeedUsername(e.target.value)}
               className="w-full px-3 py-1.5 bg-white dark:bg-[#16162a] border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-semibold focus:outline-none focus:border-[#e94560] text-gray-900 dark:text-white"

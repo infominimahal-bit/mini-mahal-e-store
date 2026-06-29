@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       .maybeSingle();
 
     const settings = await getSettings();
-    const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
+    const siteUrl = `${brand.protocol}://${brand.domain}`;
 
     const title = seoMeta?.seo_title || `${product.name} | ${brand.name}`;
     

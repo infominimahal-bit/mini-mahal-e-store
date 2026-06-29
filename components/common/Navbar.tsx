@@ -20,7 +20,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({
-  storeName: propStoreName = 'Zaynahs E-Store',
+  storeName: propStoreName = 'Our Store',
   logoUrl: propLogoUrl,
   logoWidth: propLogoWidth = 120,
   settings,
@@ -51,7 +51,7 @@ export default function Navbar({
         : 'relative';
   const showTopBar = settings?.headerShowTopBar ?? true;
   const topBarPhone = settings?.headerTopBarPhone ?? '0328-4114551';
-  const topBarEmail = settings?.headerTopBarEmail ?? 'Totvoguepk@gmail.com';
+  const topBarEmail = settings?.headerTopBarEmail ?? '';
   const showNewsletter = settings?.headerShowNewsletter ?? true;
   const newsletterText = settings?.headerNewsletterText ?? 'Summer sale discount off 50%. Shop Sale';
 

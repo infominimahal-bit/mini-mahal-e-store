@@ -18,7 +18,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     const brand = await getDomainBrand();
     const { category: categorySlug } = await searchParams;
     const settings = await getSettings();
-    const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
+    const siteUrl = `${brand.protocol}://${brand.domain}`;
 
     let title = `Shop Products | ${brand.name}`;
     let description = (settings.metaDescription || brand.tagline).slice(0, 160);

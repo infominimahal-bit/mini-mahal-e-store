@@ -39,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
   try {
     const brand = await getDomainBrand();
     const settings = await getSettings();
-    const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
+    const siteUrl = `${brand.protocol}://${brand.domain}`;
 
     const description = settings.metaDescription || brand.tagline || `Discover amazing deals at ${brand.name}. Quality items with fast delivery.`;
     const title = settings.metaTitle || brand.tagline || brand.name;
@@ -169,13 +169,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const settings = await getSettings();
-  const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
+  let siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
 
   let storeName = 'Store';
   let description = 'Premium online store.';
   try {
     const brand = await getDomainBrand();
     storeName = brand.name;
+    siteUrl = `${brand.protocol}://${brand.domain}`;
     description = settings.metaDescription || brand.tagline || `Discover amazing deals at ${storeName}.`;
   } catch {
     // Fallback already set above

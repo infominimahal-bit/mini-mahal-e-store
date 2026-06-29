@@ -450,7 +450,7 @@ export default function CustomizerEditor({
           </button>
           <div className="w-[1px] h-6 bg-white/10 hidden sm:block shrink-0" />
           <div className="hidden sm:flex flex-col items-start leading-none gap-0.5 mr-2 shrink-0">
-            <span className="text-xs font-black tracking-wider text-white uppercase">{storeSettings.storeName || 'Zaynahs'}</span>
+            <span className="text-xs font-black tracking-wider text-white uppercase">{storeSettings.storeName || 'OurStore'}</span>
             <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest">Theme Customizer</span>
           </div>
           <div className="w-[1px] h-6 bg-white/10 hidden sm:block shrink-0" />
@@ -1058,7 +1058,7 @@ export default function CustomizerEditor({
                         <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
                         <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
                         <div className="ml-4 flex-1 max-w-sm bg-white dark:bg-[#0f0f1b] text-[10px] text-gray-400 rounded px-3 py-0.5 border border-gray-200 dark:border-gray-800 truncate text-center">
-                          https://{storeSettings.storeName?.toLowerCase().replace(/\s+/g, '') || 'zaynahs'}.pk
+                          https://{storeSettings.storeName?.toLowerCase().replace(/\s+/g, '') || 'ourstore'}.pk
                         </div>
                       </div>
                       <iframe

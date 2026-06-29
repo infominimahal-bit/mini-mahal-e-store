@@ -89,10 +89,17 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  supabaseResponse.headers.set(
-    'cdn-cache-control',
-    'no-cache, no-store, must-revalidate'
-  );
+  if (isStoreRoute) {
+    supabaseResponse.headers.set(
+      'cdn-cache-control',
+      'public, s-maxage=86400, stale-while-revalidate=60'
+    );
+  } else {
+    supabaseResponse.headers.set(
+      'cdn-cache-control',
+      'no-cache, no-store, must-revalidate'
+    );
+  }
 
   return supabaseResponse;
 }

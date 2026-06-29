@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
       .maybeSingle();
 
     const settings = await getSettings();
-    const siteUrl = settings?.storeUrl?.replace(/\/+$/, '') || process.env.NEXT_PUBLIC_SITE_URL || '';
+    const siteUrl = `${brand.protocol}://${brand.domain}`;
 
     const title = seoMeta?.seo_title || `${category.name} | ${brand.name}`;
     const description = seoMeta?.meta_description || category.description || '';

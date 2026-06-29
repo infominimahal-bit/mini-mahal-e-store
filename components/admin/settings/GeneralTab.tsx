@@ -100,10 +100,10 @@ export default function GeneralTab({
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Store URL (e.g. https://www.totvogue.pk)</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Store URL (e.g. https://www.ourstore.com)</label>
             <input
               type="url"
-              placeholder="e.g. https://www.totvogue.pk"
+              placeholder="e.g. https://www.ourstore.com"
               value={storeUrl}
               onChange={(e) => setStoreUrl(e.target.value)}
               className="mt-1.5 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-[#0f0f1b]/50 px-4 py-2.5 text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-[#1a1a2e] dark:focus:border-[#e94560] focus:bg-white dark:focus:bg-[#16162a] focus:outline-none transition-all"

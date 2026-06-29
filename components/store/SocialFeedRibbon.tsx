@@ -250,7 +250,7 @@ export default function SocialFeedRibbon({
     >
       <div className="text-center space-y-2 mb-8">
         <span className="inline-block px-3 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-500 text-xs font-bold rounded-full uppercase tracking-wider">
-          {subtitle || settings.social_feeds_subtitle || '#ZAYNAHSVOGUE'}
+          {subtitle || settings.social_feeds_subtitle || '#OURSTORE'}
         </span>
         <h3 className="text-xl font-black uppercase tracking-wider text-gray-900 dark:text-white">
           {title || settings.social_feeds_title || 'Follow Us On Social Media'}

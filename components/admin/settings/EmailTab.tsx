@@ -184,7 +184,7 @@ export default function EmailTab({
                 type="text"
                 value={smtpFromName}
                 onChange={(e) => setSmtpFromName(e.target.value)}
-                placeholder="e.g. Zaynahs E-Store"
+                placeholder="e.g. Our Store"
                 className="mt-1.5 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-5/50 dark:bg-[#0f0f1b]/50 px-4 py-2.5 text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-[#1a1a2e] dark:focus:border-[#e94560] focus:bg-white dark:focus:bg-[#16162a] focus:outline-none transition-all"
               />
             </div>
