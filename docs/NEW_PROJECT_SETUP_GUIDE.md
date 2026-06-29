@@ -234,7 +234,9 @@ GITHUB_REPO=your-repo-name
 1. vercel.com → New Project
 2. Import from GitHub → select repo
 3. Framework: Next.js
-4. Deploy
+4. Ensure `.npmrc` exists in repo root with `legacy-peer-deps=true`
+   (required because `react-simple-maps` has a React 19 peer conflict)
+5. Deploy
 
 ### 5.2 Custom Domain
 Vercel → Project → Settings → Domains → Add:
@@ -278,6 +280,20 @@ INDEXNOW_API_KEY=
 # Cron
 CRON_SECRET=your_cron_secret_2026
 
+# Traffic Analytics (Optional — Live Map Feature)
+# Cloudflare API token needs Analytics → Read in addition to Cache Purge
+CLOUDFLARE_ZONE_ID=your_cloudflare_zone_id        # Same as above
+CLOUDFLARE_API_TOKEN=your_cloudflare_api_token    # Same as above
+
+# Pusher — Real-time traffic live count (Optional)
+# https://dashboard.pusher.com → Create App → copy keys
+PUSHER_APP_ID=
+PUSHER_KEY=
+PUSHER_SECRET=
+PUSHER_CLUSTER=ap2
+NEXT_PUBLIC_PUSHER_KEY=
+NEXT_PUBLIC_PUSHER_CLUSTER=ap2
+
 # Meta
 META_CATALOG_ID=
 META_ACCESS_TOKEN=
@@ -307,8 +323,10 @@ Cloudflare → your domain → Right panel scroll down:
 ### 6.3 Create API Token
 Cloudflare → My Profile → API Tokens → Create Token:
 1. "Create Custom Token" → Get started
-2. Token name: `cache-purge-token`
-3. Permissions: **Zone** → **Cache Purge** → **Purge**
+2. Token name: `zaynahs-token`
+3. Permissions (add BOTH):
+   - **Zone** → **Cache Purge** → **Purge**
+   - **Analytics** → **Read** (required for Traffic Map feature)
 4. Zone Resources: Include → All zones
 5. Create Token → copy → `CLOUDFLARE_API_TOKEN`
 
@@ -646,6 +664,14 @@ INDEXNOW_API_KEY=
 
 # Cron
 CRON_SECRET=your_cron_secret_2026
+
+# Pusher — Real-time traffic (Optional)
+PUSHER_APP_ID=
+PUSHER_KEY=
+PUSHER_SECRET=
+PUSHER_CLUSTER=ap2
+NEXT_PUBLIC_PUSHER_KEY=
+NEXT_PUBLIC_PUSHER_CLUSTER=ap2
 
 # Meta Catalog
 META_CATALOG_ID=

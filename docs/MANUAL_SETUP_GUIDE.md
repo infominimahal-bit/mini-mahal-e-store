@@ -157,6 +157,13 @@ Also, enable **Auto Minify** (HTML, CSS, JS) and **Brotli Compression** under Cl
 
 ---
 
+### 5.1.1 `.npmrc` — Required for Vercel Build
+Ensure `.npmrc` exists in repo root with:
+```
+legacy-peer-deps=true
+```
+Required because `react-simple-maps` has an unresolved React 19 peer dependency — without this, Vercel build fails with peer conflict.
+
 ### 5.2 Environment Variables Configuration
 Ensure the following variables are set in both your `.env.local` file and **Vercel Dashboard**:
 
@@ -190,6 +197,20 @@ NEXT_PUBLIC_TWITTER_HANDLE=@zaynahs_pk
 # === Cloudflare Workers AI Credentials (Optional) ===
 # Required only if you select Cloudflare as your text or vision provider in admin dashboard
 CF_ACCOUNT_ID=your_cloudflare_account_id
+
+# === Traffic Analytics (Optional — Live Map Feature) ===
+# Cloudflare API Token must have Analytics → Read permission (not just Cache Purge)
+CLOUDFLARE_ZONE_ID=your_cloudflare_zone_id        # Already set above, same value
+CLOUDFLARE_API_TOKEN=your_cloudflare_api_token    # Already set above, same value
+
+# === Pusher — Real-time traffic live count (Optional) ===
+# Sign up at https://dashboard.pusher.com, create app, copy keys below
+PUSHER_APP_ID=your_pusher_app_id
+PUSHER_KEY=your_pusher_key
+PUSHER_SECRET=your_pusher_secret
+PUSHER_CLUSTER=ap2
+NEXT_PUBLIC_PUSHER_KEY=your_pusher_key
+NEXT_PUBLIC_PUSHER_CLUSTER=ap2
 
 # === Automated System Cron (Optional) ===
 # Verification secret for background crons (e.g. review request follow-ups)

@@ -118,6 +118,8 @@ This app runs across ANY domain (localhost, custom domain, production). Never ha
    - Copy `.env.example` to `.env.local` and fill in your Supabase project details
    - Run `node scripts/init-db.mjs` to apply `SUPER_MASTER_SCHEMA.sql` (creates all tables, indexes, RLS, triggers)
    - Run `node scripts/run-migration.mjs supabase/migrations/<filename>.sql` for individual migrations
+   - Also fill in: `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_API_TOKEN` (for traffic analytics)
+   - Optional: `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `PUSHER_CLUSTER` for real-time live count
    - Then `npm run dev` — everything works
 <!-- END:db-rules -->
 
@@ -153,7 +155,9 @@ Jab bhi koi **purana / existing project clone kare** (already Supabase, Cloudfla
 | **Cloudflare DNS** | Domain ke A/CNAME records sahi hain? Proxy enabled (orange cloud)? |
 | **Cloudflare Rules** | Page Rules ya Cache Rules: HTML pages 24h cache, dynamic paths no-cache? SSL/TLS full strict? |
 | **Cloudflare Cache** | Actual pages HIT/MISS/BYPASS de rahi hain? `cf-cache-status` header check karo |
-| **Vercel** | Project import hai? Env vars set hain (Supabase keys)? Domain attached hai? Build successful? |
+| **Cloudflare Env Vars** | `CLOUDFLARE_ZONE_ID` + `CLOUDFLARE_API_TOKEN` Vercel env mein set hain? (Traffic feature ke liye) |
+| **Traffic Feature** | `lib/traffic/store.ts` in-memory store kaam kar raha hai? `proxy.ts` matcher mein `/((?!api|_next|favicon.ico).*)` hai? `react-simple-maps` + `react-leaflet` installed hain? |
+| **Vercel** | Project import hai? Env vars set hain (Supabase keys + Cloudflare)? Domain attached hai? Build successful? |
 | **GitHub** | Code pushed hai? Deployment trigger ho raha hai? |
 
 **Agent ka task:**
