@@ -50,6 +50,7 @@ export function renderOrderItemsTable(items: CartItem[], currencySymbol = 'Rs.',
           x${item.quantity}
         </td>
         <td width="20%" valign="middle" align="right" style="padding: 10px 0 10px 8px; font-weight: 700; color: #1a1a2e; font-size: 14px; white-space: nowrap;">
+          ${item.discountAmount && item.discountAmount > 0 ? `<div style="font-size: 12px; color: #ef4444; font-weight: 500; margin-bottom: 2px;">-${formatPrice(item.discountAmount, currencySymbol)}</div>` : ''}
           ${formatPrice(item.total, currencySymbol)}
         </td>
       </tr>
@@ -162,6 +163,17 @@ export async function buildVariables(emailType: string, data: Record<string, any
     vars.contact_name = data.contact.name || '';
     vars.contact_subject = data.contact.subject || '';
     vars.contact_message = data.contact.message || '';
+  }
+
+  // Abandoned Cart & PostEx extras
+  if (data.last_activity) {
+    vars.last_activity = data.last_activity;
+  }
+  if (data.checkout_url) {
+    vars.checkout_url = data.checkout_url;
+  }
+  if (data.postex_remarks) {
+    vars.postex_remarks = data.postex_remarks;
   }
 
   return vars;

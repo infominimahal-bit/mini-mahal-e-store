@@ -121,6 +121,11 @@ This app runs across ANY domain (localhost, custom domain, production). Never ha
    - Also fill in: `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_API_TOKEN` (for traffic analytics)
    - Optional: `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `PUSHER_CLUSTER` for real-time live count
    - Then `npm run dev` — everything works
+
+10. **ALWAYS KEEP TYPES.TS SYNCHRONIZED (STRICTLY ENFORCED)**
+    - Whenever any new feature is added, database column is changed, or frontend interface data model is updated, the agent MUST immediately update `lib/types.ts`.
+    - Just like `SUPER_MASTER_SCHEMA.sql` is the single source of truth for the database, `lib/types.ts` is the absolute source of truth for the frontend TypeScript interfaces.
+    - No new features can be merged with `any` types. If a feature or column is removed, its type definitions must also be removed to avoid stale code.
 <!-- END:db-rules -->
 
 <!-- BEGIN:social-proof-guidelines -->

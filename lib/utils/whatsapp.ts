@@ -19,7 +19,11 @@ export const generateWhatsAppMessage = (
       ? ` + ${item.selectedModifiers.map(m => m.name).join(', ')}`
       : '';
 
-    return `• ${item.product.name}${variantStr}${modifierStr} x${item.quantity} = ${formatPrice(item.total, settings.currencySymbol)}`;
+    const discountStr = item.discountAmount && item.discountAmount > 0 
+      ? ` (Discount: -${formatPrice(item.discountAmount, settings.currencySymbol)})` 
+      : '';
+
+    return `• ${item.product.name}${variantStr}${modifierStr} x${item.quantity}${discountStr} = ${formatPrice(item.total, settings.currencySymbol)}`;
   });
 
   const total = items.reduce((sum, i) => sum + i.total, 0);

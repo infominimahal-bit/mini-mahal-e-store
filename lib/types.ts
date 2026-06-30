@@ -511,7 +511,10 @@ export interface CartItem {
   selectedModifiers: ProductModifier[];
   quantity: number;
   unitPrice: number;                   // final price (variant price or product price)
-  total: number;                       // unitPrice * quantity + modifiers
+  total: number;                       // (unitPrice * quantity) - (discountAmount || 0) + modifiers
+  discountAmount?: number;             // Actual subtracted amount
+  discountType?: 'percent' | 'fixed';  // Type of discount applied to this item
+  discountValue?: number;              // The percentage (e.g. 10) or fixed amount
   addedLater?: boolean;                // true if added by admin after order was placed
 }
 

@@ -43,13 +43,30 @@ export default function OrderEditor({ order: initialOrder, settings, products, o
     return Math.max(0, subtotal + shippingAmount - effectiveDiscountAmount);
   }, [subtotal, shippingAmount, effectiveDiscountAmount]);
 
+  const updateItemTotal = (item: CartItem & { _isNew?: boolean }) => {
+    const baseTotal = item.unitPrice * item.quantity;
+    const discountAmt = item.discountType === 'percent' 
+      ? (baseTotal * (item.discountValue || 0) / 100) 
+      : (item.discountValue || 0);
+    item.discountAmount = discountAmt;
+    item.total = Math.max(0, baseTotal - discountAmt);
+  };
+
+  const handleItemDiscountChange = (idx: number, type: 'fixed' | 'percent', value: number) => {
+    const newItems = [...items];
+    newItems[idx].discountType = type;
+    newItems[idx].discountValue = value;
+    updateItemTotal(newItems[idx]);
+    setItems(newItems);
+  };
+
   const handleQuantityChange = (idx: number, qty: number) => {
     const newItems = [...items];
     if (qty < 1) {
       newItems.splice(idx, 1);
     } else {
       newItems[idx].quantity = qty;
-      newItems[idx].total = newItems[idx].unitPrice * qty;
+      updateItemTotal(newItems[idx]);
     }
     setItems(newItems);
   };
@@ -84,6 +101,7 @@ export default function OrderEditor({ order: initialOrder, settings, products, o
         total: unitPrice,
         _isNew: true
       };
+      updateItemTotal(newItem);
       setItems([...items, newItem]);
     }
     setSearchQuery('');
@@ -96,7 +114,7 @@ export default function OrderEditor({ order: initialOrder, settings, products, o
     if (variant) {
       newItems[idx].selectedVariant = variant;
       newItems[idx].unitPrice = variant.price || newItems[idx].product.price || 0;
-      newItems[idx].total = newItems[idx].unitPrice * newItems[idx].quantity;
+      updateItemTotal(newItems[idx]);
       setItems(newItems);
     }
   };
@@ -139,7 +157,7 @@ export default function OrderEditor({ order: initialOrder, settings, products, o
       const newItems = [...items];
       newItems[idx].selectedVariant = match;
       newItems[idx].unitPrice = match.price || newItems[idx].product.price || 0;
-      newItems[idx].total = newItems[idx].unitPrice * newItems[idx].quantity;
+      updateItemTotal(newItems[idx]);
       setItems(newItems);
     }
   };
@@ -436,28 +454,61 @@ export default function OrderEditor({ order: initialOrder, settings, products, o
                   </div>
                 </div>
 
-                {/* Bottom: qty + price + delete */}
-                <div className="flex items-center justify-between w-full mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-                  <div className="flex items-center">
+                {/* Bottom: Item Discount + qty + price + delete */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 gap-3">
+                  
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Item Discount:</span>
+                    <select 
+                      value={item.discountType || 'fixed'}
+                      onChange={e => handleItemDiscountChange(idx, e.target.value as 'fixed' | 'percent', item.discountValue || 0)}
+                      className="text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded p-1"
+                    >
+                      <option value="fixed">{settings.currencySymbol}</option>
+                      <option value="percent">%</option>
+                    </select>
+                    <input 
+                      type="number" 
+                      min="0"
+                      placeholder="0"
+                      value={item.discountValue || ''}
+                      onChange={e => handleItemDiscountChange(idx, item.discountType || 'fixed', parseFloat(e.target.value) || 0)}
+                      className="w-16 text-right px-2 py-1 text-xs bg-white dark:bg-[#0f0f1b] border border-gray-200 dark:border-gray-700 rounded font-semibold focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-4 self-end sm:self-auto">
                     <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                       <button 
                         onClick={() => handleQuantityChange(idx, item.quantity - 1)}
-                        className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 md:w-8 md:h-8 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500 font-medium text-base"
+                        className="h-8 w-8 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500 font-medium text-base"
                       >−</button>
-                      <div className="min-h-[44px] md:h-8 flex items-center justify-center text-sm font-bold border-x border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-white/5 min-w-[40px] md:min-w-0 md:w-10">
+                      <div className="h-8 flex items-center justify-center text-sm font-bold border-x border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-white/5 w-10">
                         {item.quantity}
                       </div>
                       <button 
                         onClick={() => handleQuantityChange(idx, item.quantity + 1)}
-                        className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 md:w-8 md:h-8 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500 font-medium text-base"
+                        className="h-8 w-8 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500 font-medium text-base"
                       >+</button>
                     </div>
-                  </div>
                   
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">
-                      {formatPrice(item.total, settings.currencySymbol)}
-                    </span>
+                    <div className="text-right">
+                      {item.discountAmount && item.discountAmount > 0 ? (
+                        <>
+                          <div className="text-[10px] text-gray-400 line-through">
+                            {formatPrice(item.unitPrice * item.quantity, settings.currencySymbol)}
+                          </div>
+                          <div className="text-sm font-bold text-gray-900 dark:text-white text-rose-600 dark:text-rose-400">
+                            {formatPrice(item.total, settings.currencySymbol)}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-sm font-bold text-gray-900 dark:text-white">
+                          {formatPrice(item.total, settings.currencySymbol)}
+                        </div>
+                      )}
+                    </div>
                     <button 
                       onClick={() => handleRemoveItem(idx)}
                       className="min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 md:p-2 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"

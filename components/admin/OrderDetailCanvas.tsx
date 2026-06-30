@@ -770,11 +770,22 @@ export default function OrderDetailCanvas({ order: initialOrder, settings }: Ord
                       Customer name: {order.customerName || 'Guest Customer'}
                     </div>
                   </div>
-                  <div className="text-right text-[13.5px] text-gray-500 dark:text-gray-400 sm:whitespace-nowrap shrink-0">
+                  <div className="text-right text-[13.5px] text-gray-500 dark:text-gray-400 sm:whitespace-nowrap shrink-0 flex flex-col items-end">
                     <span className="sm:inline">{formatPrice(item.unitPrice, settings.currencySymbol)} <span className="mx-2">×</span> {item.quantity}</span>
-                    <div className="text-gray-900 dark:text-white font-semibold mt-1">
-                      {formatPrice(item.total, settings.currencySymbol)}
-                    </div>
+                    {item.discountAmount && item.discountAmount > 0 ? (
+                      <>
+                        <div className="text-[12px] text-rose-500 font-medium mt-0.5">
+                          Discount: -{formatPrice(item.discountAmount, settings.currencySymbol)}
+                        </div>
+                        <div className="text-gray-900 dark:text-white font-semibold mt-1">
+                          {formatPrice(item.total, settings.currencySymbol)}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-gray-900 dark:text-white font-semibold mt-1">
+                        {formatPrice(item.total, settings.currencySymbol)}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

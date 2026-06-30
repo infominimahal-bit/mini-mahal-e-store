@@ -674,9 +674,15 @@ function AdminCustomersPageInner() {
                                   <span>Subtotal</span>
                                   <span className="font-bold text-gray-950 dark:text-white">{formatPrice(order.subtotal)}</span>
                                 </div>
+                                {order.discountAmount && order.discountAmount > 0 && (
+                                  <div className="flex justify-between text-rose-600 dark:text-rose-400">
+                                    <span>Discount {order.discountCode ? `(${order.discountCode})` : ''}</span>
+                                    <span className="font-bold">-{formatPrice(order.discountAmount)}</span>
+                                  </div>
+                                )}
                                 {(() => {
                                   const shipAmount = order.shippingAmount || 0;
-                                  const effectiveShip = shipAmount > 0 ? shipAmount : (order.total > order.subtotal ? order.total - order.subtotal : 0);
+                                  const effectiveShip = shipAmount > 0 ? shipAmount : (order.total > order.subtotal - (order.discountAmount || 0) ? order.total - (order.subtotal - (order.discountAmount || 0)) : 0);
                                   const shipLabel = order.shippingMethodName || 'Delivery Charges';
                                   return (
                                     <div className="flex justify-between">
@@ -685,6 +691,10 @@ function AdminCustomersPageInner() {
                                     </div>
                                   );
                                 })()}
+                                <div className="flex justify-between">
+                                  <span>Payment Method</span>
+                                  <span className="font-bold text-gray-950 dark:text-white">Cash on Delivery</span>
+                                </div>
                                 <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-800 text-sm font-black text-gray-900 dark:text-white">
                                   <span>Total Paid</span>
                                   <span>{formatPrice(order.total)}</span>

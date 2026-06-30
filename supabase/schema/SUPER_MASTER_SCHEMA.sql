@@ -986,7 +986,11 @@ INSERT INTO email_templates (email_type, category, label, description, subject) 
 ('admin_low_stock', 'admin', 'Low Stock Alert', 'Sent when stock level drops below threshold', 'Low Stock: {{product_name}}'),
 ('admin_new_customer', 'admin', 'New Customer Alert', 'Sent on new customer registration', 'New customer: {{customer_name}}'),
 ('admin_new_review', 'admin', 'New Review Alert', 'Sent on new product review', 'New review on {{product_name}}'),
-('admin_contact_form', 'admin', 'Contact Form Alert', 'Sent on contact form submission', 'Contact Form: {{contact_subject}}')
+('admin_contact_form', 'admin', 'Contact Form Alert', 'Sent on contact form submission', 'Contact Form: {{contact_subject}}'),
+('abandoned_cart', 'customer', 'Abandoned Cart Reminder', 'Sent to customers who left items in cart', 'You left something behind at {{brand_name}}!'),
+('admin_abandoned_cart', 'admin', 'Abandoned Cart Alert', 'Sent to admin when a cart is abandoned', 'Abandoned Cart - {{customer_name}}'),
+('postex_shipped', 'customer', 'Order Shipped (PostEx)', 'Sent when order is fulfilled via PostEx', 'Your order is on the way via PostEx!'),
+('admin_postex_shipped', 'admin', 'PostEx Fulfillment Alert', 'Sent to admin when order is pushed to PostEx', 'Order fulfilled via PostEx: #{{order_id}}')
 ON CONFLICT (email_type) DO NOTHING;
 
 -- ============================================================
