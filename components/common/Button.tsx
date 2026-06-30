@@ -41,25 +41,24 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || isLoading}
         className={cn(
-          'font-heading font-semibold transition-all duration-200 inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none',
+          'relative overflow-hidden font-heading font-semibold transition-all duration-200 inline-flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none',
           variantsMap[variant],
           sizesMap[size],
           className
         )}
         {...props}
       >
-        {isLoading ? (
-          <>
-            <RefreshCw className="h-4 w-4 animate-spin shrink-0" />
-            <span>Loading...</span>
-          </>
-        ) : (
-          <>
-            {leftIcon && <span className="shrink-0">{leftIcon}</span>}
-            {children}
-            {rightIcon && <span className="shrink-0">{rightIcon}</span>}
-          </>
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-[inherit] overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+            <RefreshCw className="h-5 w-5 animate-spin relative z-10" />
+          </div>
         )}
+        <div className={cn("inline-flex items-center justify-center gap-2 transition-opacity duration-200", isLoading ? "opacity-0" : "opacity-100")}>
+          {leftIcon && <span className="shrink-0">{leftIcon}</span>}
+          {children}
+          {rightIcon && <span className="shrink-0">{rightIcon}</span>}
+        </div>
       </button>
     );
   }

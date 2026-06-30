@@ -132,6 +132,7 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
 
   // ─── Edit Metadata Modal State ───────────────────────────────────────────
   const [editingItem, setEditingItem] = useState<MediaItem | null>(null);
+  const [isUpdatingItem, setIsUpdatingItem] = useState(false);
   const [pendingVideoUpload, setPendingVideoUpload] = useState<{ task: UploadTask; file: File } | null>(null);
 
   // ─── Image Preview & Light Editor State ────────────────────────────────
@@ -1774,7 +1775,10 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
               </div>
               <div className="pt-4 flex justify-end gap-2 border-t border-gray-100 dark:border-gray-800">
                 <button type="button" onClick={() => setEditingItem(null)} className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-semibold text-xs cursor-pointer min-h-[38px]">Cancel</button>
-                <button type="submit" className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-xs cursor-pointer min-h-[38px] active:scale-95">Save Details</button>
+                <button type="submit" disabled={isUpdatingItem} className={`px-5 py-2 text-white rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[38px] active:scale-95 ${isUpdatingItem ? 'bg-blue-400 disabled:cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}>
+                  {isUpdatingItem && <div className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />}
+                  {isUpdatingItem ? 'Saving...' : 'Save Details'}
+                </button>
               </div>
             </form>
           </div>

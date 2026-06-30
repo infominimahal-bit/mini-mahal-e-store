@@ -746,12 +746,19 @@ export default function OrderDetailCanvas({ order: initialOrder, settings }: Ord
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div
-                      className="text-[13.5px] font-medium text-[#2c6ecb] dark:text-blue-400 cursor-pointer hover:underline mb-1 line-clamp-2"
-                      onClick={() => window.open(`/admin/products/${item.product.id}`, '_blank')}
-                      title="Edit product"
-                    >
-                      {item.product.name}
+                    <div className="flex items-start gap-2 mb-1">
+                      <div
+                        className="text-[13.5px] font-medium text-[#2c6ecb] dark:text-blue-400 cursor-pointer hover:underline line-clamp-2"
+                        onClick={() => window.open(`/admin/products/${item.product.id}`, '_blank')}
+                        title="Edit product"
+                      >
+                        {item.product.name}
+                      </div>
+                      {item.addedLater && (
+                        <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                          Added Later
+                        </span>
+                      )}
                     </div>
                     {variantStr && (
                       <div className="inline-block bg-[#f1f1f1] dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded px-2 py-0.5 text-[12px] text-gray-600 dark:text-gray-300 mb-1">
@@ -797,6 +804,20 @@ export default function OrderDetailCanvas({ order: initialOrder, settings }: Ord
                 </div>
                 <div className="font-medium text-gray-900 dark:text-white">{formatPrice(order.subtotal || order.total, settings.currencySymbol)}</div>
               </div>
+              {(() => {
+                const discountAmount = order.discountAmount || 0;
+                if (discountAmount > 0) {
+                  return (
+                    <div className="flex justify-between items-start py-2 border-b border-[#f1f1f1] dark:border-gray-800 last:border-0 text-[13.5px]">
+                      <div>
+                        <div className="text-gray-900 dark:text-white">Discount</div>
+                      </div>
+                      <div className="font-medium text-emerald-600 dark:text-emerald-400">-{formatPrice(discountAmount, settings.currencySymbol)}</div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
               {(() => {
                 const shipAmount = order.shippingAmount || 0;
                 const effectiveShip = shipAmount > 0 ? shipAmount : (order.total > order.subtotal ? order.total - order.subtotal : 0);

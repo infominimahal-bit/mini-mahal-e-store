@@ -34,8 +34,24 @@ export default function ProductList({ initialProducts, settings }: ProductListPr
   const [isImportExportOpen, setIsImportExportOpen] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>('created-desc');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+
+  const categoriesMap = new Map<string, string>();
+  products.forEach(p => {
+    if (p.productCategories) {
+      p.productCategories.forEach(pc => {
+        if (pc.category && pc.categoryId) categoriesMap.set(pc.categoryId, pc.category.name);
+      });
+    }
+    if (p.category && p.categoryId) {
+      categoriesMap.set(p.categoryId, p.category.name);
+    }
+  });
+  const availableCategories = Array.from(categoriesMap.entries())
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const handleBulkFeatured = async (featuredValue: boolean) => {
     if (selectedProductIds.length === 0) return;
@@ -213,6 +229,13 @@ export default function ProductList({ initialProducts, settings }: ProductListPr
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase()))
     )
+    .filter(p => {
+      if (selectedCategory === 'all') return true;
+      if (p.productCategories && p.productCategories.length > 0) {
+        return p.productCategories.some(pc => pc.categoryId === selectedCategory);
+      }
+      return p.categoryId === selectedCategory;
+    })
     .sort((a, b) => {
       switch (sortBy) {
         case 'manual': return 0;
@@ -245,7 +268,17 @@ export default function ProductList({ initialProducts, settings }: ProductListPr
               className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-[#1a1a2e]"
             />
           </div>
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 flex items-center gap-2">
+            <select
+              value={selectedCategory}
+              onChange={(e) => { setSelectedCategory(e.target.value); setCurrentPage(1); }}
+              className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 focus:outline-none focus:border-[#1a1a2e] cursor-pointer"
+            >
+              <option value="all">All Categories</option>
+              {availableCategories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
             <select
               value={sortBy}
               onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}

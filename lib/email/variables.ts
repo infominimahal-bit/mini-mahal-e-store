@@ -78,8 +78,13 @@ export async function buildVariables(emailType: string, data: Record<string, any
     vars.order_date = order.createdAt ? new Date(order.createdAt).toLocaleDateString() : new Date().toLocaleDateString();
     vars.order_total = formatPrice(order.total, currencySymbol);
     vars.order_subtotal = formatPrice(order.subtotal || order.total, currencySymbol);
-    vars.order_shipping_fee = formatPrice(order.shippingCost || 0, currencySymbol);
+    const discountAmount = order.discountAmount || 0;
+    vars.order_discount_fee = discountAmount > 0 ? `-${formatPrice(discountAmount, currencySymbol)}` : '';
+    vars.order_shipping_fee = formatPrice(order.shippingAmount || 0, currencySymbol);
     vars.order_status = order.status;
+
+    // Default payment method
+    vars.order_payment_method = 'Cash on delivery';
 
     // Address
     const address = order.shipping_address || data.customer || {};
@@ -96,6 +101,7 @@ export async function buildVariables(emailType: string, data: Record<string, any
       const cityMatch = order.notes.match(/City:\s*(.+)/i);
       const postalMatch = order.notes.match(/Postal:\s*(.+)/i);
       const phoneMatch = order.notes.match(/Phone:\s*(.+)/i);
+      const paymentMatch = order.notes.match(/Payment Method:\s*(.+)/i);
 
       if (addressMatch) {
         street = addressMatch[1].trim();
@@ -106,6 +112,7 @@ export async function buildVariables(emailType: string, data: Record<string, any
       if (cityMatch) city = cityMatch[1].trim();
       if (postalMatch) postalCode = postalMatch[1].trim();
       if (phoneMatch) phone = phoneMatch[1].trim();
+      if (paymentMatch) vars.order_payment_method = paymentMatch[1].trim();
     }
 
     vars['shipping_address.name'] = addressName;

@@ -512,6 +512,7 @@ export interface CartItem {
   quantity: number;
   unitPrice: number;                   // final price (variant price or product price)
   total: number;                       // unitPrice * quantity + modifiers
+  addedLater?: boolean;                // true if added by admin after order was placed
 }
 
 export interface StatusLogItem {

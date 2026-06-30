@@ -10,6 +10,7 @@ import { getClientSiteUrl } from '@/lib/site-url';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import TrashProductButton from '@/components/admin/TrashProductButton';
+import DuplicateProductButton from '@/components/admin/DuplicateProductButton';
 
 export const revalidate = 0; // Dynamic server rendering
 
@@ -45,13 +46,7 @@ export default async function EditProductPage({ params }: PageProps) {
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Products</span>
           </Link>
-          <Link
-            href={`/admin/products/new?duplicate=${product.id}`}
-            className="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-300 dark:border-gray-700 rounded-xl bg-white dark:bg-[#16162a] text-slate-700 dark:text-gray-200 text-xs font-bold transition-all hover:bg-slate-50 dark:hover:bg-gray-800 shadow-sm cursor-pointer"
-          >
-            <Copy className="h-4 w-4" />
-            <span>Duplicate</span>
-          </Link>
+          <DuplicateProductButton productId={product.id} />
           <a
             href={`${getClientSiteUrl(settings)}/product/${product.slug}`}
             target="_blank"

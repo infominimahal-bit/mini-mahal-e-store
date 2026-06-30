@@ -1245,13 +1245,22 @@ export default function CartContainer({ settings }: CartContainerProps) {
             <button
               type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#e94560] hover:bg-[#d8344e] disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-5 py-4.5 text-base font-black transition-all duration-200 shadow-lg shadow-red-500/20 cursor-pointer active:scale-98"
+              className={`relative overflow-hidden flex w-full items-center justify-center gap-2.5 rounded-2xl transition-all duration-200 shadow-lg shadow-red-500/20 cursor-pointer active:scale-98 text-white px-5 py-4.5 text-base font-black ${
+                loading ? 'bg-[#d8344e] disabled:cursor-not-allowed' : 'bg-[#e94560] hover:bg-[#d8344e]'
+              }`}
             >
-              {loading ? (
-                <><div className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />Processing...</>
-              ) : (
-                <><Send className="h-5 w-5" />Confirm Order via WhatsApp</>
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-[inherit] pointer-events-none z-10 bg-inherit">
+                  <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                  <div className="flex items-center gap-2 relative z-10">
+                    <div className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    <span>Processing...</span>
+                  </div>
+                </div>
               )}
+              <div className={`flex items-center gap-2.5 transition-opacity ${loading ? 'opacity-0' : 'opacity-100'}`}>
+                <Send className="h-5 w-5" />Confirm Order via WhatsApp
+              </div>
             </button>
 
             <p className="text-center text-xs text-gray-400 font-semibold">

@@ -197,6 +197,9 @@ export default function OrderEditor({ order: initialOrder, settings, products, o
 
       const cleanItems = items.map(i => {
         const { _isNew, ...rest } = i;
+        if (_isNew) {
+          return { ...rest, addedLater: true };
+        }
         return rest;
       });
 

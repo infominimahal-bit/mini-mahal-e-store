@@ -626,7 +626,7 @@ export default function AbandonedCartsPage() {
           <div className="fixed right-0 top-0 bottom-0 w-full max-w-4xl bg-gray-50 dark:bg-[#0f0f1e] shadow-2xl z-50 flex flex-col border-l border-gray-200 dark:border-gray-800 transition-transform duration-300 translate-x-0 overflow-hidden">
             
             {/* Header */}
-            <div className="px-6 py-4 bg-white dark:bg-[#16162a] border-b border-gray-200 dark:border-gray-800/80 flex items-center justify-between flex-shrink-0">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 bg-white dark:bg-[#16162a] border-b border-gray-200 dark:border-gray-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setSelectedCartId(null)}
@@ -634,26 +634,26 @@ export default function AbandonedCartsPage() {
                 >
                   <X className="h-5 w-5" />
                 </button>
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <h2 className="text-lg font-black text-gray-900 dark:text-white">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h2 className="text-base sm:text-lg font-black text-gray-900 dark:text-white whitespace-nowrap truncate">
                       Cart Detail
                     </h2>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border ${getStatusBadgeStyles(selectedCart)}`}>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border whitespace-nowrap ${getStatusBadgeStyles(selectedCart)}`}>
                       {selectedCart.orderPlaced ? 'Recovered' : selectedCart.emailSent ? 'Emailed' : 'Pending'}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-0.5">
+                  <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-semibold mt-0.5">
                     Created: {new Date(selectedCart.createdAt).toLocaleString()}
                   </p>
                 </div>
               </div>
 
               {/* Header Navigation & Action Panel */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 self-end sm:self-auto">
                 <button
                   onClick={() => handleCopyDetails(selectedCart)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#16162a] text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#16162a] text-[10px] sm:text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors whitespace-nowrap shrink-0"
                 >
                   {copiedId === selectedCart.id ? (
                     <>
@@ -663,7 +663,8 @@ export default function AbandonedCartsPage() {
                   ) : (
                     <>
                       <Copy className="h-3.5 w-3.5" />
-                      <span>Copy Cart Info</span>
+                      <span className="hidden sm:inline">Copy Cart Info</span>
+                      <span className="inline sm:hidden">Copy Info</span>
                     </>
                   )}
                 </button>
@@ -690,7 +691,7 @@ export default function AbandonedCartsPage() {
             </div>
 
             {/* Scrollable Drawer Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 overscroll-contain">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 overscroll-contain pb-24 sm:pb-8">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Left/Main Column - Items & Totals (2 columns) */}

@@ -83,6 +83,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   const [socialInstagram, setSocialInstagram] = useState(initialSettings.socialInstagram || '');
   const [socialWhatsapp, setSocialWhatsapp] = useState(initialSettings.socialWhatsapp || '');
   const [socialYoutube, setSocialYoutube] = useState(initialSettings.socialYoutube || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fake Views & Trust States
   const [enableFakeViews, setEnableFakeViews] = useState(initialSettings.enableFakeViews ?? true);
@@ -782,6 +783,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
     // Rule W2 Check: Clean WhatsApp number
     const cleanPhone = cleanWhatsAppPhone(whatsappNumber);
 
+    setIsSubmitting(true);
     try {
       const payload: Partial<StoreSettings> = {
         storeName: storeName.trim(),
@@ -1034,6 +1036,8 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
     } catch (err: any) {
       console.error('Settings update error:', err);
       toast.error(err?.message || 'Failed to update settings');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1950,10 +1954,26 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
           </span>
           <button
             type="submit"
-            className="flex items-center gap-2 rounded-xl bg-[#1a1a2e] dark:bg-[#e94560] hover:bg-[#e94560] dark:hover:bg-[#e94560]/90 active:scale-95 text-white px-8 py-3.5 text-sm font-bold shadow-md transition-all cursor-pointer ml-auto"
+            disabled={isSubmitting}
+            className={`relative overflow-hidden flex items-center justify-center gap-2 rounded-xl active:scale-95 text-white px-8 py-3.5 text-sm font-bold shadow-md transition-all cursor-pointer ml-auto ${
+              isSubmitting 
+                ? 'bg-[#e94560] disabled:cursor-not-allowed' 
+                : 'bg-[#1a1a2e] dark:bg-[#e94560] hover:bg-[#e94560] dark:hover:bg-[#e94560]/90'
+            }`}
           >
-            <Save className="h-4 w-4" />
-            <span>Save Settings</span>
+            {isSubmitting && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-[inherit] pointer-events-none z-10 bg-inherit">
+                <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                <div className="flex items-center gap-2 relative z-10">
+                  <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  <span>Saving...</span>
+                </div>
+              </div>
+            )}
+            <div className={`flex items-center gap-2 transition-opacity ${isSubmitting ? 'opacity-0' : 'opacity-100'}`}>
+              <Save className="h-4 w-4" />
+              <span>Save Settings</span>
+            </div>
           </button>
         </div>
       )}

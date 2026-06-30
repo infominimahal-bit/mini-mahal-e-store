@@ -33,6 +33,7 @@ export default function CategoryManager({ initialCategories, aiEnabled, storeUrl
   const [active, setActive] = useState(true);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   // Always show AI button — guides user to settings if not configured
   const [aiConfigured, setAiConfigured] = useState<boolean | null>(null);
 
@@ -147,6 +148,7 @@ export default function CategoryManager({ initialCategories, aiEnabled, storeUrl
     if (!name.trim()) return toast.error('Category Name is required');
     if (!slug.trim()) return toast.error('Category Slug is required');
 
+    setIsSubmitting(true);
     const payload = {
       name: name.trim(),
       slug: slug.trim(),
@@ -224,6 +226,8 @@ export default function CategoryManager({ initialCategories, aiEnabled, storeUrl
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Failed to save category';
       toast.error(errMsg);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -481,9 +485,25 @@ export default function CategoryManager({ initialCategories, aiEnabled, storeUrl
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 text-center bg-[#1a1a2e] dark:bg-[#e94560] hover:opacity-90 text-white rounded-xl py-3 text-sm font-bold shadow-md cursor-pointer transition-all active:scale-[0.98]"
+                  disabled={isSubmitting}
+                  className={`relative overflow-hidden flex-1 flex items-center justify-center text-center rounded-xl py-3 text-sm font-bold shadow-md cursor-pointer transition-all active:scale-[0.98] ${
+                    isSubmitting
+                      ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                      : 'bg-[#1a1a2e] dark:bg-[#e94560] hover:opacity-90 text-white'
+                  }`}
                 >
-                  Save Category
+                  {isSubmitting && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-[inherit] pointer-events-none z-10 bg-inherit">
+                      <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                      <div className="flex items-center gap-2 relative z-10">
+                        <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                        <span className="text-white">Saving...</span>
+                      </div>
+                    </div>
+                  )}
+                  <span className={`transition-opacity ${isSubmitting ? 'opacity-0' : 'opacity-100'}`}>
+                    Save Category
+                  </span>
                 </button>
               </div>
             </form>

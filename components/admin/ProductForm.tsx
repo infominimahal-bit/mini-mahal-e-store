@@ -91,6 +91,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   // Always show AI button — if ai_enabled is false, we still show the button
   // but clicking it will guide user to enable AI in settings
   const [aiConfigured, setAiConfigured] = useState<boolean | null>(null);
@@ -723,6 +724,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
       }
     }
 
+    setIsSubmitting(true);
     try {
       const parsedTags = tagInput
         .split(',')
@@ -846,6 +848,8 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
       console.error(err);
       const errMsg = err instanceof Error ? err.message : 'Failed to save product';
       toast.error(errMsg);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -864,19 +868,28 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                     type="button"
                     onClick={aiConfigured ? handleAICopywrite : () => { toast.info('AI is not enabled. Go to Admin → Settings → AI Copywriter to enable it.', { duration: 5000 }); }}
                     disabled={isAiGenerating}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98] ${
+                    className={`relative overflow-hidden flex items-center gap-1.5 px-3 py-1.5 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm select-none active:scale-[0.98] ${
                       aiConfigured
-                        ? 'bg-purple-600 bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-purple-700 hover:from-purple-700 hover:to-indigo-700'
+                        ? isAiGenerating
+                          ? 'bg-purple-700 bg-linear-to-r from-purple-700 to-indigo-700 disabled:cursor-not-allowed'
+                          : 'bg-purple-600 bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-purple-700 hover:from-purple-700 hover:to-indigo-700'
                         : 'bg-gray-400 hover:bg-gray-500'
                     }`}
                     title={aiConfigured ? 'Generate AI copy' : 'Enable AI in Settings → AI Copywriter'}
                   >
-                    {isAiGenerating ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Zap className="w-3.5 h-3.5 fill-current" />
+                    {isAiGenerating && (
+                      <div className="absolute inset-0 flex items-center justify-center rounded-[inherit] pointer-events-none z-10 bg-inherit">
+                        <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                        <div className="flex items-center gap-2 relative z-10">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Generating...</span>
+                        </div>
+                      </div>
                     )}
-                    <span>AI Generate Copy</span>
+                    <div className={`flex items-center gap-1.5 transition-opacity ${isAiGenerating ? 'opacity-0' : 'opacity-100'}`}>
+                      <Zap className="w-3.5 h-3.5 fill-current" />
+                      <span>AI Generate Copy</span>
+                    </div>
                   </button>
                 )}
               </div>
@@ -1005,19 +1018,28 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                       type="button"
                       onClick={aiConfigured ? handleAICopywrite : () => { toast.info('AI is not enabled. Go to Admin → Settings → AI Copywriter to enable it.', { duration: 5000 }); }}
                       disabled={isAiGenerating}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98] ${
+                      className={`relative overflow-hidden flex items-center gap-1.5 px-3 py-1.5 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm select-none active:scale-[0.98] ${
                         aiConfigured
-                          ? 'bg-purple-600 bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-purple-700 hover:from-purple-700 hover:to-indigo-700'
+                          ? isAiGenerating
+                            ? 'bg-purple-700 bg-linear-to-r from-purple-700 to-indigo-700 disabled:cursor-not-allowed'
+                            : 'bg-purple-600 bg-linear-to-r from-purple-600 to-indigo-600 hover:bg-purple-700 hover:from-purple-700 hover:to-indigo-700'
                           : 'bg-gray-400 hover:bg-gray-500'
                       }`}
                       title={aiConfigured ? 'Generate AI copy' : 'Enable AI in Settings → AI Copywriter'}
                     >
-                      {isAiGenerating ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Zap className="w-3.5 h-3.5 fill-current" />
+                      {isAiGenerating && (
+                        <div className="absolute inset-0 flex items-center justify-center rounded-[inherit] pointer-events-none z-10 bg-inherit">
+                          <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                          <div className="flex items-center gap-2 relative z-10">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Generating...</span>
+                          </div>
+                        </div>
                       )}
-                      <span>AI Generate Copy</span>
+                      <div className={`flex items-center gap-1.5 transition-opacity ${isAiGenerating ? 'opacity-0' : 'opacity-100'}`}>
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        <span>AI Generate Copy</span>
+                      </div>
                     </button>
                   )}
                 </div>
@@ -2692,9 +2714,23 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
               </button>
               <button
                 type="submit"
-                className="flex-1 text-center bg-[#1a1a2e] hover:bg-[#e94560] text-white rounded-xl py-3.5 text-sm font-bold shadow-md transition-all active:scale-95 cursor-pointer"
+                disabled={isSubmitting}
+                className={`relative overflow-hidden flex-1 flex items-center justify-center text-center text-white rounded-xl py-3.5 text-sm font-bold shadow-md transition-all duration-200 active:scale-95 cursor-pointer ${
+                  isSubmitting ? 'bg-[#e94560] disabled:cursor-not-allowed' : 'bg-[#1a1a2e] hover:bg-[#e94560]'
+                }`}
               >
-                Save Product
+                {isSubmitting && (
+                  <div className="absolute inset-0 flex items-center justify-center rounded-[inherit] pointer-events-none z-10 bg-inherit">
+                    <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                    <div className="flex items-center gap-2 relative z-10">
+                      <div className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      <span>Saving...</span>
+                    </div>
+                  </div>
+                )}
+                <div className={`flex items-center gap-2 transition-opacity ${isSubmitting ? 'opacity-0' : 'opacity-100'}`}>
+                  Save Product
+                </div>
               </button>
             </div>
 

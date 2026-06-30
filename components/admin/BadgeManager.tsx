@@ -21,6 +21,7 @@ export default function BadgeManager({ initialBadges }: BadgeManagerProps) {
   const [name, setName] = useState('');
   const [bgColor, setBgColor] = useState('#e94560');
   const [textColor, setTextColor] = useState('#ffffff');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleOpenNew = () => {
     setEditId(null);
@@ -55,6 +56,7 @@ export default function BadgeManager({ initialBadges }: BadgeManagerProps) {
     if (!bgColor.trim()) return toast.error('Background Color is required');
     if (!textColor.trim()) return toast.error('Text Color is required');
 
+    setIsSubmitting(true);
     const payload = {
       name: name.trim(),
       bgColor: bgColor.trim(),
@@ -75,6 +77,8 @@ export default function BadgeManager({ initialBadges }: BadgeManagerProps) {
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Failed to save badge';
       toast.error(errMsg);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -239,9 +243,25 @@ export default function BadgeManager({ initialBadges }: BadgeManagerProps) {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 text-center bg-[#1a1a2e] hover:bg-[#e94560] text-white rounded-xl py-3 text-sm font-bold shadow-md cursor-pointer transition-all"
+                  disabled={isSubmitting}
+                  className={`relative overflow-hidden flex-1 flex items-center justify-center text-center rounded-xl py-3 text-sm font-bold shadow-md cursor-pointer transition-all ${
+                    isSubmitting
+                      ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                      : 'bg-[#1a1a2e] hover:bg-[#e94560] text-white'
+                  }`}
                 >
-                  Save Badge
+                  {isSubmitting && (
+                    <div className="absolute inset-0 flex items-center justify-center rounded-[inherit] pointer-events-none z-10 bg-inherit">
+                      <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                      <div className="flex items-center gap-2 relative z-10">
+                        <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                        <span className="text-white">Saving...</span>
+                      </div>
+                    </div>
+                  )}
+                  <span className={`transition-opacity ${isSubmitting ? 'opacity-0' : 'opacity-100'}`}>
+                    Save Badge
+                  </span>
                 </button>
               </div>
             </form>
