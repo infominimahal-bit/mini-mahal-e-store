@@ -102,11 +102,14 @@ async function fetchCloudflareCountryData(range: string) {
         ) {
           dimensions {
             date
-            clientCountryCode
           }
           sum {
             requests
             pageViews
+            countryMap {
+              clientCountryName
+              requests
+            }
           }
           uniq {
             uniques
@@ -147,21 +150,41 @@ async function fetchCloudflareCountryData(range: string) {
     let totalPageviews = 0;
 
     for (const g of groups) {
-      const code = g.dimensions?.clientCountryCode || 'XX';
-      const name = COUNTRY_NAMES[code] || 'Unknown';
-      const visitors = g.uniq?.uniques || 0;
-      const pageviews = g.sum?.pageViews || 0;
+      const dailyUniques = g.uniq?.uniques || 0;
+      const dailyPageviews = g.sum?.pageViews || 0;
+      const dailyRequests = g.sum?.requests || 1; // avoid div by 0
 
-      if (!countryMap.has(code)) {
-        countryMap.set(code, { code, name, visitors: 0, pageviews: 0 });
+      totalVisitors += dailyUniques;
+      totalPageviews += dailyPageviews;
+
+      const cMap = g.sum?.countryMap || [];
+      for (const c of cMap) {
+        const name = c.clientCountryName || 'Unknown';
+        
+        // Find country code from name, default to 'XX'
+        let code = 'XX';
+        for (const [k, v] of Object.entries(COUNTRY_NAMES)) {
+          if (v === name) {
+            code = k;
+            break;
+          }
+        }
+        if (code === 'XX' && name.length === 2) {
+            code = name; // If Cloudflare returned a 2-letter code for some reason
+        }
+
+        // Approximate visitors & pageviews by proportional requests
+        const ratio = c.requests / dailyRequests;
+        const estVisitors = Math.round(dailyUniques * ratio);
+        const estPageviews = Math.round(dailyPageviews * ratio);
+
+        if (!countryMap.has(code)) {
+          countryMap.set(code, { code, name, visitors: 0, pageviews: 0 });
+        }
+        const entry = countryMap.get(code)!;
+        entry.visitors += estVisitors;
+        entry.pageviews += estPageviews;
       }
-      const entry = countryMap.get(code)!;
-      entry.visitors += visitors;
-      entry.pageviews += pageviews;
-
-      // Track totals (count each group once for uniques sum)
-      totalVisitors += visitors;
-      totalPageviews += pageviews;
     }
 
     // Calculate accurate totals from UNSET — Cloudflare 1dGroups uniques are per-day,

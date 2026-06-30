@@ -181,7 +181,7 @@ REVALIDATE_SECRET=your_strong_random_secret_string
 
 # Cloudflare Purge API credentials
 CLOUDFLARE_ZONE_ID=your_cloudflare_zone_id
-CLOUDFLARE_API_TOKEN=your_cloudflare_cache_purge_api_token
+CLOUDFLARE_API_TOKEN=your_cloudflare_cache_purge_api_token # Must have permissions: Zone:Cache Rules:Edit, Zone:Zone Settings:Edit, Zone:Zone:Edit, Zone:Cache Purge:Purge, Zone:DNS:Edit, Zone:Analytics:Read
 
 # Store public URL (required for purging cache, sitemaps, robots, breadcrumbs)
 NEXT_PUBLIC_SITE_URL=https://your-domain.vercel.app
@@ -199,7 +199,7 @@ NEXT_PUBLIC_TWITTER_HANDLE=@zaynahs_pk
 CF_ACCOUNT_ID=your_cloudflare_account_id
 
 # === Traffic Analytics (Optional — Live Map Feature) ===
-# Cloudflare API Token must have Analytics → Read permission (not just Cache Purge)
+# Cloudflare API Token must have all 6 permissions (Analytics -> Read, Cache Purge -> Purge, etc.)
 CLOUDFLARE_ZONE_ID=your_cloudflare_zone_id        # Already set above, same value
 CLOUDFLARE_API_TOKEN=your_cloudflare_api_token    # Already set above, same value
 

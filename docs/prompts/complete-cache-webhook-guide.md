@@ -157,8 +157,15 @@ Right side panel → scroll down →
 Cloudflare → Top right corner →
 My Profile → API Tokens →
 Create Token →
-"Cache Purge" template select karo →
-Zone Resources: teri site select karo →
+"Create Custom Token" select karo →
+Permissions (add ALL of these):
+  - Zone -> Cache Rules -> Edit
+  - Zone -> Zone Settings -> Edit
+  - Zone -> Zone -> Edit
+  - Zone -> Cache Purge -> Purge
+  - Zone -> DNS -> Edit
+  - Zone -> Analytics -> Read
+Zone Resources: All zones (multi-domain ke liye) →
 Create Token →
 Token copy karo → .env.local mein rakho
 

@@ -324,10 +324,14 @@ Cloudflare → your domain → Right panel scroll down:
 Cloudflare → My Profile → API Tokens → Create Token:
 1. "Create Custom Token" → Get started
 2. Token name: `zaynahs-token`
-3. Permissions (add BOTH):
+3. Permissions (add ALL of these):
+   - **Zone** → **Cache Rules** → **Edit**
+   - **Zone** → **Zone Settings** → **Edit**
+   - **Zone** → **Zone** → **Edit**
    - **Zone** → **Cache Purge** → **Purge**
-   - **Analytics** → **Read** (required for Traffic Map feature)
-4. Zone Resources: Include → All zones
+   - **Zone** → **DNS** → **Edit**
+   - **Zone** → **Analytics** → **Read** (required for Traffic Map feature)
+4. Zone Resources: Include → All zones (for multi-domain support)
 5. Create Token → copy → `CLOUDFLARE_API_TOKEN`
 
 ### 6.4 DNS Records
@@ -742,7 +746,7 @@ bashcurl -X POST https://www.zaynahs.pk/api/revalidate \
 | 2 | Supabase service role key | Supabase dashboard → Settings → API → `service_role key` | `eyJhbGciOiJI...` |
 | 3 | Supabase project ref ID | **URL se auto-extract:** `https://[REF].supabase.co` → ref = subdomain. Agent khud nikaal lega. | `abcdefghijklm` (auto) |
 | 4 | Cloudflare zone ID | Cloudflare dashboard → Right sidebar → Zone ID | `e4aceeacdc4f6a1...` |
-| 5 | Cloudflare API token | Cloudflare → My Profile → API Tokens → Create (permission: Zone:Cache Purge + DNS:Edit) | `cfut_ik8c0Y7o...` |
+| 5 | Cloudflare API token | Cloudflare → My Profile → API Tokens → Create Custom Token (Permissions: Zone:Cache Rules:Edit, Zone:Zone Settings:Edit, Zone:Zone:Edit, Zone:Cache Purge:Purge, Zone:DNS:Edit, Zone:Analytics:Read) | `cfut_ik8c0Y7o...` |
 | 6 | Vercel API token | Vercel dashboard → Settings → Tokens → Create → scope: full | `UcVbN7vH7w...` |
 | 7 | GitHub personal access token | GitHub → Settings → Developer settings → Personal access tokens → Fine-grained → repo + contents write | `ghp_xxxx...` |
 | 8 | Domain name | Aapka domain jo Cloudflare pe add hai | `mynewstore.pk` |
