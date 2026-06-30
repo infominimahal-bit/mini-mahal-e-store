@@ -432,7 +432,7 @@ function AdminLayoutContent({
       </aside>
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="admin-layout-wrapper flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Unified Mobile/Desktop Header with Hamburger Trigger */}
         <header className="fixed md:relative top-0 left-0 right-0 z-30 md:z-auto h-16 flex-shrink-0 bg-white dark:bg-[#16162a] border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 md:px-8">
           <div className="flex items-center gap-3">

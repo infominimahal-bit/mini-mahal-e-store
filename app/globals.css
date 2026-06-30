@@ -368,3 +368,11 @@ video::-webkit-media-controls {
   animation: restore-pulse 1.2s ease-out;
   outline: none;
 }
+
+/* Fix stacking context for admin modals on mobile */
+/* When a modal (z-50) is open, promote the wrapper to z-50 to escape the main stacking context */
+.admin-layout-wrapper:has(.fixed.z-50),
+main#admin-main-content:has(.fixed.z-50) {
+  z-index: 50;
+  position: relative;
+}
