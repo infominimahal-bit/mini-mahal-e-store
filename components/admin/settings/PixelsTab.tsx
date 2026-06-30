@@ -397,9 +397,22 @@ export default function PixelsTab({
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Google Analytics 4 (GA4) Measurement ID
-            </label>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Google Analytics 4 (GA4) Measurement ID
+                </label>
+                <div className="relative group inline-block text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help">
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  <div className="absolute bottom-full left-0 mb-2 w-64 p-3 bg-gray-900 dark:bg-gray-800 text-[11px] leading-relaxed text-gray-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none border border-gray-800">
+                    Find this in your Google Analytics dashboard. It starts with "G-". This allows you to track visitors, traffic sources, and behavior accurately.
+                  </div>
+                </div>
+              </div>
+              <a href="https://analytics.google.com/" target="_blank" rel="noreferrer" className="text-[10px] font-bold text-[#e94560] hover:underline flex items-center gap-1">
+                Get ID <Globe className="w-3 h-3" />
+              </a>
+            </div>
             <input
               type="text"
               value={ga4MeasurementId}

@@ -137,11 +137,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 ```
 
-Settings → Database → Connection string:
-```env
-DATABASE_URL=postgresql://postgres.XXXX:PASSWORD@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true
-DIRECT_URL=postgresql://postgres.XXXX:PASSWORD@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres
-```
+
 
 ### 3.3 Run Master Schema (Recommended & Fastest)
 1. In your project, open the [SUPER_MASTER_SCHEMA.sql](file:///Users/shoaib/Desktop/Zaynahs%20e-store/supabase/schema/SUPER_MASTER_SCHEMA.sql) file and copy its entire content.
@@ -154,7 +150,7 @@ DIRECT_URL=postgresql://postgres.XXXX:PASSWORD@aws-1-ap-northeast-1.pooler.supab
    - Realtime tracking subscriptions on `orders` and `abandoned_carts` tables.
    - Trigger functions (for syncing product reviews and auto-linking orders to abandoned carts).
    - Seeds the default settings singleton row in `store_settings`.
-*Note: You do NOT need to run prisma/supabase push commands or manually set up buckets, realtime settings, or policies in the dashboard.*
+*Note: You do NOT need to run any supabase cli push commands or manually set up buckets, realtime settings, or policies in the dashboard.*
 
 ### 3.4 Auth Configuration (via Management API)
 
@@ -642,8 +638,6 @@ Admin Panel → Settings → Meta Sync → Sync All to Meta
 NEXT_PUBLIC_SUPABASE_URL=https://XXXX.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
-DATABASE_URL=postgresql://...
-DIRECT_URL=postgresql://...
 
 # Site & Brand
 NEXT_PUBLIC_SITE_URL=http://localhost:3000

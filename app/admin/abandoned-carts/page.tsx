@@ -75,6 +75,8 @@ export default function AbandonedCartsPage() {
   const [dateFilter, setDateFilter] = useState<string>('today');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
   const [selectedCartId, setSelectedCartId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -146,6 +148,10 @@ export default function AbandonedCartsPage() {
       supabase.removeChannel(channel);
     };
   }, [fetchCarts]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, dateFilter, statusFilter, customStartDate, customEndDate]);
 
   const handleDelete = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -226,6 +232,9 @@ export default function AbandonedCartsPage() {
 
     return matchesStatus && matchesSearch && matchesDate;
   });
+
+  const totalPages = Math.ceil(filteredCarts.length / itemsPerPage);
+  const paginatedCarts = filteredCarts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // Date-filtered active carts for stats
   const dateFilteredCarts = carts.filter(c => {
@@ -392,14 +401,14 @@ export default function AbandonedCartsPage() {
             />
           </div>
           
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             {/* Date filter */}
-            <div className="flex items-center gap-1.5 bg-white dark:bg-[#16162a] border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-1 flex-1 sm:flex-initial">
+            <div className="flex items-center gap-1.5 bg-white dark:bg-[#16162a] border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-2 sm:py-1 w-full sm:w-auto">
               <Calendar className="h-4 w-4 text-gray-400" />
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="bg-transparent border-0 text-xs font-bold focus:outline-none text-gray-900 dark:text-white cursor-pointer py-1.5"
+                className="bg-transparent border-0 text-xs font-bold focus:outline-none text-gray-900 dark:text-white cursor-pointer py-1.5 flex-1"
               >
                 <option value="all">All Dates</option>
                 <option value="today">Today</option>
@@ -414,7 +423,7 @@ export default function AbandonedCartsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#16162a] px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#e94560] text-gray-900 dark:text-white cursor-pointer transition-colors flex-1 sm:flex-initial"
+              className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#16162a] px-4 py-3 sm:py-2.5 text-xs font-bold focus:outline-none focus:border-[#e94560] text-gray-900 dark:text-white cursor-pointer transition-colors w-full sm:w-auto"
             >
               <option value="all">Active Carts ({stats.total - stats.recovered})</option>
               <option value="pending">Pending ({stats.pending})</option>
@@ -485,7 +494,7 @@ export default function AbandonedCartsPage() {
                       <th className="py-4 px-6 text-center">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800/80">{filteredCarts.map(cart => (
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800/80">{paginatedCarts.map(cart => (
                       <tr 
                         key={cart.id} 
                         onClick={() => setSelectedCartId(cart.id)}
@@ -566,11 +575,27 @@ export default function AbandonedCartsPage() {
                   </tbody>
                 </table>
               </div>
+              
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-gray-800/80">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 disabled:opacity-50"
+                  >Previous</button>
+                  <span className="text-xs font-semibold text-gray-400">Page {currentPage} of {totalPages}</span>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 disabled:opacity-50"
+                  >Next</button>
+                </div>
+              )}
             </div>
 
             {/* Mobile Cards */}
             <div className="md:hidden space-y-3 p-4">
-              {filteredCarts.map(cart => (
+              {paginatedCarts.map(cart => (
                 <div
                   key={cart.id}
                   onClick={() => setSelectedCartId(cart.id)}
@@ -608,6 +633,22 @@ export default function AbandonedCartsPage() {
                   </div>
                 </div>
               ))}
+              
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800/60 mt-4">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center justify-center px-4 py-2 rounded-lg bg-gray-50 dark:bg-white/5 text-xs font-bold text-gray-600 dark:text-gray-300 disabled:opacity-50 border border-gray-200 dark:border-gray-800"
+                  >Previous</button>
+                  <span className="text-xs font-semibold text-gray-400">Page {currentPage} of {totalPages}</span>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center justify-center px-4 py-2 rounded-lg bg-gray-50 dark:bg-white/5 text-xs font-bold text-gray-600 dark:text-gray-300 disabled:opacity-50 border border-gray-200 dark:border-gray-800"
+                  >Next</button>
+                </div>
+              )}
             </div>
           </>
         )}

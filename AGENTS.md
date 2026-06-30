@@ -97,10 +97,10 @@ This app runs across ANY domain (localhost, custom domain, production). Never ha
 
 7. **All Supabase admin actions via Management API only.**
    - Never use Supabase CLI (`supabase db push`, `supabase migration` etc.)
-   - Never use direct Postgres connection strings for schema changes
+   - Never use direct Postgres connection strings, Prisma, or any direct ORM for schema changes or management. All operations MUST go through the Supabase Management API.
    - All operations must use `SUPABASE_MGMT_TOKEN` and `SUPABASE_PROJECT_REF` from `.env.local`
    - Covers: schema migrations, storage rules, RLS policies, triggers, functions, webhooks, auth config, and any other DDL/DML changes
-   - Pattern: use the helper scripts below — never hardcode tokens in any file
+   - Pattern: use the helper scripts below — never hardcode tokens in any file. **Reference:** [SUPABASE_API_GUIDE.md](file:///Users/shoaib/Documents/zaynahsestore-tv-main/docs/SUPABASE_API_GUIDE.md)
 
 8. **NEVER hardcode credentials in any file.**
    - No tokens, API keys, passwords, or project refs in `.ts`, `.tsx`, `.sql`, `.md`, `.json`, or `.js` files

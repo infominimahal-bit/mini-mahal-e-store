@@ -42,6 +42,7 @@ export function renderOrderItemsTable(items: CartItem[], currencySymbol = 'Rs.',
           ${productUrl
             ? `<a href="${productUrl}" target="_blank" style="color: #1a1a1a; text-decoration: none; font-weight: 600; font-size: 14px; display: block;">${item.product.name}</a>`
             : `<span style="font-weight: 600; color: #1a1a1a; font-size: 14px;">${item.product.name}</span>`}
+          ${(item as any).addedLater ? `<span style="display: inline-block; background-color: #fef2f2; color: #ef4444; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 4px; border: 1px solid #fecaca;">Added Later</span>` : ''}
           ${variantDetails ? `<p style="margin: 4px 0 0; color: #666; font-size: 12px;">${variantDetails}</p>` : ''}
           ${modifierDetails ? `<p style="margin: 2px 0 0; color: #10b981; font-size: 12px;">+ ${modifierDetails}</p>` : ''}
         </td>
@@ -78,9 +79,13 @@ export async function buildVariables(emailType: string, data: Record<string, any
     vars.order_date = order.createdAt ? new Date(order.createdAt).toLocaleDateString() : new Date().toLocaleDateString();
     vars.order_total = formatPrice(order.total, currencySymbol);
     vars.order_subtotal = formatPrice(order.subtotal || order.total, currencySymbol);
-    const discountAmount = order.discountAmount || 0;
+    
+    // Webhook payload comes from Supabase so fields are snake_case: discount_amount, shipping_amount
+    const discountAmount = order.discount_amount || order.discountAmount || 0;
     vars.order_discount_fee = discountAmount > 0 ? `-${formatPrice(discountAmount, currencySymbol)}` : '';
-    vars.order_shipping_fee = formatPrice(order.shippingAmount || 0, currencySymbol);
+    
+    const shippingAmount = order.shipping_amount || order.shippingAmount || 0;
+    vars.order_shipping_fee = formatPrice(shippingAmount, currencySymbol);
     vars.order_status = order.status;
 
     // Default payment method
