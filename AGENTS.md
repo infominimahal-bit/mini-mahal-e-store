@@ -241,3 +241,12 @@ When adding a new page, category, or route:
 3. **When redirecting from `proxy.ts` to a login or auth page, always append a cache-buster query parameter** (e.g., `?_nocache=timestamp`) and set `cdn-cache-control: no-store, no-cache, must-revalidate` on the NextResponse to explicitly prevent Cloudflare from caching the redirect or the resulting RSC payload.
 4. **Cookie Chunking**: Mobile browsers strictly enforce the 4KB cookie limit. When using Supabase SSR, ensure `createServerClient` sets cookies on the `NextResponse` explicitly during redirects, so chunked cookies are successfully stored on mobile devices.
 <!-- END:middleware-rsc-rule -->
+
+<!-- BEGIN:admin-mobile-responsive-rule -->
+# Admin Mobile Responsive Data Grids (Table vs Cards)
+
+1. All `/admin` pages displaying list/grid data MUST implement a dual-layout strategy to prevent mobile horizontal scrolling cut-offs.
+2. Use `hidden md:block` with a standard HTML `<table>` for desktop views.
+3. Use `md:hidden` with stacked Flexbox cards (`space-y-3 p-4`) for mobile views.
+4. Follow the exact implementation pattern defined in [admin_mobile_responsive_ui_pattern.md](file:///Users/shoaib/Documents/zaynahsestore-tv-main/docs/prompts/admin_mobile_responsive_ui_pattern.md).
+<!-- END:admin-mobile-responsive-rule -->
