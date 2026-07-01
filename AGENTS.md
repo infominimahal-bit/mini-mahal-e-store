@@ -149,33 +149,34 @@ This app runs across ANY domain (localhost, custom domain, production). Never ha
 <!-- BEGIN:legacy-audit-rule -->
 # Legacy Project Audit Rule (Old Version → Complete Setup)
 
-Jab bhi koi **purana / existing project clone kare** (already Supabase, Cloudflare, Vercel, GitHub bane hain), to agent **in sab docs ko ek ek karke padhe** aur jo missing/wrong hai wo fix kare:
+Jab bhi koi naya agent kisi **purane / existing project ko clone ya touch kare**, jahan pehle se Supabase, Cloudflare, Vercel, aur GitHub setup ho chuke hon, to us agent ki sab se pehli aur bunyadi zimmedari **SYSTEM AUDIT** karna hai. Agent paband hai ke wo aagay ka koi bhi kaam karne se pehle in sab docs ko deeply study kare aur purane project ko naye standards par automatically update kare:
 
-| Area | Check Against |
-|---|---|
-| **Database** | `SUPER_MASTER_SCHEMA.sql` — sab tables, columns, indexes, RLS policies, triggers, functions exist karte hain? |
-| **Migrations** | `supabase/migrations/` — jo bhi migration file hai, wo `run-migration.mjs` se apply hai? |
-| **Storage** | `product-images` bucket exist karta hai? Public policy set hai? |
-| **Webhooks** | Supabase DB webhooks (product_changes, order_events etc.) exist karte hain? |
-| **Cloudflare DNS** | Domain ke A/CNAME records sahi hain? Proxy enabled (orange cloud)? |
-| **Cloudflare Rules** | Page Rules ya Cache Rules: HTML pages 24h cache, dynamic paths no-cache? SSL/TLS full strict? |
-| **Cloudflare Cache** | Actual pages HIT/MISS/BYPASS de rahi hain? `cf-cache-status` header check karo |
-| **Cloudflare Env Vars** | `CLOUDFLARE_ZONE_ID` + `CLOUDFLARE_API_TOKEN` Vercel env mein set hain? (Traffic feature ke liye) |
-| **Traffic Feature** | `lib/traffic/store.ts` in-memory store kaam kar raha hai? `proxy.ts` matcher mein `/((?!api|_next|favicon.ico).*)` hai? `react-simple-maps` + `react-leaflet` installed hain? |
-| **Vercel** | Project import hai? Env vars set hain (Supabase keys + Cloudflare)? Domain attached hai? Build successful? |
-| **GitHub** | Code pushed hai? Deployment trigger ho raha hai? |
+### 1. Mandatory Docs to Read (Batch Read):
+Agent ko laazmi tor par in files ko parhna hai (agar ye repo mein exist karti hon):
+- `docs/NEW_PROJECT_SETUP_GUIDE.md`
+- `docs/MANUAL_SETUP_GUIDE.md`
+- `docs/CLOUDFLARE_SUPABASE_SETUP.md`
+- `docs/MASTER_CACHE_GUIDE.md`
+- `docs/META_SYNC_GUIDE.md`
 
-**Agent ka task:**
-1. Pehle **sari docs** ek sath batch-read karo: `docs/NEW_PROJECT_SETUP_GUIDE.md`, `docs/MANUAL_SETUP_GUIDE.md`, `docs/CLOUDFLARE_SUPABASE_SETUP.md`, `docs/MASTER_CACHE_GUIDE.md`, `docs/META_SYNC_GUIDE.md` (agar exist karein)
-2. Phir **SUPABASE_MGMT_TOKEN** + **CLOUDFLARE_API_TOKEN** + **VERCEL_TOKEN** le kar sab APIs se verify karo
-3. Jo cheezein missing hain, wo auto-create/fix karo
-4. Last mein summary do: "✅ Sab sahi hai" ya "⚠️ Yeh cheezein fixed ki"
+### 2. Strict Audit Checklist:
+Agent in tamam areas ko scan karega aur jo missing ho, usay **Khu-ba-khud (Automatically)** create ya fix karega:
 
-**Rules:**
-- Sirf actual missing cheezein fix karo — jo pehle se sahi hai use mat todo
-- Koi bhi naya feature add nahi karna — sirf existing setup complete karna hai
-- Har action ke baad verify karo ke kaam hua ya nahi
-- Kuch bhi delete mat karo jo pehle se kaam kar raha ho
+| Area | Check Against | Auto-Fix Action |
+|---|---|---|
+| **Database Schema** | `SUPER_MASTER_SCHEMA.sql` | Kya sari nayi tables, columns, constraints, foreign keys aur indexes purane DB mein hain? Agar nahi, to API ke zariye DB update karo. |
+| **RLS & Policies** | `SUPER_MASTER_SCHEMA.sql` | Kya nayi security policies aur triggers (e.g., auto-increment, sync) apply ho chuke hain? Missing hain to add karo. |
+| **Migrations** | `supabase/migrations/` files | Kya saari migration files apply ho chuki hain? Agar purana project peeche hai to migrations run karo. |
+| **Storage Buckets** | `product-images` | Kya bucket exist karta hai? Uski public read/write policies bilkul wesi hain jesi docs mein likhi hain? Fix them. |
+| **Webhooks** | `docs/CLOUDFLARE_SUPABASE_SETUP.md` | Supabase DB webhooks (product_changes, order_events etc.) bani hui hain? |
+| **Cloudflare DNS & Rules** | Page/Cache Rules | HTML pages ki 24h cache, dynamic paths par no-cache, aur SSL Full Strict set hai? |
+| **Env Variables** | `.env.example` vs Vercel | Kya `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_API_TOKEN`, VERCEL_TOKEN, aur Supabase Keys Vercel par set hain? |
+| **Features Sync** | Export/Import, Image Fetch | Kya purane project mein nayi image fetching (Base64 ki bajaye Link Fetching) aur category imports chal rahe hain? Code update karo. |
+
+### 3. Execution Rules (Agent Lazmi Follow Kare):
+- **DO NOT ASK FOR PERMISSION:** Jo missing hai ya purana hai, usay khud fix karo (Jaise missing columns add karna ya purane base64 imports ko link-fetch pe shift karna).
+- **DO NOT BREAK EXISTING LOGIC:** Jo cheez pehle se bilkul perfect chal rahi hai, usay mat chero jab tak naye standard mein uska conflict na aye.
+- **PROVIDE A REPORT:** Aakhir mein ek summary do: "✅ Ye cheezein pehle se theek theen" aur "⚠️ Ye cheezein maine fix ki hain".
 <!-- END:legacy-audit-rule -->
 
 <!-- BEGIN:navigation-scroll-rule -->
