@@ -282,7 +282,7 @@ export default function BulkConsoleClient() {
             To run bulk SEO copywriting or media vision tag generation, you must first enable the AI features globally in the settings panel.
           </p>
           <Link 
-            href="/admin/seo/settings" 
+            href="/admin/settings?tab=ai_settings" 
             className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-sm text-sm"
           >
             Configure AI Settings

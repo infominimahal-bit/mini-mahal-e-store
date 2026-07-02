@@ -141,7 +141,7 @@ export default function VariantPresetsPage() {
       const dataStr = JSON.stringify(exportData, null, 2);
       const dataBlob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(dataBlob);
-      
+
       const link = document.createElement('a');
       link.href = url;
       link.download = `variant-presets-${new Date().toISOString().split('T')[0]}.json`;
@@ -150,7 +150,7 @@ export default function VariantPresetsPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       setSelectedPresetIds(new Set());
-      
+
       toast.success('Variant Presets exported successfully.');
     } catch {
       toast.error('Failed to export presets');
@@ -256,7 +256,7 @@ export default function VariantPresetsPage() {
               }}
               className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#0f0f1b] px-4 py-2.5 text-sm focus:outline-none focus:border-[#e94560]"
             >
-              {(['color','size','material','custom'] as const).map(a => (
+              {(['color', 'size', 'material', 'custom'] as const).map(a => (
                 <option key={a} value={a}>{ATTR_LABELS[a]}</option>
               ))}
             </select>
@@ -274,7 +274,7 @@ export default function VariantPresetsPage() {
                     type="color"
                     value={v.hex || '#888888'}
                     onChange={(e) => {
-                      setNewValues(prev => prev.map((item, idx) => 
+                      setNewValues(prev => prev.map((item, idx) =>
                         idx === i ? { ...item, hex: e.target.value } : item
                       ));
                     }}
@@ -397,7 +397,7 @@ export default function VariantPresetsPage() {
 
         {loading ? (
           <div className="space-y-2">
-            {[1,2,3].map(i => (
+            {[1, 2, 3].map(i => (
               <div key={i} className="h-12 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
             ))}
           </div>
@@ -445,7 +445,12 @@ export default function VariantPresetsPage() {
                           setNewName(preset.name);
                           setNewAttr(preset.attribute);
                           setNewValues(preset.values);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          const mainEl = document.getElementById('admin-main-content');
+                          if (mainEl) {
+                            mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+                          } else {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }
                         }}
                         className="p-1.5 text-blue-400 hover:text-blue-600 cursor-pointer"
                         title="Edit preset"

@@ -266,7 +266,7 @@ export default function SizeGuidesTab({
           </div>
 
           {/* Table Columns Editor */}
-          <div className="space-y-1.5">
+          <div className="hidden space-y-1.5">
             <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex justify-between items-center">
               <span>Table Columns (Comma-separated)</span>
               <span className="text-[10px] text-gray-400 lowercase font-semibold">Press comma to add a column</span>
@@ -294,10 +294,32 @@ export default function SizeGuidesTab({
 
           {/* Interactive Sizing Table Builder */}
           <div className="space-y-2.5">
-            <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Sizing Rows Data</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">Sizing Rows Data</label>
+              <button
+                type="button"
+                onClick={() => {
+                  const colName = window.prompt("Enter new column name (e.g. Waist):");
+                  if (colName && colName.trim()) {
+                    const trimmed = colName.trim();
+                    const val = guideColumns ? `${guideColumns}, ${trimmed}` : trimmed;
+                    setGuideColumns(val);
+                    const cols = val.split(',').map(s => s.trim()).filter(Boolean);
+                    setGuideRows(prev => prev.map(row => {
+                      const updated = { ...row };
+                      cols.forEach(col => { if (updated[col] === undefined) updated[col] = ''; });
+                      return updated;
+                    }));
+                  }
+                }}
+                className="flex items-center gap-1.5 text-[#e94560] hover:text-[#d8344e] text-xs font-bold py-1.5 px-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition-all cursor-pointer border border-[#e94560]/20 hover:border-[#e94560]/40"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add Column
+              </button>
+            </div>
 
             {/* Sizing Table Grid */}
-            <div className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden bg-white dark:bg-[#0f0f1b]">
+            <div className="border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-[#0f0f1b]">
               <div className="overflow-x-auto scrollbar-thin">
                 <table className="w-full text-left border-collapse min-w-[300px]">
                   <thead>
@@ -305,12 +327,59 @@ export default function SizeGuidesTab({
                       {guideColumns.split(',').map(s => s.trim()).filter(Boolean).map((colName, index) => (
                         <th
                           key={index}
-                          className="px-4 py-3 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap"
+                          className="px-4 py-3 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap group"
                         >
-                          {colName}
+                          <div className="flex items-center gap-2 bg-gray-100/50 dark:bg-white/5 py-1 px-2 rounded-lg border border-gray-200/50 dark:border-gray-800/50">
+                            <span className="text-gray-700 dark:text-gray-300">{colName}</span>
+                            <div className="flex items-center gap-1 ml-1 pl-2 border-l border-gray-200 dark:border-gray-700">
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  const newName = window.prompt("Edit column name:", colName);
+                                  if (newName && newName.trim() && newName.trim() !== colName) {
+                                    const trimmed = newName.trim();
+                                    const cols = guideColumns.split(',').map(s => s.trim()).filter(Boolean);
+                                    const updatedCols = cols.map(c => c === colName ? trimmed : c);
+                                    setGuideColumns(updatedCols.join(', '));
+                                    setGuideRows(prev => prev.map(row => {
+                                      const updated = { ...row };
+                                      if (updated[colName] !== undefined) {
+                                        updated[trimmed] = updated[colName];
+                                        delete updated[colName];
+                                      }
+                                      return updated;
+                                    }));
+                                  }
+                                }}
+                                className="text-gray-400 hover:text-blue-500 transition-colors p-0.5"
+                                title="Edit column name"
+                              >
+                                <Edit2 className="h-3 w-3" />
+                              </button>
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  if (window.confirm(`Remove column "${colName}"?`)) {
+                                    const cols = guideColumns.split(',').map(s => s.trim()).filter(Boolean);
+                                    const updatedCols = cols.filter(c => c !== colName);
+                                    setGuideColumns(updatedCols.join(', '));
+                                    setGuideRows(prev => prev.map(row => {
+                                      const updated = { ...row };
+                                      delete updated[colName];
+                                      return updated;
+                                    }));
+                                  }
+                                }}
+                                className="text-gray-400 hover:text-red-500 transition-colors p-0.5"
+                                title="Remove column"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
                         </th>
                       ))}
-                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right w-16">
+                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center whitespace-nowrap">
                         Actions
                       </th>
                     </tr>
@@ -337,13 +406,13 @@ export default function SizeGuidesTab({
                               />
                             </td>
                           ))}
-                          <td className="px-4 py-2 text-right">
+                          <td className="px-4 py-2 text-center">
                             <button
                               type="button"
                               onClick={() => {
                                 setGuideRows(prev => prev.filter((_, idx) => idx !== rowIndex));
                               }}
-                              className="p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer"
+                              className="p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer mx-auto"
                               title="Delete Row"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -379,7 +448,7 @@ export default function SizeGuidesTab({
                     });
                     setGuideRows(prev => [...prev, newRow]);
                   }}
-                  className="flex items-center gap-1.5 text-[#e94560] hover:text-[#e94560]/90 text-xs font-bold py-1.5 px-3 rounded-lg hover:bg-gray-100/50 dark:hover:bg-white/5 transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 text-[#e94560] hover:text-[#d8344e] text-xs font-bold py-1.5 px-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition-all cursor-pointer border border-[#e94560]/20 hover:border-[#e94560]/40"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>Add Sizing Row</span>

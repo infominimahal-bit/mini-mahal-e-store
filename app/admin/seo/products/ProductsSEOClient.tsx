@@ -305,8 +305,8 @@ export default function ProductsSEOClient() {
 
       {!aiEnabled && (
         <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-xl p-4 text-amber-800 dark:text-amber-300 text-xs font-semibold flex items-center justify-between gap-4 transition-all">
-          <span>AI SEO features are globally disabled. Turn on the switch in the AI Settings tab to enable "Write AI" copy generation.</span>
-          <Link href="/admin/seo/settings" className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg whitespace-nowrap">
+          <span>AI SEO features are globally disabled. Turn on the switch in the SEO Settings page to enable "Write AI" copy generation.</span>
+          <Link href="/admin/settings?tab=ai_settings" className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg whitespace-nowrap">
             Go to Settings
           </Link>
         </div>

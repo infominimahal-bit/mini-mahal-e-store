@@ -656,7 +656,7 @@ export const getAllProductsAdmin = async (): Promise<Product[]> => {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    
+
     const products = (data ?? []).map(mapProduct);
 
     if (products.length > 0) {
@@ -1067,7 +1067,7 @@ export const updateProductFields = async (
         if (pcInsError) throw pcInsError;
       }
     }
-    
+
     if (prodData?.slug) {
       try {
         await revalidateProduct(prodData.slug);
@@ -1086,7 +1086,7 @@ export const updateProductFields = async (
 export const deleteProduct = async (id: string): Promise<void> => {
   try {
     const supabase = await createClient();
-    
+
     // Get product slug to revalidate properly
     const { data: prodData } = await supabase
       .from('products')
@@ -1101,7 +1101,7 @@ export const deleteProduct = async (id: string): Promise<void> => {
       .eq('id', id);
 
     if (error) throw error;
-    
+
     if (prodData?.slug) {
       try {
         await revalidateProduct(prodData.slug);
@@ -1152,7 +1152,7 @@ export const getDeletedProducts = async (): Promise<Product[]> => {
 export const restoreProduct = async (id: string): Promise<void> => {
   try {
     const supabase = await createClient();
-    
+
     // Get product slug to revalidate properly
     const { data: prodData } = await supabase
       .from('products')
@@ -1166,7 +1166,7 @@ export const restoreProduct = async (id: string): Promise<void> => {
       .eq('id', id);
 
     if (error) throw error;
-    
+
     if (prodData?.slug) {
       try {
         await revalidateProduct(prodData.slug);
@@ -1190,7 +1190,7 @@ export const hardDeleteProduct = async (id: string): Promise<void> => {
       .eq('id', id);
 
     if (error) throw error;
-    
+
     (revalidateTag as any)('products');
   } catch (error) {
     console.error('[products] hardDeleteProduct failed:', error);
@@ -1201,32 +1201,32 @@ export const hardDeleteProduct = async (id: string): Promise<void> => {
 export const getProductsByCategoryId = async (categoryId: string): Promise<Product[]> => {
   try {
     const supabase = await createClient();
-    
+
     // First, get product IDs from the junction table
     const { data: junctionData, error: junctionError } = await supabase
       .from('product_categories')
       .select('product_id')
       .eq('category_id', categoryId);
-      
+
     if (junctionError) throw junctionError;
     const junctionProductIds = (junctionData ?? []).map(row => row.product_id);
-    
+
     // Query products that match the legacy category_id or are in the junction table
     let query = supabase
       .from('products')
       .select('*, product_images(*), product_variants(*), product_modifiers(*), categories!category_id(*), product_categories(*, categories(*)), badges(*), size_guides(*)')
       .is('deleted_at', null)
       .eq('is_active', true);
-      
+
     if (junctionProductIds.length > 0) {
       query = query.or(`category_id.eq.${categoryId},id.in.(${junctionProductIds.join(',')})`);
     } else {
       query = query.eq('category_id', categoryId);
     }
-    
+
     const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw error;
-    
+
     return (data ?? []).map(mapProduct);
   } catch (error) {
     console.error('[products] getProductsByCategoryId failed:', error);
@@ -1268,7 +1268,7 @@ export const updateProductVariantFields = async (
         .select('slug')
         .eq('id', varData.product_id)
         .single();
-      
+
       if (prodData?.slug) {
         try {
           await revalidateProduct(prodData.slug);
@@ -1339,6 +1339,60 @@ export const addProductToCategory = async (
   }
 };
 
+export const addProductsToCategory = async (
+  productIds: string[],
+  categoryId: string
+): Promise<void> => {
+  try {
+    const supabase = await createClient();
+
+    // Prepare relationships
+    const inserts = productIds.map(productId => ({
+      product_id: productId,
+      category_id: categoryId
+    }));
+
+    const { error: relError } = await supabase
+      .from('product_categories')
+      .insert(inserts);
+
+    if (relError) throw relError;
+
+    // Fetch product details for slugs and primary category check
+    const { data: prodData } = await supabase
+      .from('products')
+      .select('id, slug, category_id')
+      .in('id', productIds);
+
+    if (prodData && prodData.length > 0) {
+      // Find products whose category_id is null
+      const nullCatProdIds = prodData.filter(p => !p.category_id).map(p => p.id);
+      if (nullCatProdIds.length > 0) {
+        await supabase
+          .from('products')
+          .update({ category_id: categoryId })
+          .in('id', nullCatProdIds);
+      }
+
+      // Revalidate all products in parallel
+      const revalidatePromises = prodData
+        .filter((prod) => prod.slug)
+        .map((prod) =>
+          revalidateProduct(prod.slug!).catch((e) =>
+            console.error(`[products] revalidateProduct failed for ${prod.slug}:`, e)
+          )
+        );
+      await Promise.allSettled(revalidatePromises);
+    }
+
+    (revalidateTag as any)('products');
+    (revalidateTag as any)('categories');
+  } catch (error) {
+    console.error('[products] addProductsToCategory failed:', error);
+    throw error;
+  }
+};
+
 export const removeProductFromCategory = async (
   productId: string,
   categoryId: string
@@ -1392,6 +1446,64 @@ export const removeProductFromCategory = async (
     (revalidateTag as any)('categories');
   } catch (error) {
     console.error('[products] removeProductFromCategory failed:', error);
+    throw error;
+  }
+};
+
+export const removeProductsFromCategory = async (
+  productIds: string[],
+  categoryId: string
+): Promise<void> => {
+  try {
+    if (categoryId === '00000000-0000-4000-8000-000000000099') return;
+    if (!productIds || productIds.length === 0) return;
+
+    const supabase = await createClient();
+
+    // 1. Delete relations
+    const { error: relError } = await supabase
+      .from('product_categories')
+      .delete()
+      .eq('category_id', categoryId)
+      .in('product_id', productIds);
+
+    if (relError) throw relError;
+
+    // 2. Fetch products that had this category as primary
+    const { data: prodData } = await supabase
+      .from('products')
+      .select('id, slug, category_id')
+      .in('id', productIds);
+
+    if (prodData && prodData.length > 0) {
+      const primaryCatProdIds = prodData.filter(p => p.category_id === categoryId).map(p => p.id);
+
+      // We don't try to find the next category in bulk as it's complex and usually negligible.
+      // We'll just set it to null. Product will still be associated with other categories via junction table.
+      if (primaryCatProdIds.length > 0) {
+        await supabase
+          .from('products')
+          .update({ category_id: null })
+          .in('id', primaryCatProdIds);
+      }
+
+      // Revalidate in background to not block the UI
+      const revalidatePromises = prodData
+        .filter(prod => prod.slug)
+        .map(prod =>
+          revalidateProduct(prod.slug!).catch(e =>
+            console.error(`[products] revalidateProduct failed for ${prod.slug}:`, e)
+          )
+        );
+      
+      // Fire and forget - do not await the Promise.allSettled so the UI returns instantly
+      Promise.allSettled(revalidatePromises).catch(console.error);
+    }
+
+    (revalidateTag as any)('products');
+    (revalidateTag as any)('categories');
+  } catch (error) {
+    console.error('[products] removeProductsFromCategory failed:', error);
     throw error;
   }
 };

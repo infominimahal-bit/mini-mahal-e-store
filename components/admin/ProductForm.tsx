@@ -7,11 +7,13 @@ import { Trash2, Plus, Upload, Star, Bold, Italic, Underline, List, ListOrdered,
 import HorizontalSortableList from '@/components/admin/HorizontalSortableList';
 import {
   DndContext,
+  DragOverlay,
   closestCenter,
   PointerSensor,
   TouchSensor,
   useSensor,
   useSensors,
+  type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
 import {
@@ -92,25 +94,25 @@ function SortableImageItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="group relative select-none"
+      className="group relative select-none animate-in fade-in duration-200"
     >
       {/* Image container */}
-      <div className="relative aspect-square rounded-lg border border-gray-100 bg-gray-50 overflow-hidden cursor-grab active:cursor-grabbing">
-        {/* drag handle area / listener */}
-        <div 
-          className="absolute inset-0 z-0" 
-          {...attributes} 
-          {...listeners}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={img.url} alt={`Preview ${index}`} className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
-        </div>
+      <div 
+        className="relative aspect-square rounded-lg border border-gray-150 bg-gray-50 dark:bg-gray-850 dark:border-gray-800 overflow-hidden cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+        {...attributes}
+        {...listeners}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={img.url} alt={`Preview ${index}`} className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
 
         {/* Desktop-only hover overlay (hidden on mobile) */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex items-center justify-center gap-2 z-20">
           <button
             type="button"
-            onClick={() => handleSetPrimaryImage(index)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSetPrimaryImage(index);
+            }}
             className={`p-1.5 rounded-lg text-white hover:bg-white/10 ${img.isPrimary ? 'text-amber-400' : ''}`}
             title="Make Primary"
           >
@@ -118,7 +120,10 @@ function SortableImageItem({
           </button>
           <button
             type="button"
-            onClick={() => handleRemoveImage(index, img.url)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRemoveImage(index, img.url);
+            }}
             className="p-1.5 rounded-lg text-red-400 hover:bg-white/10"
             title="Delete Image"
           >
@@ -128,20 +133,28 @@ function SortableImageItem({
 
         {/* Badges always visible */}
         {img.isPrimary && (
-          <span className="absolute top-1 right-1 z-10 bg-amber-400 text-[9px] font-extrabold text-[#1a1a2e] px-1.5 py-0.5 rounded-md shadow-md">
+          <span className="absolute top-1.5 right-1.5 z-30 bg-amber-400 text-[9px] font-extrabold text-[#1a1a2e] px-1.5 py-0.5 rounded-md shadow-md">
             PRIMARY
           </span>
         )}
-        <span className="absolute top-1.5 left-1.5 z-10 bg-secondary text-[10px] font-extrabold text-white w-6 h-6 rounded-full flex items-center justify-center shadow-md border border-white/20">
-          {index + 1}
-        </span>
+        
+        {/* Combined Grip handle and index number badge */}
+        <div className="absolute top-1.5 left-1.5 z-30 flex items-center gap-1 bg-[#1a1a2e]/80 backdrop-blur-xs text-white px-2 py-0.5 rounded-lg shadow-md border border-white/10 select-none">
+          <GripVertical className="h-3 w-3 text-gray-300 flex-shrink-0" />
+          <span className="text-[10px] font-extrabold tabular-nums">
+            {index + 1}
+          </span>
+        </div>
       </div>
 
       {/* Mobile-only action buttons below image — no accidental deletes */}
       <div className="mt-1.5 flex gap-1.5 md:hidden z-20 relative">
         <button
           type="button"
-          onClick={() => handleSetPrimaryImage(index)}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSetPrimaryImage(index);
+          }}
           className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${img.isPrimary
               ? 'bg-amber-50 border-amber-300 text-amber-700'
               : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-600'
@@ -153,7 +166,10 @@ function SortableImageItem({
         </button>
         <button
           type="button"
-          onClick={() => handleRemoveImage(index, img.url)}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleRemoveImage(index, img.url);
+          }}
           className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 transition-all cursor-pointer"
           title="Remove Image"
         >
@@ -364,6 +380,8 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
     })) || []
   );
 
+  const [activeImageId, setActiveImageId] = useState<string | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -378,7 +396,16 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
     })
   );
 
+  const handleDragStartImages = (event: DragStartEvent) => {
+    setActiveImageId(event.active.id as string);
+  };
+
+  const handleDragCancelImages = () => {
+    setActiveImageId(null);
+  };
+
   const handleDragEndImages = (event: DragEndEvent) => {
+    setActiveImageId(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -2562,6 +2589,8 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
+                  onDragStart={handleDragStartImages}
+                  onDragCancel={handleDragCancelImages}
                   onDragEnd={handleDragEndImages}
                 >
                   <SortableContext
@@ -2580,6 +2609,17 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                       ))}
                     </div>
                   </SortableContext>
+                  <DragOverlay adjustScale={true}>
+                    {activeImageId ? (
+                      <div className="rounded-xl overflow-hidden border-2 border-primary shadow-2xl relative aspect-[3/4]">
+                        <img 
+                          src={images.find(img => img.url === activeImageId)?.url || ''} 
+                          alt="Dragging" 
+                          className="w-full h-full object-cover" 
+                        />
+                      </div>
+                    ) : null}
+                  </DragOverlay>
                 </DndContext>
               )}
             </div>

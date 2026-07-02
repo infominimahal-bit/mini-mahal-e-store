@@ -1653,13 +1653,13 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
             <div className="text-center py-16 text-gray-400 bg-white dark:bg-[#16162a] border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm">
               No media files found matching the search criteria.
             </div>
-          ) : mode === 'selector' ? (
+          ) : (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {paginatedMedia.map(item =>
                   renderMediaCard(
                     item,
-                    selectedLibraryUrls.has(item.file_url),
+                    mode === 'selector' ? selectedLibraryUrls.has(item.file_url) : selectedIds.includes(item.id),
                     () => toggleSelect(item)
                   )
                 )}
@@ -1674,7 +1674,7 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
                         setPageSize(Number(e.target.value));
                         setCurrentPage(1);
                       }}
-                      className="rounded-lg border border-gray-250 dark:border-gray-800 bg-white dark:bg-[#16162a] px-2.5 py-1.5 focus:outline-none focus:border-blue-500 cursor-pointer"
+                      className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#16162a] px-2.5 py-1.5 focus:outline-none focus:border-blue-500 cursor-pointer"
                     >
                       <option value={50}>50</option>
                       <option value={100}>100</option>
@@ -1708,18 +1708,6 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
                 </div>
               )}
             </>
-          ) : (
-            <SortableMediaGrid
-              items={filteredMedia}
-              onItemsReorder={() => {}}
-              onSave={handleSaveSortOrder}
-              renderItem={(item, selected, onToggle) =>
-                renderMediaCard(item, selected, onToggle)
-              }
-              isSelected={(item) => selectedIds.includes(item.id)}
-              onToggle={(item) => toggleSelect(item)}
-              saving={isSavingSortOrder}
-            />
           )}
 
           </div>

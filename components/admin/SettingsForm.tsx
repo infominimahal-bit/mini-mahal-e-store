@@ -1284,15 +1284,29 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
     }
   }, [router]);
 
+  // Scroll active tab into view horizontally
+  useEffect(() => {
+    const activeBtn = document.getElementById(`tab-btn-${activeTab}`);
+    const tabBar = document.getElementById('settings-tab-bar');
+    if (activeBtn && tabBar) {
+      const containerRect = tabBar.getBoundingClientRect();
+      const btnRect = activeBtn.getBoundingClientRect();
+      if (btnRect.left < containerRect.left || btnRect.right > containerRect.right) {
+        activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, [activeTab]);
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl pb-16">
 
       {/* ====== TAB BAR - hidden on mobile (use sidebar instead) ====== */}
       <div className="hidden md:block bg-white dark:bg-[#16162a] border border-gray-200 dark:border-gray-800 rounded-2xl p-2 shadow-sm">
-        <div className="flex gap-1 overflow-x-auto scrollbar-hide flex-wrap sm:flex-nowrap">
+        <div id="settings-tab-bar" className="flex gap-1 overflow-x-auto scrollbar-hide flex-wrap sm:flex-nowrap scroll-smooth">
           {TABS.filter(tab => tab.id !== 'meta_sync' || metaSyncEnabled).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
+              id={`tab-btn-${id}`}
               type="button"
               onClick={() => setActiveTab(id)}
               className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 cursor-pointer shrink-0 ${activeTab === id

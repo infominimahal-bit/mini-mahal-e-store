@@ -251,7 +251,7 @@ export default function SizeGuidesPage() {
           />
         </div>
 
-        <div>
+        <div className="hidden">
           <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Table Columns (Comma-separated)</label>
           <input
             type="text"
@@ -273,16 +273,89 @@ export default function SizeGuidesPage() {
 
         {/* Sizing Rows Table */}
         <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Sizing Rows</label>
-          <div className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden bg-white dark:bg-[#0f0f1b]">
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-xs font-bold text-gray-500 uppercase">Sizing Rows</label>
+            <button
+              type="button"
+              onClick={() => {
+                const colName = window.prompt("Enter new column name (e.g. Waist):");
+                if (colName && colName.trim()) {
+                  const trimmed = colName.trim();
+                  const val = newColumns ? `${newColumns}, ${trimmed}` : trimmed;
+                  setNewColumns(val);
+                  const cols = val.split(',').map(s => s.trim()).filter(Boolean);
+                  setNewRows(prev => prev.map(row => {
+                    const updated = { ...row };
+                    cols.forEach(col => { if (updated[col] === undefined) updated[col] = ''; });
+                    return updated;
+                  }));
+                }
+              }}
+              className="flex items-center gap-1.5 text-[#e94560] hover:text-[#d8344e] text-xs font-bold py-1.5 px-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition-all cursor-pointer border border-[#e94560]/20 hover:border-[#e94560]/40"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add Column
+            </button>
+          </div>
+          <div className="border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-[#0f0f1b]">
             <div className="overflow-x-auto scrollbar-thin">
               <table className="w-full text-left border-collapse min-w-[300px]">
                 <thead>
                   <tr className="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-gray-800">
                     {newColumns.split(',').map(s => s.trim()).filter(Boolean).map((col, i) => (
-                      <th key={i} className="px-4 py-3 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">{col}</th>
+                      <th key={i} className="px-4 py-3 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap group">
+                        <div className="flex items-center gap-2 bg-gray-100/50 dark:bg-white/5 py-1 px-2 rounded-lg border border-gray-200/50 dark:border-gray-800/50">
+                          <span className="text-gray-700 dark:text-gray-300">{col}</span>
+                          <div className="flex items-center gap-1 ml-1 pl-2 border-l border-gray-200 dark:border-gray-700">
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                const newName = window.prompt("Edit column name:", col);
+                                if (newName && newName.trim() && newName.trim() !== col) {
+                                  const trimmed = newName.trim();
+                                  const cols = newColumns.split(',').map(s => s.trim()).filter(Boolean);
+                                  const updatedCols = cols.map(c => c === col ? trimmed : c);
+                                  setNewColumns(updatedCols.join(', '));
+                                  setNewRows(prev => prev.map(row => {
+                                    const updated = { ...row };
+                                    if (updated[col] !== undefined) {
+                                      updated[trimmed] = updated[col];
+                                      delete updated[col];
+                                    }
+                                    return updated;
+                                  }));
+                                }
+                              }}
+                              className="text-gray-400 hover:text-blue-500 transition-colors p-0.5"
+                              title="Edit column name"
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(`Remove column "${col}"?`)) {
+                                  const cols = newColumns.split(',').map(s => s.trim()).filter(Boolean);
+                                  const updatedCols = cols.filter(c => c !== col);
+                                  setNewColumns(updatedCols.join(', '));
+                                  setNewRows(prev => prev.map(row => {
+                                    const updated = { ...row };
+                                    delete updated[col];
+                                    return updated;
+                                  }));
+                                }
+                              }}
+                              className="text-gray-400 hover:text-red-500 transition-colors p-0.5"
+                              title="Remove column"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </th>
                     ))}
-                    <th className="px-4 py-3 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right w-16">Actions</th>
+                    <th className="px-4 py-3 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center whitespace-nowrap">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>{newRows.map((row, ri) => {
@@ -304,15 +377,18 @@ export default function SizeGuidesPage() {
                             />
                           </td>
                         ))}
-                        <td className="px-4 py-2 text-right">
-                          <button
-                            type="button"
-                            onClick={() => setNewRows(prev => prev.filter((_, idx) => idx !== ri))}
-                            className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </td>
+                          <td className="px-4 py-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNewRows(prev => prev.filter((_, idx) => idx !== ri));
+                              }}
+                              className="p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors cursor-pointer mx-auto"
+                              title="Delete Row"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </td>
                       </tr>
                     );
                   })}
@@ -335,7 +411,7 @@ export default function SizeGuidesPage() {
                   cols.forEach(col => { newRow[col] = ''; });
                   setNewRows(prev => [...prev, newRow]);
                 }}
-                className="flex items-center gap-1.5 text-[#e94560] hover:text-[#e94560]/90 text-xs font-bold py-1.5 px-3 rounded-lg hover:bg-gray-100/50 dark:hover:bg-white/5 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 text-[#e94560] hover:text-[#d8344e] text-xs font-bold py-1.5 px-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition-all cursor-pointer border border-[#e94560]/20 hover:border-[#e94560]/40"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add Sizing Row</span>
@@ -479,7 +555,13 @@ export default function SizeGuidesPage() {
                           const colHeaders = guide.chart_data.length > 0 ? Object.keys(guide.chart_data[0]) : ['Size', 'Chest', 'Length', 'Shoulder'];
                           setNewColumns(colHeaders.join(', '));
                           setNewRows(guide.chart_data);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          setTimeout(() => {
+                            const mainEl = document.getElementById('admin-main-content');
+                            if (mainEl) {
+                              mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }, 50);
                         }}
                         className="p-1.5 text-blue-400 hover:text-blue-600 cursor-pointer"
                         title="Edit guide"

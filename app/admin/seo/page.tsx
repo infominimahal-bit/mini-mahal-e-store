@@ -64,7 +64,7 @@ export default async function SEODashboard() {
         </div>
         <div className="flex gap-3 w-full sm:w-auto">
           <Link 
-            href="/admin/seo/settings"
+            href="/admin/settings?tab=ai_settings"
             className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a1a30] text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-800 text-sm transition-colors cursor-pointer min-h-[44px] flex-1 sm:flex-none"
           >
             <Settings className="w-4 h-4" />

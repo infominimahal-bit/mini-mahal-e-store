@@ -1,27 +1,32 @@
 'use client';
 
 import React, { useState, useTransition, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Product, Category, ProductVariant } from '@/lib/types';
-import { 
-  updateProductFields, 
+import {
+  updateProductFields,
   updateProductSortOrders,
   updateProductVariantFields,
   addProductToCategory,
+  addProductsToCategory,
   removeProductFromCategory,
+  removeProductsFromCategory,
   getAllProductsAdmin
 } from '@/lib/services/products';
 import { updateCategory } from '@/lib/services/categories';
 import { toast } from 'sonner';
 import { formatPrice } from '@/lib/utils/whatsapp';
-import { 
-  Search, 
+import {
+  Search,
   ChevronDown,
   ChevronUp,
   ChevronRight,
   Edit,
   GripVertical,
+  ArrowLeft,
+  ExternalLink,
   Loader2,
   PackageOpen,
   FolderOpen,
@@ -38,6 +43,7 @@ interface CategoryDetailManagerProps {
 }
 
 export default function CategoryDetailManager({ category, initialProducts }: CategoryDetailManagerProps) {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [sortBy, setSortBy] = useState('newest');
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,17 +78,11 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
   const handleBulkRemoveProducts = async () => {
     if (selectedProductIds.length === 0) return;
     if (!confirm(`Are you sure you want to remove ${selectedProductIds.length} products from this category?`)) return;
-    const toastId = toast.loading(`Removing ${selectedProductIds.length} products...`);
-    try {
-      await Promise.all(selectedProductIds.map(productId => 
-        removeProductFromCategory(productId, category.id)
-      ));
-      setProducts(prev => prev.filter(p => !selectedProductIds.includes(p.id)));
-      setSelectedProductIds([]);
-      toast.success('Selected products removed from category', { id: toastId });
-    } catch (err) {
-      toast.error('Failed to remove selected products', { id: toastId });
-    }
+    
+    setProducts(prev => prev.filter(p => !selectedProductIds.includes(p.id)));
+    setSelectedProductIds([]);
+    setHasUnsavedChanges(true);
+    toast.info('Selected products marked for removal. Click Save Settings to apply.', { duration: 4000 });
   };
 
   // Bulk update variant fields
@@ -90,7 +90,7 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
     if (variantIds.length === 0) return;
     const toastId = toast.loading(`Updating ${variantIds.length} variants...`);
     try {
-      await Promise.all(variantIds.map(variantId => 
+      await Promise.all(variantIds.map(variantId =>
         updateProductVariantFields(variantId, fields)
       ));
       setProducts(prev => prev.map(p => {
@@ -131,49 +131,57 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
     }
   };
 
+  const [modalSelectedProductIds, setModalSelectedProductIds] = useState<string[]>([]);
+
   const handleAddProduct = async (productId: string) => {
-    setAddingProductId(productId);
-    try {
-      await addProductToCategory(productId, category.id);
-      
-      const addedProduct = allStoreProducts.find(p => p.id === productId);
-      if (addedProduct) {
-        const updatedProduct = {
-          ...addedProduct,
-          productCategories: [
-            ...(addedProduct.productCategories || []),
-            {
-              productId: productId,
-              categoryId: category.id
-            }
-          ]
-        };
-        setProducts(prev => [updatedProduct, ...prev]);
-      }
-      toast.success('Product added to category successfully');
-    } catch (err) {
-      toast.error('Failed to add product to category');
-    } finally {
-      setAddingProductId(null);
+    const addedProduct = allStoreProducts.find(p => p.id === productId);
+    if (addedProduct) {
+      const updatedProduct = {
+        ...addedProduct,
+        productCategories: [
+          ...(addedProduct.productCategories || []),
+          {
+            productId: productId,
+            categoryId: category.id
+          }
+        ]
+      };
+      setProducts(prev => [updatedProduct, ...prev]);
+      setHasUnsavedChanges(true);
+      toast.info('Product marked to add. Click Save Settings to apply.', { duration: 3000 });
     }
   };
 
+  const handleBulkAddProducts = async () => {
+    if (modalSelectedProductIds.length === 0) return;
+    
+    const addedProducts = allStoreProducts.filter(p => modalSelectedProductIds.includes(p.id));
+    const newProducts = addedProducts.map(p => ({
+      ...p,
+      productCategories: [
+        ...(p.productCategories || []),
+        {
+          productId: p.id,
+          categoryId: category.id
+        }
+      ]
+    }));
+    
+    setProducts(prev => [...newProducts, ...prev]);
+    setModalSelectedProductIds([]);
+    setHasUnsavedChanges(true);
+    toast.info(`${addedProducts.length} products marked to add. Click Save Settings to apply.`, { duration: 4000 });
+  };
+
   const handleRemoveProduct = async (productId: string) => {
-    setRemovingProductId(productId);
-    try {
-      await removeProductFromCategory(productId, category.id);
-      setProducts(prev => prev.filter(p => p.id !== productId));
-      toast.success('Product removed from category successfully');
-    } catch (err) {
-      toast.error('Failed to remove product from category');
-    } finally {
-      setRemovingProductId(null);
-    }
+    setProducts(prev => prev.filter(p => p.id !== productId));
+    setHasUnsavedChanges(true);
+    toast.info('Product marked for removal. Click Save Settings to apply.', { duration: 3000 });
   };
 
   const assignedProductIds = new Set(products.map(p => p.id));
   const availableProducts = allStoreProducts.filter(p => !assignedProductIds.has(p.id));
-  
+
   const filteredModalProducts = availableProducts.filter(p =>
     p.name.toLowerCase().includes(modalSearchQuery.toLowerCase()) ||
     (p.sku && p.sku.toLowerCase().includes(modalSearchQuery.toLowerCase()))
@@ -320,12 +328,29 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
     setSavingSortOrder(true);
     const toastId = toast.loading('Saving changes...');
     try {
+      const originalProductIds = new Set(initialProducts.map(p => p.id));
+      const currentProductIds = new Set(products.map(p => p.id));
+      
+      const addedProductIds = products.filter(p => !originalProductIds.has(p.id)).map(p => p.id);
+      const removedProductIds = initialProducts.filter(p => !currentProductIds.has(p.id)).map(p => p.id);
+
+      if (addedProductIds.length > 0) {
+        await addProductsToCategory(addedProductIds, category.id);
+      }
+      
+      if (removedProductIds.length > 0) {
+        await removeProductsFromCategory(removedProductIds, category.id);
+      }
+
       if (sortBy === 'manual') {
         await updateProductSortOrders(products.map(p => p.id));
       }
+      
       await updateCategory(category.id, { activeSortPreference: sortBy });
+      
       setHasUnsavedChanges(false);
-      toast.success('Sort settings saved successfully', { id: toastId });
+      toast.success('Settings and products saved successfully', { id: toastId });
+      router.refresh(); // Refresh page to get latest initialProducts baseline
     } catch (err) {
       toast.error('Failed to save settings', { id: toastId });
     } finally {
@@ -342,7 +367,7 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
           <ChevronRight className="h-3 w-3" />
           <span className="text-gray-800 dark:text-gray-200">{category.name}</span>
         </div>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-primary/5 dark:bg-white/5 rounded-2xl text-primary dark:text-white border border-gray-100 dark:border-gray-850">
               <FolderOpen className="h-6 w-6" />
@@ -354,14 +379,33 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={openAddModal}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-[#e94560] text-white hover:bg-[#e94560]/90 transition-all active:scale-95 shadow-sm md:w-auto w-full"
-          >
-            <Plus className="h-4 w-4" />
-            Add Product
-          </button>
+          
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <Link
+              href="/admin/categories"
+              className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-[#16162a] text-gray-700 dark:text-gray-200 text-xs font-bold transition-all hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm cursor-pointer"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Categories</span>
+            </Link>
+            <a
+              href={`/shop?category=${category.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold transition-all hover:bg-blue-100 dark:hover:bg-blue-500/20 shadow-sm cursor-pointer"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span>View Storefront</span>
+            </a>
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#e94560] text-white hover:bg-[#e94560]/90 transition-all active:scale-95 shadow-sm"
+            >
+              <Plus className="h-4 w-4" />
+              Add Product
+            </button>
+          </div>
         </div>
       </div>
 
@@ -442,513 +486,513 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">{paginatedProducts.map((product, index) => {
-                    const isExpanded = expandedProducts[product.id] ?? false;
-                    
-                    return (
-                      <React.Fragment key={product.id}><tr 
-                          className={`transition-all duration-200 ease-in-out${draggingId === product.id ? ' opacity-50 bg-orange-50/50 dark:bg-orange-950/20' : ' hover:bg-gray-50/50 dark:hover:bg-[#1d1d36]/30'}`}
-                        >
-                          <td className="py-4 px-4 text-center">
-                            <input
-                              type="checkbox"
-                              checked={selectedProductIds.includes(product.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedProductIds(prev => [...prev, product.id]);
-                                } else {
-                                  setSelectedProductIds(prev => prev.filter(id => id !== product.id));
-                                }
-                              }}
-                              className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-4 w-4 cursor-pointer"
-                            />
-                          </td>
-                          {sortBy === 'manual' && (
-                            <td className="py-4 px-2 w-10 text-center">
-                              <span className="text-xs font-semibold text-slate-400">#{index + 1}</span>
-                            </td>
-                          )}
-                          {sortBy === 'manual' && (
-                            <td className="py-4 px-2 w-14 align-middle">
-                              <div className="flex flex-col items-center gap-0.5"
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, index)}
-                                onDragOver={(e) => handleDragOver(e, index)}
-                                onDrop={handleDrop}
-                                onDragEnd={handleDragEnd}
-                              >
+                  const isExpanded = expandedProducts[product.id] ?? false;
+
+                  return (
+                    <React.Fragment key={product.id}><tr
+                      className={`transition-all duration-200 ease-in-out${draggingId === product.id ? ' opacity-50 bg-orange-50/50 dark:bg-orange-950/20' : ' hover:bg-gray-50/50 dark:hover:bg-[#1d1d36]/30'}`}
+                    >
+                      <td className="py-4 px-4 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedProductIds.includes(product.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedProductIds(prev => [...prev, product.id]);
+                            } else {
+                              setSelectedProductIds(prev => prev.filter(id => id !== product.id));
+                            }
+                          }}
+                          className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-4 w-4 cursor-pointer"
+                        />
+                      </td>
+                      {sortBy === 'manual' && (
+                        <td className="py-4 px-2 w-10 text-center">
+                          <span className="text-xs font-semibold text-slate-400">#{index + 1}</span>
+                        </td>
+                      )}
+                      {sortBy === 'manual' && (
+                        <td className="py-4 px-2 w-14 align-middle">
+                          <div className="flex flex-col items-center gap-0.5"
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, index)}
+                            onDragOver={(e) => handleDragOver(e, index)}
+                            onDrop={handleDrop}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => moveProduct(product.id, 'up')}
+                              disabled={products.findIndex(p => p.id === product.id) === 0}
+                              className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-white disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                            >
+                              <ChevronUp className="h-3 w-3" />
+                            </button>
+                            <span className="p-0.5 text-gray-400 cursor-grab active:cursor-grabbing touch-none select-none">
+                              <GripVertical className="h-3.5 w-3.5" />
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => moveProduct(product.id, 'down')}
+                              disabled={products.findIndex(p => p.id === product.id) === products.length - 1}
+                              className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-white disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                            >
+                              <ChevronDown className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                      <td className="py-4 px-4 text-center">
+                        {product.hasVariants ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleExpand(product.id)}
+                            className="text-gray-400 hover:text-gray-700 dark:hover:text-white p-1 rounded-md hover:bg-gray-100 dark:hover:bg-[#252542] transition-all"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </button>
+                        ) : null}
+                      </td>
+                      <td className="py-4 px-4 font-semibold text-gray-900 dark:text-white">
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-10 w-10 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 border border-gray-150 dark:border-gray-800 flex-shrink-0">
+                            {product.images?.[0] ? (
+                              <Image
+                                src={product.images[0].url}
+                                alt={product.name}
+                                fill
+                                sizes="40px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="h-full w-full bg-gray-100 dark:bg-gray-850 flex items-center justify-center text-gray-400 text-[10px]">
+                                No Img
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-gray-900 dark:text-white">{product.name}</div>
+                            <div className="text-[10px] font-mono text-gray-450 mt-0.5">{product.sku || 'No SKU'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        {product.hasVariants ? (
+                          <span className="text-xs text-gray-400">Managed per variant</span>
+                        ) : (
+                          <div className="flex items-center gap-2 max-w-[120px]">
+                            <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
+                              <span className="text-xs pl-2.5 text-gray-400 font-bold">Rs.</span>
+                              <input
+                                type="number"
+                                defaultValue={product.price}
+                                style={{ borderWidth: 0 }}
+                                className="w-20 bg-transparent text-xs text-gray-900 dark:text-white px-2 py-1.5 focus:outline-none"
+                                onBlur={(e) => {
+                                  const val = parseFloat(e.target.value);
+                                  if (!isNaN(val) && val !== product.price) {
+                                    handleUpdateProduct(product.id, { price: val });
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    const val = parseFloat((e.target as HTMLInputElement).value);
+                                    if (!isNaN(val)) {
+                                      handleUpdateProduct(product.id, { price: val });
+                                      (e.target as HTMLInputElement).blur();
+                                    }
+                                  }
+                                }}
+                              />
+                            </div>
+                            {updatingIds[`price-${product.id}`] && (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#e94560]" />
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-4 px-4">
+                        {product.hasVariants ? (
+                          <span className="text-xs text-gray-400">Managed per variant</span>
+                        ) : (
+                          <div className="flex items-center gap-2 max-w-[120px]">
+                            <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
+                              <span className="text-xs pl-2.5 text-gray-400 font-bold">Rs.</span>
+                              <input
+                                type="number"
+                                defaultValue={product.comparePrice || ''}
+                                placeholder="—"
+                                style={{ borderWidth: 0 }}
+                                className="w-20 bg-transparent text-xs text-gray-900 dark:text-white px-2 py-1.5 focus:outline-none"
+                                onBlur={(e) => {
+                                  const val = parseFloat(e.target.value);
+                                  if (!isNaN(val) && val !== product.comparePrice) {
+                                    handleUpdateProduct(product.id, { comparePrice: val });
+                                  } else if (e.target.value === '' && product.comparePrice !== undefined) {
+                                    handleUpdateProduct(product.id, { comparePrice: undefined });
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    const val = parseFloat((e.target as HTMLInputElement).value);
+                                    if (!isNaN(val)) {
+                                      handleUpdateProduct(product.id, { comparePrice: val });
+                                      (e.target as HTMLInputElement).blur();
+                                    } else if ((e.target as HTMLInputElement).value === '') {
+                                      handleUpdateProduct(product.id, { comparePrice: undefined });
+                                      (e.target as HTMLInputElement).blur();
+                                    }
+                                  }
+                                }}
+                              />
+                            </div>
+                            {updatingIds[`comparePrice-${product.id}`] && (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#e94560]" />
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-4 px-4">
+                        {product.hasVariants ? (
+                          <span className="font-bold text-xs text-indigo-600 dark:text-indigo-400">
+                            Variants ({product.stock})
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-2 max-w-[120px]">
+                            <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
+                              <input
+                                type="number"
+                                defaultValue={product.stock}
+                                style={{ borderWidth: 0 }}
+                                className="w-16 bg-transparent text-xs text-gray-900 dark:text-white px-2.5 py-1.5 focus:outline-none"
+                                onBlur={(e) => {
+                                  const val = parseInt(e.target.value, 10);
+                                  if (!isNaN(val) && val !== product.stock) {
+                                    handleUpdateProduct(product.id, { stock: val });
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    const val = parseInt((e.target as HTMLInputElement).value, 10);
+                                    if (!isNaN(val)) {
+                                      handleUpdateProduct(product.id, { stock: val });
+                                      (e.target as HTMLInputElement).blur();
+                                    }
+                                  }
+                                }}
+                              />
+                            </div>
+                            {updatingIds[`stock-${product.id}`] && (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#e94560]" />
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Link
+                            href={`/admin/products/${product.id}`}
+                            className="inline-flex p-2 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-650 hover:bg-gray-50 dark:hover:bg-[#1d1d36] transition-all"
+                            title="Edit full product details"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveProduct(product.id)}
+                            disabled={removingProductId === product.id}
+                            className="inline-flex p-2 rounded-lg border border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all disabled:opacity-50"
+                            title="Remove from category"
+                          >
+                            {removingProductId === product.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>{product.hasVariants && isExpanded && (
+                      <tr>
+                        <td colSpan={sortBy === 'manual' ? 9 : 7} className="bg-gray-50/40 dark:bg-[#0e0e1e]/40 p-4">
+                          {product.variants.some(v => selectedVariantIds.includes(v.id)) && (
+                            <div className="ml-10 bg-gray-100/95 dark:bg-[#1c1c36] p-4 rounded-xl border border-gray-200 dark:border-gray-800 mb-3 flex flex-wrap items-center justify-between gap-4 animate-in slide-in-from-top-1 duration-150">
+                              <div className="text-xs font-bold text-gray-700 dark:text-gray-200">
+                                {product.variants.filter(v => selectedVariantIds.includes(v.id)).length} variant(s) selected
+                              </div>
+                              <div className="flex flex-wrap items-center gap-3.5">
+                                {/* Bulk Set Price */}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Price:</span>
+                                  <input
+                                    type="number"
+                                    placeholder="Set Price"
+                                    id={`bulk-price-input-${product.id}`}
+                                    className="w-28 px-3 py-1.5 bg-white dark:bg-[#0f0f1b] border border-gray-200 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:border-primary text-gray-900 dark:text-white font-medium"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const input = document.getElementById(`bulk-price-input-${product.id}`) as HTMLInputElement;
+                                      const val = parseFloat(input?.value);
+                                      if (!isNaN(val)) {
+                                        const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
+                                        handleBulkUpdateVariantFields(vIds, { price: val });
+                                        if (input) input.value = '';
+                                      } else {
+                                        toast.error('Please enter a valid price');
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 bg-[#e94560] hover:bg-[#e94560]/95 text-white rounded-lg text-xs font-bold transition-all"
+                                  >
+                                    Apply
+                                  </button>
+                                </div>
+
+                                {/* Bulk Set Compare Price */}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Compare:</span>
+                                  <input
+                                    type="number"
+                                    placeholder="Set Compare"
+                                    id={`bulk-compare-input-${product.id}`}
+                                    className="w-28 px-3 py-1.5 bg-white dark:bg-[#0f0f1b] border border-gray-200 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:border-primary text-gray-900 dark:text-white font-medium"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const input = document.getElementById(`bulk-compare-input-${product.id}`) as HTMLInputElement;
+                                      const val = parseFloat(input?.value);
+                                      if (!isNaN(val)) {
+                                        const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
+                                        handleBulkUpdateVariantFields(vIds, { comparePrice: val });
+                                        if (input) input.value = '';
+                                      } else if (input?.value === '') {
+                                        const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
+                                        handleBulkUpdateVariantFields(vIds, { comparePrice: undefined });
+                                      } else {
+                                        toast.error('Please enter a valid compare price');
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 bg-[#e94560] hover:bg-[#e94560]/95 text-white rounded-lg text-xs font-bold transition-all"
+                                  >
+                                    Apply
+                                  </button>
+                                </div>
+
+                                {/* Bulk Set Stock */}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Stock:</span>
+                                  <input
+                                    type="number"
+                                    placeholder="Set Stock"
+                                    id={`bulk-stock-input-${product.id}`}
+                                    className="w-28 px-3 py-1.5 bg-white dark:bg-[#0f0f1b] border border-gray-200 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:border-primary text-gray-900 dark:text-white font-medium"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const input = document.getElementById(`bulk-stock-input-${product.id}`) as HTMLInputElement;
+                                      const val = parseInt(input?.value, 10);
+                                      if (!isNaN(val)) {
+                                        const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
+                                        handleBulkUpdateVariantFields(vIds, { stock: val });
+                                        if (input) input.value = '';
+                                      } else {
+                                        toast.error('Please enter a valid stock number');
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 bg-[#e94560] hover:bg-[#e94560]/95 text-white rounded-lg text-xs font-bold transition-all"
+                                  >
+                                    Apply
+                                  </button>
+                                </div>
+
                                 <button
                                   type="button"
-                                  onClick={() => moveProduct(product.id, 'up')}
-                                  disabled={products.findIndex(p => p.id === product.id) === 0}
-                                  className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-white disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                                  onClick={() => {
+                                    const vIds = product.variants.map(v => v.id);
+                                    setSelectedVariantIds(prev => prev.filter(id => !vIds.includes(id)));
+                                  }}
+                                  className="px-3 py-1.5 bg-gray-200 hover:bg-gray-250 dark:bg-gray-800 dark:hover:bg-gray-750 text-gray-700 dark:text-gray-350 rounded-lg text-xs font-bold transition-all"
                                 >
-                                  <ChevronUp className="h-3 w-3" />
-                                </button>
-                                <span className="p-0.5 text-gray-400 cursor-grab active:cursor-grabbing touch-none select-none">
-                                  <GripVertical className="h-3.5 w-3.5" />
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => moveProduct(product.id, 'down')}
-                                  disabled={products.findIndex(p => p.id === product.id) === products.length - 1}
-                                  className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-white disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
-                                >
-                                  <ChevronDown className="h-3 w-3" />
+                                  Cancel
                                 </button>
                               </div>
-                            </td>
+                            </div>
                           )}
-                          <td className="py-4 px-4 text-center">
-                            {product.hasVariants ? (
-                              <button
-                                type="button"
-                                onClick={() => toggleExpand(product.id)}
-                                className="text-gray-400 hover:text-gray-700 dark:hover:text-white p-1 rounded-md hover:bg-gray-100 dark:hover:bg-[#252542] transition-all"
-                              >
-                                {isExpanded ? (
-                                  <ChevronDown className="h-4 w-4" />
-                                ) : (
-                                  <ChevronRight className="h-4 w-4" />
-                                )}
-                              </button>
-                            ) : null}
-                          </td>
-                          <td className="py-4 px-4 font-semibold text-gray-900 dark:text-white">
-                            <div className="flex items-center gap-3">
-                              <div className="relative h-10 w-10 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 border border-gray-150 dark:border-gray-800 flex-shrink-0">
-                                {product.images?.[0] ? (
-                                  <Image
-                                    src={product.images[0].url}
-                                    alt={product.name}
-                                    fill
-                                    sizes="40px"
-                                    className="object-cover"
-                                  />
-                                ) : (
-                                  <div className="h-full w-full bg-gray-100 dark:bg-gray-850 flex items-center justify-center text-gray-400 text-[10px]">
-                                    No Img
-                                  </div>
-                                )}
-                              </div>
-                              <div>
-                                <div className="text-sm font-bold text-gray-900 dark:text-white">{product.name}</div>
-                                <div className="text-[10px] font-mono text-gray-450 mt-0.5">{product.sku || 'No SKU'}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-4 px-4">
-                            {product.hasVariants ? (
-                              <span className="text-xs text-gray-400">Managed per variant</span>
-                            ) : (
-                              <div className="flex items-center gap-2 max-w-[120px]">
-                                <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
-                                  <span className="text-xs pl-2.5 text-gray-400 font-bold">Rs.</span>
-                                  <input
-                                    type="number"
-                                    defaultValue={product.price}
-                                    style={{ borderWidth: 0 }}
-                                    className="w-20 bg-transparent text-xs text-gray-900 dark:text-white px-2 py-1.5 focus:outline-none"
-                                    onBlur={(e) => {
-                                      const val = parseFloat(e.target.value);
-                                      if (!isNaN(val) && val !== product.price) {
-                                        handleUpdateProduct(product.id, { price: val });
-                                      }
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        const val = parseFloat((e.target as HTMLInputElement).value);
-                                        if (!isNaN(val)) {
-                                          handleUpdateProduct(product.id, { price: val });
-                                          (e.target as HTMLInputElement).blur();
-                                        }
-                                      }
-                                    }}
-                                  />
-                                </div>
-                                {updatingIds[`price-${product.id}`] && (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#e94560]" />
-                                )}
-                              </div>
-                            )}
-                          </td>
-                          <td className="py-4 px-4">
-                            {product.hasVariants ? (
-                              <span className="text-xs text-gray-400">Managed per variant</span>
-                            ) : (
-                              <div className="flex items-center gap-2 max-w-[120px]">
-                                <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
-                                  <span className="text-xs pl-2.5 text-gray-400 font-bold">Rs.</span>
-                                  <input
-                                    type="number"
-                                    defaultValue={product.comparePrice || ''}
-                                    placeholder="—"
-                                    style={{ borderWidth: 0 }}
-                                    className="w-20 bg-transparent text-xs text-gray-900 dark:text-white px-2 py-1.5 focus:outline-none"
-                                    onBlur={(e) => {
-                                      const val = parseFloat(e.target.value);
-                                      if (!isNaN(val) && val !== product.comparePrice) {
-                                        handleUpdateProduct(product.id, { comparePrice: val });
-                                      } else if (e.target.value === '' && product.comparePrice !== undefined) {
-                                        handleUpdateProduct(product.id, { comparePrice: undefined });
-                                      }
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        const val = parseFloat((e.target as HTMLInputElement).value);
-                                        if (!isNaN(val)) {
-                                          handleUpdateProduct(product.id, { comparePrice: val });
-                                          (e.target as HTMLInputElement).blur();
-                                        } else if ((e.target as HTMLInputElement).value === '') {
-                                          handleUpdateProduct(product.id, { comparePrice: undefined });
-                                          (e.target as HTMLInputElement).blur();
-                                        }
-                                      }
-                                    }}
-                                  />
-                                </div>
-                                {updatingIds[`comparePrice-${product.id}`] && (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#e94560]" />
-                                )}
-                              </div>
-                            )}
-                          </td>
-                          <td className="py-4 px-4">
-                            {product.hasVariants ? (
-                              <span className="font-bold text-xs text-indigo-600 dark:text-indigo-400">
-                                Variants ({product.stock})
-                              </span>
-                            ) : (
-                              <div className="flex items-center gap-2 max-w-[120px]">
-                                <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
-                                  <input
-                                    type="number"
-                                    defaultValue={product.stock}
-                                    style={{ borderWidth: 0 }}
-                                    className="w-16 bg-transparent text-xs text-gray-900 dark:text-white px-2.5 py-1.5 focus:outline-none"
-                                    onBlur={(e) => {
-                                      const val = parseInt(e.target.value, 10);
-                                      if (!isNaN(val) && val !== product.stock) {
-                                        handleUpdateProduct(product.id, { stock: val });
-                                      }
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        const val = parseInt((e.target as HTMLInputElement).value, 10);
-                                        if (!isNaN(val)) {
-                                          handleUpdateProduct(product.id, { stock: val });
-                                          (e.target as HTMLInputElement).blur();
-                                        }
-                                      }
-                                    }}
-                                  />
-                                </div>
-                                {updatingIds[`stock-${product.id}`] && (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#e94560]" />
-                                )}
-                              </div>
-                            )}
-                          </td>
-                          <td className="py-4 px-4 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                              <Link
-                                href={`/admin/products/${product.id}`}
-                                className="inline-flex p-2 rounded-lg border border-gray-200 dark:border-gray-800 text-gray-650 hover:bg-gray-50 dark:hover:bg-[#1d1d36] transition-all"
-                                title="Edit full product details"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Link>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveProduct(product.id)}
-                                disabled={removingProductId === product.id}
-                                className="inline-flex p-2 rounded-lg border border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all disabled:opacity-50"
-                                title="Remove from category"
-                              >
-                                {removingProductId === product.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="h-4 w-4" />
-                                )}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>{product.hasVariants && isExpanded && (
-                          <tr>
-                            <td colSpan={sortBy === 'manual' ? 9 : 7} className="bg-gray-50/40 dark:bg-[#0e0e1e]/40 p-4">
-                              {product.variants.some(v => selectedVariantIds.includes(v.id)) && (
-                                <div className="ml-10 bg-gray-100/95 dark:bg-[#1c1c36] p-4 rounded-xl border border-gray-200 dark:border-gray-800 mb-3 flex flex-wrap items-center justify-between gap-4 animate-in slide-in-from-top-1 duration-150">
-                                  <div className="text-xs font-bold text-gray-700 dark:text-gray-200">
-                                    {product.variants.filter(v => selectedVariantIds.includes(v.id)).length} variant(s) selected
-                                  </div>
-                                  <div className="flex flex-wrap items-center gap-3.5">
-                                    {/* Bulk Set Price */}
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Price:</span>
-                                      <input
-                                        type="number"
-                                        placeholder="Set Price"
-                                        id={`bulk-price-input-${product.id}`}
-                                        className="w-28 px-3 py-1.5 bg-white dark:bg-[#0f0f1b] border border-gray-200 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:border-primary text-gray-900 dark:text-white font-medium"
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const input = document.getElementById(`bulk-price-input-${product.id}`) as HTMLInputElement;
-                                          const val = parseFloat(input?.value);
-                                          if (!isNaN(val)) {
-                                            const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
-                                            handleBulkUpdateVariantFields(vIds, { price: val });
-                                            if (input) input.value = '';
-                                          } else {
-                                            toast.error('Please enter a valid price');
-                                          }
-                                        }}
-                                        className="px-3 py-1.5 bg-[#e94560] hover:bg-[#e94560]/95 text-white rounded-lg text-xs font-bold transition-all"
-                                      >
-                                        Apply
-                                      </button>
-                                    </div>
-
-                                    {/* Bulk Set Compare Price */}
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Compare:</span>
-                                      <input
-                                        type="number"
-                                        placeholder="Set Compare"
-                                        id={`bulk-compare-input-${product.id}`}
-                                        className="w-28 px-3 py-1.5 bg-white dark:bg-[#0f0f1b] border border-gray-200 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:border-primary text-gray-900 dark:text-white font-medium"
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const input = document.getElementById(`bulk-compare-input-${product.id}`) as HTMLInputElement;
-                                          const val = parseFloat(input?.value);
-                                          if (!isNaN(val)) {
-                                            const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
-                                            handleBulkUpdateVariantFields(vIds, { comparePrice: val });
-                                            if (input) input.value = '';
-                                          } else if (input?.value === '') {
-                                            const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
-                                            handleBulkUpdateVariantFields(vIds, { comparePrice: undefined });
-                                          } else {
-                                            toast.error('Please enter a valid compare price');
-                                          }
-                                        }}
-                                        className="px-3 py-1.5 bg-[#e94560] hover:bg-[#e94560]/95 text-white rounded-lg text-xs font-bold transition-all"
-                                      >
-                                        Apply
-                                      </button>
-                                    </div>
-
-                                    {/* Bulk Set Stock */}
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Stock:</span>
-                                      <input
-                                        type="number"
-                                        placeholder="Set Stock"
-                                        id={`bulk-stock-input-${product.id}`}
-                                        className="w-28 px-3 py-1.5 bg-white dark:bg-[#0f0f1b] border border-gray-200 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:border-primary text-gray-900 dark:text-white font-medium"
-                                      />
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const input = document.getElementById(`bulk-stock-input-${product.id}`) as HTMLInputElement;
-                                          const val = parseInt(input?.value, 10);
-                                          if (!isNaN(val)) {
-                                            const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
-                                            handleBulkUpdateVariantFields(vIds, { stock: val });
-                                            if (input) input.value = '';
-                                          } else {
-                                            toast.error('Please enter a valid stock number');
-                                          }
-                                        }}
-                                        className="px-3 py-1.5 bg-[#e94560] hover:bg-[#e94560]/95 text-white rounded-lg text-xs font-bold transition-all"
-                                      >
-                                        Apply
-                                      </button>
-                                    </div>
-
-                                    <button
-                                      type="button"
-                                      onClick={() => {
+                          <div className="ml-10 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-inner">
+                            <table className="w-full text-left text-xs text-gray-600 dark:text-gray-450">
+                              <thead className="bg-gray-100/70 dark:bg-[#121226] border-b border-gray-200 dark:border-gray-800 text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                                <tr>
+                                  <th className="py-2.5 px-4 w-10 text-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={product.variants.length > 0 && product.variants.every(v => selectedVariantIds.includes(v.id))}
+                                      onChange={(e) => {
                                         const vIds = product.variants.map(v => v.id);
-                                        setSelectedVariantIds(prev => prev.filter(id => !vIds.includes(id)));
+                                        if (e.target.checked) {
+                                          setSelectedVariantIds(prev => [...new Set([...prev, ...vIds])]);
+                                        } else {
+                                          setSelectedVariantIds(prev => prev.filter(id => !vIds.includes(id)));
+                                        }
                                       }}
-                                      className="px-3 py-1.5 bg-gray-200 hover:bg-gray-250 dark:bg-gray-800 dark:hover:bg-gray-750 text-gray-700 dark:text-gray-350 rounded-lg text-xs font-bold transition-all"
-                                    >
-                                      Cancel
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                              <div className="ml-10 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-inner">
-                                <table className="w-full text-left text-xs text-gray-600 dark:text-gray-450">
-                                  <thead className="bg-gray-100/70 dark:bg-[#121226] border-b border-gray-200 dark:border-gray-800 text-[9px] font-bold uppercase tracking-wider text-gray-400">
-                                    <tr>
-                                      <th className="py-2.5 px-4 w-10 text-center">
-                                        <input
-                                          type="checkbox"
-                                          checked={product.variants.length > 0 && product.variants.every(v => selectedVariantIds.includes(v.id))}
-                                          onChange={(e) => {
-                                            const vIds = product.variants.map(v => v.id);
-                                            if (e.target.checked) {
-                                              setSelectedVariantIds(prev => [...new Set([...prev, ...vIds])]);
-                                            } else {
-                                              setSelectedVariantIds(prev => prev.filter(id => !vIds.includes(id)));
-                                            }
-                                          }}
-                                          className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-3 w-3 cursor-pointer"
-                                        />
-                                      </th>
-                                      <th className="py-2.5 px-4">Variant Option</th>
-                                      <th className="py-2.5 px-4">Price</th>
-                                      <th className="py-2.5 px-4">Compare Price</th>
-                                      <th className="py-2.5 px-4">Stock Level</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-gray-150 dark:divide-gray-800 bg-white/50 dark:bg-[#16162a]/50">{product.variants.map(variant => {
-                                      const variantLabel = [variant.color, variant.size, variant.material, variant.customValue].filter(Boolean).join(' / ') || 'Default';
-                                      
-                                      return (
-                                        <tr key={variant.id} className="hover:bg-gray-150/20 dark:hover:bg-[#1e1e3b]/20 transition-colors">
-                                          <td className="py-2.5 px-4 text-center">
-                                            <input
-                                              type="checkbox"
-                                              checked={selectedVariantIds.includes(variant.id)}
-                                              onChange={(e) => {
-                                                if (e.target.checked) {
-                                                  setSelectedVariantIds(prev => [...prev, variant.id]);
-                                                } else {
-                                                  setSelectedVariantIds(prev => prev.filter(id => id !== variant.id));
+                                      className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-3 w-3 cursor-pointer"
+                                    />
+                                  </th>
+                                  <th className="py-2.5 px-4">Variant Option</th>
+                                  <th className="py-2.5 px-4">Price</th>
+                                  <th className="py-2.5 px-4">Compare Price</th>
+                                  <th className="py-2.5 px-4">Stock Level</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-150 dark:divide-gray-800 bg-white/50 dark:bg-[#16162a]/50">{product.variants.map(variant => {
+                                const variantLabel = [variant.color, variant.size, variant.material, variant.customValue].filter(Boolean).join(' / ') || 'Default';
+
+                                return (
+                                  <tr key={variant.id} className="hover:bg-gray-150/20 dark:hover:bg-[#1e1e3b]/20 transition-colors">
+                                    <td className="py-2.5 px-4 text-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedVariantIds.includes(variant.id)}
+                                        onChange={(e) => {
+                                          if (e.target.checked) {
+                                            setSelectedVariantIds(prev => [...prev, variant.id]);
+                                          } else {
+                                            setSelectedVariantIds(prev => prev.filter(id => id !== variant.id));
+                                          }
+                                        }}
+                                        className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-3.5 w-3.5 cursor-pointer"
+                                      />
+                                    </td>
+                                    <td className="py-2.5 px-4 font-semibold text-gray-855 dark:text-gray-200">
+                                      <div className="flex items-center gap-2">
+                                        {variant.colorHex && (
+                                          <span className="h-3 w-3 rounded-full flex-shrink-0 border border-gray-300" style={{ background: variant.colorHex }} />
+                                        )}
+                                        {variantLabel}
+                                      </div>
+                                    </td>
+                                    <td className="py-2.5 px-4">
+                                      <div className="flex items-center gap-2">
+                                        <div className="flex items-center border border-gray-250 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
+                                          <span className="text-[10px] pl-2 text-gray-400 font-bold">Rs.</span>
+                                          <input
+                                            type="number"
+                                            defaultValue={variant.price || ''}
+                                            placeholder={product.price.toString()}
+                                            style={{ borderWidth: 0 }}
+                                            className="w-16 bg-transparent text-xs text-gray-900 dark:text-white px-2 py-1 focus:outline-none"
+                                            onBlur={(e) => {
+                                              const val = parseFloat(e.target.value);
+                                              if (!isNaN(val) && val !== variant.price) {
+                                                handleUpdateVariant(product.id, variant.id, { price: val });
+                                              }
+                                            }}
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                const val = parseFloat((e.target as HTMLInputElement).value);
+                                                if (!isNaN(val)) {
+                                                  handleUpdateVariant(product.id, variant.id, { price: val });
+                                                  (e.target as HTMLInputElement).blur();
                                                 }
-                                              }}
-                                              className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-3.5 w-3.5 cursor-pointer"
-                                            />
-                                          </td>
-                                          <td className="py-2.5 px-4 font-semibold text-gray-855 dark:text-gray-200">
-                                            <div className="flex items-center gap-2">
-                                              {variant.colorHex && (
-                                                <span className="h-3 w-3 rounded-full flex-shrink-0 border border-gray-300" style={{ background: variant.colorHex }} />
-                                              )}
-                                              {variantLabel}
-                                            </div>
-                                          </td>
-                                          <td className="py-2.5 px-4">
-                                            <div className="flex items-center gap-2">
-                                              <div className="flex items-center border border-gray-250 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
-                                                <span className="text-[10px] pl-2 text-gray-400 font-bold">Rs.</span>
-                                                <input
-                                                  type="number"
-                                                  defaultValue={variant.price || ''}
-                                                  placeholder={product.price.toString()}
-                                                  style={{ borderWidth: 0 }}
-                                                  className="w-16 bg-transparent text-xs text-gray-900 dark:text-white px-2 py-1 focus:outline-none"
-                                                  onBlur={(e) => {
-                                                    const val = parseFloat(e.target.value);
-                                                    if (!isNaN(val) && val !== variant.price) {
-                                                      handleUpdateVariant(product.id, variant.id, { price: val });
-                                                    }
-                                                  }}
-                                                  onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                      e.preventDefault();
-                                                      const val = parseFloat((e.target as HTMLInputElement).value);
-                                                      if (!isNaN(val)) {
-                                                        handleUpdateVariant(product.id, variant.id, { price: val });
-                                                        (e.target as HTMLInputElement).blur();
-                                                      }
-                                                    }
-                                                  }}
-                                                />
-                                              </div>
-                                              {updatingIds[`price-${variant.id}`] && (
-                                                <Loader2 className="h-3 w-3 animate-spin text-[#e94560]" />
-                                              )}
-                                            </div>
-                                          </td>
-                                          <td className="py-2.5 px-4">
-                                            <div className="flex items-center gap-2">
-                                              <div className="flex items-center border border-gray-250 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
-                                                <span className="text-[10px] pl-2 text-gray-400 font-bold">Rs.</span>
-                                                <input
-                                                  type="number"
-                                                  defaultValue={variant.comparePrice || ''}
-                                                  placeholder="—"
-                                                  style={{ borderWidth: 0 }}
-                                                  className="w-16 bg-transparent text-xs text-gray-900 dark:text-white px-2 py-1 focus:outline-none"
-                                                  onBlur={(e) => {
-                                                    const val = parseFloat(e.target.value);
-                                                    if (!isNaN(val) && val !== variant.comparePrice) {
-                                                      handleUpdateVariant(product.id, variant.id, { comparePrice: val });
-                                                    } else if (e.target.value === '' && variant.comparePrice !== undefined) {
-                                                      handleUpdateVariant(product.id, variant.id, { comparePrice: undefined });
-                                                    }
-                                                  }}
-                                                  onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                      e.preventDefault();
-                                                      const val = parseFloat((e.target as HTMLInputElement).value);
-                                                      if (!isNaN(val)) {
-                                                        handleUpdateVariant(product.id, variant.id, { comparePrice: val });
-                                                        (e.target as HTMLInputElement).blur();
-                                                      } else if ((e.target as HTMLInputElement).value === '') {
-                                                        handleUpdateVariant(product.id, variant.id, { comparePrice: undefined });
-                                                        (e.target as HTMLInputElement).blur();
-                                                      }
-                                                    }
-                                                  }}
-                                                />
-                                              </div>
-                                              {updatingIds[`comparePrice-${variant.id}`] && (
-                                                <Loader2 className="h-3 w-3 animate-spin text-[#e94560]" />
-                                              )}
-                                            </div>
-                                          </td>
-                                          <td className="py-2.5 px-4">
-                                            <div className="flex items-center gap-2">
-                                              <div className="flex items-center border border-gray-250 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
-                                                <input
-                                                  type="number"
-                                                  defaultValue={variant.stock}
-                                                  style={{ borderWidth: 0 }}
-                                                  className="w-14 bg-transparent text-xs text-gray-900 dark:text-white px-2 py-1 focus:outline-none"
-                                                  onBlur={(e) => {
-                                                    const val = parseInt(e.target.value, 10);
-                                                    if (!isNaN(val) && val !== variant.stock) {
-                                                      handleUpdateVariant(product.id, variant.id, { stock: val });
-                                                    }
-                                                  }}
-                                                  onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                      e.preventDefault();
-                                                      const val = parseInt((e.target as HTMLInputElement).value, 10);
-                                                      if (!isNaN(val)) {
-                                                        handleUpdateVariant(product.id, variant.id, { stock: val });
-                                                        (e.target as HTMLInputElement).blur();
-                                                      }
-                                                    }
-                                                  }}
-                                                />
-                                              </div>
-                                              {updatingIds[`stock-${variant.id}`] && (
-                                                <Loader2 className="h-3 w-3 animate-spin text-[#e94560]" />
-                                              )}
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </td>
-                          </tr>
-                        )}</React.Fragment>
-                    );
-                  })}
+                                              }
+                                            }}
+                                          />
+                                        </div>
+                                        {updatingIds[`price-${variant.id}`] && (
+                                          <Loader2 className="h-3 w-3 animate-spin text-[#e94560]" />
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td className="py-2.5 px-4">
+                                      <div className="flex items-center gap-2">
+                                        <div className="flex items-center border border-gray-250 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
+                                          <span className="text-[10px] pl-2 text-gray-400 font-bold">Rs.</span>
+                                          <input
+                                            type="number"
+                                            defaultValue={variant.comparePrice || ''}
+                                            placeholder="—"
+                                            style={{ borderWidth: 0 }}
+                                            className="w-16 bg-transparent text-xs text-gray-900 dark:text-white px-2 py-1 focus:outline-none"
+                                            onBlur={(e) => {
+                                              const val = parseFloat(e.target.value);
+                                              if (!isNaN(val) && val !== variant.comparePrice) {
+                                                handleUpdateVariant(product.id, variant.id, { comparePrice: val });
+                                              } else if (e.target.value === '' && variant.comparePrice !== undefined) {
+                                                handleUpdateVariant(product.id, variant.id, { comparePrice: undefined });
+                                              }
+                                            }}
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                const val = parseFloat((e.target as HTMLInputElement).value);
+                                                if (!isNaN(val)) {
+                                                  handleUpdateVariant(product.id, variant.id, { comparePrice: val });
+                                                  (e.target as HTMLInputElement).blur();
+                                                } else if ((e.target as HTMLInputElement).value === '') {
+                                                  handleUpdateVariant(product.id, variant.id, { comparePrice: undefined });
+                                                  (e.target as HTMLInputElement).blur();
+                                                }
+                                              }
+                                            }}
+                                          />
+                                        </div>
+                                        {updatingIds[`comparePrice-${variant.id}`] && (
+                                          <Loader2 className="h-3 w-3 animate-spin text-[#e94560]" />
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td className="py-2.5 px-4">
+                                      <div className="flex items-center gap-2">
+                                        <div className="flex items-center border border-gray-250 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
+                                          <input
+                                            type="number"
+                                            defaultValue={variant.stock}
+                                            style={{ borderWidth: 0 }}
+                                            className="w-14 bg-transparent text-xs text-gray-900 dark:text-white px-2 py-1 focus:outline-none"
+                                            onBlur={(e) => {
+                                              const val = parseInt(e.target.value, 10);
+                                              if (!isNaN(val) && val !== variant.stock) {
+                                                handleUpdateVariant(product.id, variant.id, { stock: val });
+                                              }
+                                            }}
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                const val = parseInt((e.target as HTMLInputElement).value, 10);
+                                                if (!isNaN(val)) {
+                                                  handleUpdateVariant(product.id, variant.id, { stock: val });
+                                                  (e.target as HTMLInputElement).blur();
+                                                }
+                                              }
+                                            }}
+                                          />
+                                        </div>
+                                        {updatingIds[`stock-${variant.id}`] && (
+                                          <Loader2 className="h-3 w-3 animate-spin text-[#e94560]" />
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                      </tr>
+                    )}</React.Fragment>
+                  );
+                })}
                 </tbody>
               </table>
             </div>
@@ -957,9 +1001,9 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
             <div className="md:hidden space-y-4">
               {paginatedProducts.map(product => {
                 const isExpanded = expandedProducts[product.id] ?? false;
-                
+
                 return (
-                  <div 
+                  <div
                     key={product.id}
                     draggable={sortBy === 'manual'}
                     onDragStart={sortBy === 'manual' ? (e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', product.id); setDraggingId(product.id); } : undefined}
@@ -1013,431 +1057,431 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
 
                     {/* Card Body */}
                     <div className="p-4 space-y-4">
-                    {/* Card Header */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedProductIds.includes(product.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedProductIds(prev => [...prev, product.id]);
-                            } else {
-                              setSelectedProductIds(prev => prev.filter(id => id !== product.id));
-                            }
-                          }}
-                          className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-4 w-4 cursor-pointer flex-shrink-0"
-                        />
-                        <div className="relative h-12 w-12 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-850 border border-gray-150 dark:border-gray-800 flex-shrink-0">
-                          {product.images?.[0] ? (
-                            <Image
-                              src={product.images[0].url}
-                              alt={product.name}
-                              fill
-                              sizes="48px"
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="h-full w-full bg-gray-100 dark:bg-gray-850 flex items-center justify-center text-gray-400 text-[10px]">
-                              No Img
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold text-gray-900 dark:text-white leading-tight">{product.name}</div>
-                          {product.sku && (
-                            <div className="text-[10px] font-mono text-gray-550 dark:text-gray-400 mt-0.5">
-                              SKU: {product.sku}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Action buttons on top right */}
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <Link
-                          href={`/admin/products/${product.id}`}
-                          className="p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-650 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1d1d36] transition-all min-h-[36px] min-w-[36px] flex items-center justify-center bg-white dark:bg-transparent"
-                          title="Edit full product details"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveProduct(product.id)}
-                          disabled={removingProductId === product.id}
-                          className="p-2 rounded-xl border border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all disabled:opacity-50 min-h-[36px] min-w-[36px] flex items-center justify-center bg-white dark:bg-transparent"
-                          title="Remove from category"
-                        >
-                          {removingProductId === product.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Pricing / Stock / Variants section */}
-                    {product.hasVariants ? (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between bg-gray-50 dark:bg-[#0f0f1b] p-3 rounded-xl">
-                          <span className="text-xs font-bold text-gray-550 dark:text-gray-400">
-                            Total Stock: <span className="text-gray-900 dark:text-white font-black">{product.stock}</span>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => toggleExpand(product.id)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1d1d36] border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-755 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#252542] transition-all min-h-[36px]"
-                          >
-                            <span>{isExpanded ? 'Hide Variants' : 'Show Variants'}</span>
-                            {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                          </button>
-                        </div>
-
-                        {/* Variants list on mobile */}
-                        {isExpanded && (
-                          <div className="space-y-3 pl-2 border-l-2 border-gray-200 dark:border-gray-800">
-                            {product.variants.some(v => selectedVariantIds.includes(v.id)) && (
-                              <div className="bg-gray-50 dark:bg-[#0f0f1b] p-3 rounded-xl border border-gray-200 dark:border-gray-800 space-y-3">
-                                <div className="text-xs font-bold text-gray-700 dark:text-gray-200">
-                                  {product.variants.filter(v => selectedVariantIds.includes(v.id)).length} variant(s) selected
-                                </div>
-                                <div className="grid grid-cols-1 gap-2.5">
-                                  {/* Price input */}
-                                  <div className="flex items-center gap-2">
-                                    <input
-                                      type="number"
-                                      placeholder="Set Price"
-                                      id={`bulk-price-input-mobile-${product.id}`}
-                                      className="flex-1 px-3 py-2 bg-white dark:bg-[#1d1d36] border border-gray-200 dark:border-gray-700 rounded-xl text-xs focus:outline-none focus:border-primary text-gray-900 dark:text-white min-h-[40px]"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const input = document.getElementById(`bulk-price-input-mobile-${product.id}`) as HTMLInputElement;
-                                        const val = parseFloat(input?.value);
-                                        if (!isNaN(val)) {
-                                          const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
-                                          handleBulkUpdateVariantFields(vIds, { price: val });
-                                          if (input) input.value = '';
-                                        } else {
-                                          toast.error('Please enter a valid price');
-                                        }
-                                      }}
-                                      className="px-3 py-2 bg-[#e94560] hover:bg-[#e94560]/95 text-white rounded-xl text-xs font-bold min-h-[40px]"
-                                    >
-                                      Apply
-                                    </button>
-                                  </div>
-
-                                  {/* Compare input */}
-                                  <div className="flex items-center gap-2">
-                                    <input
-                                      type="number"
-                                      placeholder="Set Compare Price"
-                                      id={`bulk-compare-input-mobile-${product.id}`}
-                                      className="flex-1 px-3 py-2 bg-white dark:bg-[#1d1d36] border border-gray-200 dark:border-gray-700 rounded-xl text-xs focus:outline-none focus:border-primary text-gray-900 dark:text-white min-h-[40px]"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const input = document.getElementById(`bulk-compare-input-mobile-${product.id}`) as HTMLInputElement;
-                                        const val = parseFloat(input?.value);
-                                        if (!isNaN(val)) {
-                                          const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
-                                          handleBulkUpdateVariantFields(vIds, { comparePrice: val });
-                                          if (input) input.value = '';
-                                        } else if (input?.value === '') {
-                                          const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
-                                          handleBulkUpdateVariantFields(vIds, { comparePrice: undefined });
-                                        } else {
-                                          toast.error('Please enter a valid compare price');
-                                        }
-                                      }}
-                                      className="px-3 py-2 bg-[#e94560] hover:bg-[#e94560]/95 text-white rounded-xl text-xs font-bold min-h-[40px]"
-                                    >
-                                      Apply
-                                    </button>
-                                  </div>
-
-                                  {/* Stock input */}
-                                  <div className="flex items-center gap-2">
-                                    <input
-                                      type="number"
-                                      placeholder="Set Stock"
-                                      id={`bulk-stock-input-mobile-${product.id}`}
-                                      className="flex-1 px-3 py-2 bg-white dark:bg-[#1d1d36] border border-gray-200 dark:border-gray-700 rounded-xl text-xs focus:outline-none focus:border-primary text-gray-900 dark:text-white min-h-[40px]"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const input = document.getElementById(`bulk-stock-input-mobile-${product.id}`) as HTMLInputElement;
-                                        const val = parseInt(input?.value, 10);
-                                        if (!isNaN(val)) {
-                                          const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
-                                          handleBulkUpdateVariantFields(vIds, { stock: val });
-                                          if (input) input.value = '';
-                                        } else {
-                                          toast.error('Please enter a valid stock number');
-                                        }
-                                      }}
-                                      className="px-3 py-2 bg-[#e94560] hover:bg-[#e94560]/95 text-white rounded-xl text-xs font-bold min-h-[40px]"
-                                    >
-                                      Apply
-                                    </button>
-                                  </div>
-                                </div>
+                      {/* Card Header */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedProductIds.includes(product.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedProductIds(prev => [...prev, product.id]);
+                              } else {
+                                setSelectedProductIds(prev => prev.filter(id => id !== product.id));
+                              }
+                            }}
+                            className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-4 w-4 cursor-pointer flex-shrink-0"
+                          />
+                          <div className="relative h-12 w-12 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-850 border border-gray-150 dark:border-gray-800 flex-shrink-0">
+                            {product.images?.[0] ? (
+                              <Image
+                                src={product.images[0].url}
+                                alt={product.name}
+                                fill
+                                sizes="48px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="h-full w-full bg-gray-100 dark:bg-gray-850 flex items-center justify-center text-gray-400 text-[10px]">
+                                No Img
                               </div>
                             )}
-                            {product.variants.map(variant => {
-                              const variantLabel = [variant.color, variant.size, variant.material, variant.customValue].filter(Boolean).join(' / ') || 'Default';
-                              
-                              return (
-                                <div 
-                                  key={variant.id}
-                                  className="bg-gray-50/50 dark:bg-[#0f0f1b]/50 p-3 rounded-xl border border-gray-150 dark:border-gray-800 space-y-2.5"
-                                >
-                                  <div className="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedVariantIds.includes(variant.id)}
-                                      onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setSelectedVariantIds(prev => [...prev, variant.id]);
-                                        } else {
-                                          setSelectedVariantIds(prev => prev.filter(id => id !== variant.id));
-                                        }
-                                      }}
-                                      className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-3.5 w-3.5 cursor-pointer flex-shrink-0"
-                                    />
-                                    {variant.colorHex && (
-                                      <span className="h-3.5 w-3.5 rounded-full border border-gray-300 flex-shrink-0" style={{ background: variant.colorHex }} />
-                                    )}
-                                    {variantLabel}
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-gray-900 dark:text-white leading-tight">{product.name}</div>
+                            {product.sku && (
+                              <div className="text-[10px] font-mono text-gray-550 dark:text-gray-400 mt-0.5">
+                                SKU: {product.sku}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Action buttons on top right */}
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <Link
+                            href={`/admin/products/${product.id}`}
+                            className="p-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-650 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#1d1d36] transition-all min-h-[36px] min-w-[36px] flex items-center justify-center bg-white dark:bg-transparent"
+                            title="Edit full product details"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveProduct(product.id)}
+                            disabled={removingProductId === product.id}
+                            className="p-2 rounded-xl border border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all disabled:opacity-50 min-h-[36px] min-w-[36px] flex items-center justify-center bg-white dark:bg-transparent"
+                            title="Remove from category"
+                          >
+                            {removingProductId === product.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Pricing / Stock / Variants section */}
+                      {product.hasVariants ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between bg-gray-50 dark:bg-[#0f0f1b] p-3 rounded-xl">
+                            <span className="text-xs font-bold text-gray-550 dark:text-gray-400">
+                              Total Stock: <span className="text-gray-900 dark:text-white font-black">{product.stock}</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => toggleExpand(product.id)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1d1d36] border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-755 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#252542] transition-all min-h-[36px]"
+                            >
+                              <span>{isExpanded ? 'Hide Variants' : 'Show Variants'}</span>
+                              {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                            </button>
+                          </div>
+
+                          {/* Variants list on mobile */}
+                          {isExpanded && (
+                            <div className="space-y-3 pl-2 border-l-2 border-gray-200 dark:border-gray-800">
+                              {product.variants.some(v => selectedVariantIds.includes(v.id)) && (
+                                <div className="bg-gray-50 dark:bg-[#0f0f1b] p-3 rounded-xl border border-gray-200 dark:border-gray-800 space-y-3">
+                                  <div className="text-xs font-bold text-gray-700 dark:text-gray-200">
+                                    {product.variants.filter(v => selectedVariantIds.includes(v.id)).length} variant(s) selected
                                   </div>
-
-                                  <div className="grid grid-cols-3 gap-2.5">
-                                    <div>
-                                      <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Price</label>
-                                      <div className="flex items-center gap-1">
-                                        <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
-                                          <input
-                                            type="number"
-                                            defaultValue={variant.price || ''}
-                                            placeholder={product.price.toString()}
-                                            style={{ borderWidth: 0 }}
-                                            className="w-full bg-transparent text-xs text-gray-900 dark:text-white px-2 py-2 focus:outline-none min-h-[40px]"
-                                            onBlur={(e) => {
-                                              const val = parseFloat(e.target.value);
-                                              if (!isNaN(val) && val !== variant.price) {
-                                                handleUpdateVariant(product.id, variant.id, { price: val });
-                                              }
-                                            }}
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                const val = parseFloat((e.target as HTMLInputElement).value);
-                                                if (!isNaN(val)) {
-                                                  handleUpdateVariant(product.id, variant.id, { price: val });
-                                                  (e.target as HTMLInputElement).blur();
-                                                }
-                                              }
-                                            }}
-                                          />
-                                        </div>
-                                        {updatingIds[`price-${variant.id}`] && (
-                                          <Loader2 className="h-3 w-3 animate-spin text-[#e94560] flex-shrink-0" />
-                                        )}
-                                      </div>
+                                  <div className="grid grid-cols-1 gap-2.5">
+                                    {/* Price input */}
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="number"
+                                        placeholder="Set Price"
+                                        id={`bulk-price-input-mobile-${product.id}`}
+                                        className="flex-1 px-3 py-2 bg-white dark:bg-[#1d1d36] border border-gray-200 dark:border-gray-700 rounded-xl text-xs focus:outline-none focus:border-primary text-gray-900 dark:text-white min-h-[40px]"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const input = document.getElementById(`bulk-price-input-mobile-${product.id}`) as HTMLInputElement;
+                                          const val = parseFloat(input?.value);
+                                          if (!isNaN(val)) {
+                                            const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
+                                            handleBulkUpdateVariantFields(vIds, { price: val });
+                                            if (input) input.value = '';
+                                          } else {
+                                            toast.error('Please enter a valid price');
+                                          }
+                                        }}
+                                        className="px-3 py-2 bg-[#e94560] hover:bg-[#e94560]/95 text-white rounded-xl text-xs font-bold min-h-[40px]"
+                                      >
+                                        Apply
+                                      </button>
                                     </div>
 
-                                    <div>
-                                      <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Compare</label>
-                                      <div className="flex items-center gap-1">
-                                        <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
-                                          <input
-                                            type="number"
-                                            defaultValue={variant.comparePrice || ''}
-                                            placeholder="—"
-                                            style={{ borderWidth: 0 }}
-                                            className="w-full bg-transparent text-xs text-gray-900 dark:text-white px-2 py-2 focus:outline-none min-h-[40px]"
-                                            onBlur={(e) => {
-                                              const val = parseFloat(e.target.value);
-                                              if (!isNaN(val) && val !== variant.comparePrice) {
-                                                handleUpdateVariant(product.id, variant.id, { comparePrice: val });
-                                              } else if (e.target.value === '' && variant.comparePrice !== undefined) {
-                                                handleUpdateVariant(product.id, variant.id, { comparePrice: undefined });
-                                              }
-                                            }}
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                const val = parseFloat((e.target as HTMLInputElement).value);
-                                                if (!isNaN(val)) {
-                                                  handleUpdateVariant(product.id, variant.id, { comparePrice: val });
-                                                  (e.target as HTMLInputElement).blur();
-                                                } else if ((e.target as HTMLInputElement).value === '') {
-                                                  handleUpdateVariant(product.id, variant.id, { comparePrice: undefined });
-                                                  (e.target as HTMLInputElement).blur();
-                                                }
-                                              }
-                                            }}
-                                          />
-                                        </div>
-                                        {updatingIds[`comparePrice-${variant.id}`] && (
-                                          <Loader2 className="h-3 w-3 animate-spin text-[#e94560] flex-shrink-0" />
-                                        )}
-                                      </div>
+                                    {/* Compare input */}
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="number"
+                                        placeholder="Set Compare Price"
+                                        id={`bulk-compare-input-mobile-${product.id}`}
+                                        className="flex-1 px-3 py-2 bg-white dark:bg-[#1d1d36] border border-gray-200 dark:border-gray-700 rounded-xl text-xs focus:outline-none focus:border-primary text-gray-900 dark:text-white min-h-[40px]"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const input = document.getElementById(`bulk-compare-input-mobile-${product.id}`) as HTMLInputElement;
+                                          const val = parseFloat(input?.value);
+                                          if (!isNaN(val)) {
+                                            const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
+                                            handleBulkUpdateVariantFields(vIds, { comparePrice: val });
+                                            if (input) input.value = '';
+                                          } else if (input?.value === '') {
+                                            const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
+                                            handleBulkUpdateVariantFields(vIds, { comparePrice: undefined });
+                                          } else {
+                                            toast.error('Please enter a valid compare price');
+                                          }
+                                        }}
+                                        className="px-3 py-2 bg-[#e94560] hover:bg-[#e94560]/95 text-white rounded-xl text-xs font-bold min-h-[40px]"
+                                      >
+                                        Apply
+                                      </button>
                                     </div>
 
-                                    <div>
-                                      <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Stock</label>
-                                      <div className="flex items-center gap-1">
-                                        <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
-                                          <input
-                                            type="number"
-                                            defaultValue={variant.stock}
-                                            style={{ borderWidth: 0 }}
-                                            className="w-full bg-transparent text-xs text-gray-900 dark:text-white px-2 py-2 focus:outline-none min-h-[40px]"
-                                            onBlur={(e) => {
-                                              const val = parseInt(e.target.value, 10);
-                                              if (!isNaN(val) && val !== variant.stock) {
-                                                handleUpdateVariant(product.id, variant.id, { stock: val });
-                                              }
-                                            }}
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                const val = parseInt((e.target as HTMLInputElement).value, 10);
-                                                if (!isNaN(val)) {
-                                                  handleUpdateVariant(product.id, variant.id, { stock: val });
-                                                  (e.target as HTMLInputElement).blur();
-                                                }
-                                              }
-                                            }}
-                                          />
-                                        </div>
-                                        {updatingIds[`stock-${variant.id}`] && (
-                                          <Loader2 className="h-3 w-3 animate-spin text-[#e94560] flex-shrink-0" />
-                                        )}
-                                      </div>
+                                    {/* Stock input */}
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="number"
+                                        placeholder="Set Stock"
+                                        id={`bulk-stock-input-mobile-${product.id}`}
+                                        className="flex-1 px-3 py-2 bg-white dark:bg-[#1d1d36] border border-gray-200 dark:border-gray-700 rounded-xl text-xs focus:outline-none focus:border-primary text-gray-900 dark:text-white min-h-[40px]"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const input = document.getElementById(`bulk-stock-input-mobile-${product.id}`) as HTMLInputElement;
+                                          const val = parseInt(input?.value, 10);
+                                          if (!isNaN(val)) {
+                                            const vIds = product.variants.filter(v => selectedVariantIds.includes(v.id)).map(v => v.id);
+                                            handleBulkUpdateVariantFields(vIds, { stock: val });
+                                            if (input) input.value = '';
+                                          } else {
+                                            toast.error('Please enter a valid stock number');
+                                          }
+                                        }}
+                                        className="px-3 py-2 bg-[#e94560] hover:bg-[#e94560]/95 text-white rounded-xl text-xs font-bold min-h-[40px]"
+                                      >
+                                        Apply
+                                      </button>
                                     </div>
                                   </div>
                                 </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-3 gap-2.5 bg-gray-50 dark:bg-[#0f0f1b] p-3 rounded-xl">
-                        <div>
-                          <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Price</label>
-                          <div className="flex items-center gap-1">
-                            <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-[#e94560] transition-all">
-                              <input
-                                type="number"
-                                defaultValue={product.price}
-                                style={{ borderWidth: 0 }}
-                                className="w-full bg-transparent text-xs text-gray-900 dark:text-white px-2 py-2 focus:outline-none min-h-[40px]"
-                                onBlur={(e) => {
-                                  const val = parseFloat(e.target.value);
-                                  if (!isNaN(val) && val !== product.price) {
-                                    handleUpdateProduct(product.id, { price: val });
-                                  }
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    const val = parseFloat((e.target as HTMLInputElement).value);
-                                    if (!isNaN(val)) {
+                              )}
+                              {product.variants.map(variant => {
+                                const variantLabel = [variant.color, variant.size, variant.material, variant.customValue].filter(Boolean).join(' / ') || 'Default';
+
+                                return (
+                                  <div
+                                    key={variant.id}
+                                    className="bg-gray-50/50 dark:bg-[#0f0f1b]/50 p-3 rounded-xl border border-gray-150 dark:border-gray-800 space-y-2.5"
+                                  >
+                                    <div className="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedVariantIds.includes(variant.id)}
+                                        onChange={(e) => {
+                                          if (e.target.checked) {
+                                            setSelectedVariantIds(prev => [...prev, variant.id]);
+                                          } else {
+                                            setSelectedVariantIds(prev => prev.filter(id => id !== variant.id));
+                                          }
+                                        }}
+                                        className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-3.5 w-3.5 cursor-pointer flex-shrink-0"
+                                      />
+                                      {variant.colorHex && (
+                                        <span className="h-3.5 w-3.5 rounded-full border border-gray-300 flex-shrink-0" style={{ background: variant.colorHex }} />
+                                      )}
+                                      {variantLabel}
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-2.5">
+                                      <div>
+                                        <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Price</label>
+                                        <div className="flex items-center gap-1">
+                                          <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
+                                            <input
+                                              type="number"
+                                              defaultValue={variant.price || ''}
+                                              placeholder={product.price.toString()}
+                                              style={{ borderWidth: 0 }}
+                                              className="w-full bg-transparent text-xs text-gray-900 dark:text-white px-2 py-2 focus:outline-none min-h-[40px]"
+                                              onBlur={(e) => {
+                                                const val = parseFloat(e.target.value);
+                                                if (!isNaN(val) && val !== variant.price) {
+                                                  handleUpdateVariant(product.id, variant.id, { price: val });
+                                                }
+                                              }}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                  e.preventDefault();
+                                                  const val = parseFloat((e.target as HTMLInputElement).value);
+                                                  if (!isNaN(val)) {
+                                                    handleUpdateVariant(product.id, variant.id, { price: val });
+                                                    (e.target as HTMLInputElement).blur();
+                                                  }
+                                                }
+                                              }}
+                                            />
+                                          </div>
+                                          {updatingIds[`price-${variant.id}`] && (
+                                            <Loader2 className="h-3 w-3 animate-spin text-[#e94560] flex-shrink-0" />
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <div>
+                                        <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Compare</label>
+                                        <div className="flex items-center gap-1">
+                                          <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
+                                            <input
+                                              type="number"
+                                              defaultValue={variant.comparePrice || ''}
+                                              placeholder="—"
+                                              style={{ borderWidth: 0 }}
+                                              className="w-full bg-transparent text-xs text-gray-900 dark:text-white px-2 py-2 focus:outline-none min-h-[40px]"
+                                              onBlur={(e) => {
+                                                const val = parseFloat(e.target.value);
+                                                if (!isNaN(val) && val !== variant.comparePrice) {
+                                                  handleUpdateVariant(product.id, variant.id, { comparePrice: val });
+                                                } else if (e.target.value === '' && variant.comparePrice !== undefined) {
+                                                  handleUpdateVariant(product.id, variant.id, { comparePrice: undefined });
+                                                }
+                                              }}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                  e.preventDefault();
+                                                  const val = parseFloat((e.target as HTMLInputElement).value);
+                                                  if (!isNaN(val)) {
+                                                    handleUpdateVariant(product.id, variant.id, { comparePrice: val });
+                                                    (e.target as HTMLInputElement).blur();
+                                                  } else if ((e.target as HTMLInputElement).value === '') {
+                                                    handleUpdateVariant(product.id, variant.id, { comparePrice: undefined });
+                                                    (e.target as HTMLInputElement).blur();
+                                                  }
+                                                }
+                                              }}
+                                            />
+                                          </div>
+                                          {updatingIds[`comparePrice-${variant.id}`] && (
+                                            <Loader2 className="h-3 w-3 animate-spin text-[#e94560] flex-shrink-0" />
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <div>
+                                        <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Stock</label>
+                                        <div className="flex items-center gap-1">
+                                          <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-primary transition-all">
+                                            <input
+                                              type="number"
+                                              defaultValue={variant.stock}
+                                              style={{ borderWidth: 0 }}
+                                              className="w-full bg-transparent text-xs text-gray-900 dark:text-white px-2 py-2 focus:outline-none min-h-[40px]"
+                                              onBlur={(e) => {
+                                                const val = parseInt(e.target.value, 10);
+                                                if (!isNaN(val) && val !== variant.stock) {
+                                                  handleUpdateVariant(product.id, variant.id, { stock: val });
+                                                }
+                                              }}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                  e.preventDefault();
+                                                  const val = parseInt((e.target as HTMLInputElement).value, 10);
+                                                  if (!isNaN(val)) {
+                                                    handleUpdateVariant(product.id, variant.id, { stock: val });
+                                                    (e.target as HTMLInputElement).blur();
+                                                  }
+                                                }
+                                              }}
+                                            />
+                                          </div>
+                                          {updatingIds[`stock-${variant.id}`] && (
+                                            <Loader2 className="h-3 w-3 animate-spin text-[#e94560] flex-shrink-0" />
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-3 gap-2.5 bg-gray-50 dark:bg-[#0f0f1b] p-3 rounded-xl">
+                          <div>
+                            <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Price</label>
+                            <div className="flex items-center gap-1">
+                              <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-[#e94560] transition-all">
+                                <input
+                                  type="number"
+                                  defaultValue={product.price}
+                                  style={{ borderWidth: 0 }}
+                                  className="w-full bg-transparent text-xs text-gray-900 dark:text-white px-2 py-2 focus:outline-none min-h-[40px]"
+                                  onBlur={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    if (!isNaN(val) && val !== product.price) {
                                       handleUpdateProduct(product.id, { price: val });
-                                      (e.target as HTMLInputElement).blur();
                                     }
-                                  }
-                                }}
-                              />
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      const val = parseFloat((e.target as HTMLInputElement).value);
+                                      if (!isNaN(val)) {
+                                        handleUpdateProduct(product.id, { price: val });
+                                        (e.target as HTMLInputElement).blur();
+                                      }
+                                    }
+                                  }}
+                                />
+                              </div>
+                              {updatingIds[`price-${product.id}`] && (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#e94560] flex-shrink-0" />
+                              )}
                             </div>
-                            {updatingIds[`price-${product.id}`] && (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#e94560] flex-shrink-0" />
-                            )}
                           </div>
-                        </div>
 
-                        <div>
-                          <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Compare At</label>
-                          <div className="flex items-center gap-1">
-                            <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-[#e94560] transition-all">
-                              <input
-                                type="number"
-                                defaultValue={product.comparePrice || ''}
-                                placeholder="—"
-                                style={{ borderWidth: 0 }}
-                                className="w-full bg-transparent text-xs text-gray-900 dark:text-white px-2 py-2 focus:outline-none min-h-[40px]"
-                                onBlur={(e) => {
-                                  const val = parseFloat(e.target.value);
-                                  if (!isNaN(val) && val !== product.comparePrice) {
-                                    handleUpdateProduct(product.id, { comparePrice: val });
-                                  } else if (e.target.value === '' && product.comparePrice !== undefined) {
-                                    handleUpdateProduct(product.id, { comparePrice: undefined });
-                                  }
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    const val = parseFloat((e.target as HTMLInputElement).value);
-                                    if (!isNaN(val)) {
+                          <div>
+                            <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Compare At</label>
+                            <div className="flex items-center gap-1">
+                              <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-[#e94560] transition-all">
+                                <input
+                                  type="number"
+                                  defaultValue={product.comparePrice || ''}
+                                  placeholder="—"
+                                  style={{ borderWidth: 0 }}
+                                  className="w-full bg-transparent text-xs text-gray-900 dark:text-white px-2 py-2 focus:outline-none min-h-[40px]"
+                                  onBlur={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    if (!isNaN(val) && val !== product.comparePrice) {
                                       handleUpdateProduct(product.id, { comparePrice: val });
-                                      (e.target as HTMLInputElement).blur();
-                                    } else if ((e.target as HTMLInputElement).value === '') {
+                                    } else if (e.target.value === '' && product.comparePrice !== undefined) {
                                       handleUpdateProduct(product.id, { comparePrice: undefined });
-                                      (e.target as HTMLInputElement).blur();
                                     }
-                                  }
-                                }}
-                              />
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      const val = parseFloat((e.target as HTMLInputElement).value);
+                                      if (!isNaN(val)) {
+                                        handleUpdateProduct(product.id, { comparePrice: val });
+                                        (e.target as HTMLInputElement).blur();
+                                      } else if ((e.target as HTMLInputElement).value === '') {
+                                        handleUpdateProduct(product.id, { comparePrice: undefined });
+                                        (e.target as HTMLInputElement).blur();
+                                      }
+                                    }
+                                  }}
+                                />
+                              </div>
+                              {updatingIds[`comparePrice-${product.id}`] && (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#e94560] flex-shrink-0" />
+                              )}
                             </div>
-                            {updatingIds[`comparePrice-${product.id}`] && (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#e94560] flex-shrink-0" />
-                            )}
                           </div>
-                        </div>
 
-                        <div>
-                          <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Stock</label>
-                          <div className="flex items-center gap-1">
-                            <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-[#e94560] transition-all">
-                              <input
-                                type="number"
-                                defaultValue={product.stock}
-                                style={{ borderWidth: 0 }}
-                                className="w-full bg-transparent text-xs text-gray-900 dark:text-white px-2 py-2 focus:outline-none min-h-[40px]"
-                                onBlur={(e) => {
-                                  const val = parseInt(e.target.value, 10);
-                                  if (!isNaN(val) && val !== product.stock) {
-                                    handleUpdateProduct(product.id, { stock: val });
-                                  }
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    const val = parseInt((e.target as HTMLInputElement).value, 10);
-                                    if (!isNaN(val)) {
+                          <div>
+                            <label className="block text-[8px] font-bold text-gray-400 uppercase mb-1">Stock</label>
+                            <div className="flex items-center gap-1">
+                              <div className="flex-1 flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f1b] focus-within:border-[#e94560] transition-all">
+                                <input
+                                  type="number"
+                                  defaultValue={product.stock}
+                                  style={{ borderWidth: 0 }}
+                                  className="w-full bg-transparent text-xs text-gray-900 dark:text-white px-2 py-2 focus:outline-none min-h-[40px]"
+                                  onBlur={(e) => {
+                                    const val = parseInt(e.target.value, 10);
+                                    if (!isNaN(val) && val !== product.stock) {
                                       handleUpdateProduct(product.id, { stock: val });
-                                      (e.target as HTMLInputElement).blur();
                                     }
-                                  }
-                                }}
-                              />
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      const val = parseInt((e.target as HTMLInputElement).value, 10);
+                                      if (!isNaN(val)) {
+                                        handleUpdateProduct(product.id, { stock: val });
+                                        (e.target as HTMLInputElement).blur();
+                                      }
+                                    }
+                                  }}
+                                />
+                              </div>
+                              {updatingIds[`stock-${product.id}`] && (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#e94560] flex-shrink-0" />
+                              )}
                             </div>
-                            {updatingIds[`stock-${product.id}`] && (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#e94560] flex-shrink-0" />
-                            )}
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                     </div>{/* end Card Body */}
                   </div>
                 );
@@ -1471,7 +1515,7 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
                 <X className="h-5 w-5" />
               </button>
             </div>
-            
+
             {/* Search Input in Modal */}
             <div className="my-4 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -1483,7 +1527,43 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
                 className="w-full pl-9 pr-4 py-2 bg-gray-50/50 dark:bg-[#0f0f1b] border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:border-primary text-gray-900 dark:text-white"
               />
             </div>
-            
+
+            {!loadingAllProducts && filteredModalProducts.length > 0 && (
+              <div className="flex items-center justify-between mb-3 px-1">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-4 w-4"
+                    checked={filteredModalProducts.length > 0 && modalSelectedProductIds.length === filteredModalProducts.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setModalSelectedProductIds(filteredModalProducts.map(p => p.id));
+                      } else {
+                        setModalSelectedProductIds([]);
+                      }
+                    }}
+                  />
+                  Select All
+                </label>
+
+                {modalSelectedProductIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleBulkAddProducts}
+                    disabled={addingProductId === 'bulk'}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold bg-[#e94560] text-white hover:bg-[#e94560]/90 transition-all disabled:opacity-50"
+                  >
+                    {addingProductId === 'bulk' ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                    Add Selected ({modalSelectedProductIds.length})
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Product List */}
             <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1">
               {loadingAllProducts ? (
@@ -1501,6 +1581,18 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
                     className="flex items-center justify-between p-3 rounded-xl border border-gray-150 dark:border-gray-850 hover:bg-gray-50/50 dark:hover:bg-[#1d1d36]/20 transition-all"
                   >
                     <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-4 w-4 cursor-pointer"
+                        checked={modalSelectedProductIds.includes(prod.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setModalSelectedProductIds(prev => [...prev, prod.id]);
+                          } else {
+                            setModalSelectedProductIds(prev => prev.filter(id => id !== prod.id));
+                          }
+                        }}
+                      />
                       <div className="relative h-12 w-12 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 border border-gray-150 dark:border-gray-800 flex-shrink-0">
                         {prod.images?.[0] ? (
                           <Image
@@ -1543,7 +1635,7 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
       )}
 
       {/* Sticky Save Footer — consolidated with bulk actions */}
-      <div className={`sticky bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#16162a] border-t border-gray-200 dark:border-gray-800 px-6 py-4 shadow-lg rounded-t-2xl transition-all duration-300 ${!hasUnsavedChanges ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0 pointer-events-auto'
+      <div className={`sticky bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#16162a] border-t border-gray-200 dark:border-gray-800 px-6 py-4 shadow-lg rounded-t-2xl transition-all duration-300 ${(!hasUnsavedChanges && selectedProductIds.length === 0) ? 'opacity-0 pointer-events-none translate-y-4' : 'opacity-100 translate-y-0 pointer-events-auto'
         }`}>
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Contextual multi-selection controls */}
