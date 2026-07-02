@@ -32,7 +32,7 @@ export default function CategoryGridSettings({
   };
 
   const handleAddCard = () => {
-    handleItemsChange([...items, { title: '', link: '', imageUrl: '' }]);
+    handleItemsChange([{ title: '', link: '', imageUrl: '' }, ...items]);
   };
 
   return (
