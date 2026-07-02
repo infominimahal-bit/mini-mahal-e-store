@@ -5,6 +5,22 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Trash2, Plus, Upload, Star, Bold, Italic, Underline, List, ListOrdered, Code, Eye, X, FolderOpen, Search, Check, Image as ImageIcon, ChevronDown, ChevronUp, Zap, Loader2, GripVertical, AlertTriangle } from '@/components/common/Icons';
 import HorizontalSortableList from '@/components/admin/HorizontalSortableList';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Product, ProductImage, ProductVariant, ProductModifier, Category, VariantPreset, VariantPresetValue, Badge, SizeGuide } from '@/lib/types';
 import { createProduct, updateProduct } from '@/lib/services/products';
 import { deleteProductImage } from '@/lib/services/storage';
@@ -44,6 +60,110 @@ const standardColorMap: Record<string, string> = {
   silver: '#c0c0c0',
   cream: '#fffdd0'
 };
+
+function SortableImageItem({
+  img,
+  index,
+  handleSetPrimaryImage,
+  handleRemoveImage,
+}: {
+  img: any;
+  index: number;
+  handleSetPrimaryImage: (idx: number) => void;
+  handleRemoveImage: (idx: number, url: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: img.url });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : 1,
+    zIndex: isDragging ? 50 : 'auto',
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="group relative select-none"
+    >
+      {/* Image container */}
+      <div className="relative aspect-square rounded-lg border border-gray-100 bg-gray-50 overflow-hidden cursor-grab active:cursor-grabbing">
+        {/* drag handle area / listener */}
+        <div 
+          className="absolute inset-0 z-0" 
+          {...attributes} 
+          {...listeners}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={img.url} alt={`Preview ${index}`} className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+        </div>
+
+        {/* Desktop-only hover overlay (hidden on mobile) */}
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex items-center justify-center gap-2 z-20">
+          <button
+            type="button"
+            onClick={() => handleSetPrimaryImage(index)}
+            className={`p-1.5 rounded-lg text-white hover:bg-white/10 ${img.isPrimary ? 'text-amber-400' : ''}`}
+            title="Make Primary"
+          >
+            <Star className="h-4.5 w-4.5 fill-current" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleRemoveImage(index, img.url)}
+            className="p-1.5 rounded-lg text-red-400 hover:bg-white/10"
+            title="Delete Image"
+          >
+            <Trash2 className="h-4.5 w-4.5" />
+          </button>
+        </div>
+
+        {/* Badges always visible */}
+        {img.isPrimary && (
+          <span className="absolute top-1 right-1 z-10 bg-amber-400 text-[9px] font-extrabold text-[#1a1a2e] px-1.5 py-0.5 rounded-md shadow-md">
+            PRIMARY
+          </span>
+        )}
+        <span className="absolute top-1.5 left-1.5 z-10 bg-secondary text-[10px] font-extrabold text-white w-6 h-6 rounded-full flex items-center justify-center shadow-md border border-white/20">
+          {index + 1}
+        </span>
+      </div>
+
+      {/* Mobile-only action buttons below image — no accidental deletes */}
+      <div className="mt-1.5 flex gap-1.5 md:hidden z-20 relative">
+        <button
+          type="button"
+          onClick={() => handleSetPrimaryImage(index)}
+          className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${img.isPrimary
+              ? 'bg-amber-50 border-amber-300 text-amber-700'
+              : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-600'
+            }`}
+          title="Make Primary"
+        >
+          <Star className="h-3 w-3 fill-current" />
+          {img.isPrimary ? 'Primary' : 'Set Primary'}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleRemoveImage(index, img.url)}
+          className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 transition-all cursor-pointer"
+          title="Remove Image"
+        >
+          <Trash2 className="h-3 w-3" />
+          Remove
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function ProductForm({ categories, initialProduct, aiEnabled, storeUrl }: ProductFormProps) {
   const router = useRouter();
@@ -243,6 +363,38 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
       isPrimary: img.isPrimary
     })) || []
   );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    })
+  );
+
+  const handleDragEndImages = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = images.findIndex((img) => img.url === active.id);
+    const newIndex = images.findIndex((img) => img.url === over.id);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const reordered = arrayMove(images, oldIndex, newIndex);
+      const updated = reordered.map((img, idx) => ({
+        ...img,
+        sortOrder: idx + 1,
+      }));
+      setImages(updated);
+    }
+  };
+
   const [uploading, setUploading] = useState(false);
 
   // 3. Variants List
@@ -2407,72 +2559,28 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
 
               {/* Uploaded Images preview grid */}
               {images.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  {images.map((img, i) => (
-                    <div key={i} className="group relative">
-                      {/* Image container */}
-                      <div className="relative aspect-square rounded-lg border border-gray-100 bg-gray-50 overflow-hidden">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={img.url} alt={`Preview ${i}`} className="absolute inset-0 w-full h-full object-cover" />
-
-                        {/* Desktop-only hover overlay (hidden on mobile) */}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleSetPrimaryImage(i)}
-                            className={`p-1.5 rounded-lg text-white hover:bg-white/10 ${img.isPrimary ? 'text-amber-400' : ''}`}
-                            title="Make Primary"
-                          >
-                            <Star className="h-4.5 w-4.5 fill-current" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveImage(i, img.url)}
-                            className="p-1.5 rounded-lg text-red-400 hover:bg-white/10"
-                            title="Delete Image"
-                          >
-                            <Trash2 className="h-4.5 w-4.5" />
-                          </button>
-                        </div>
-
-                        {/* Badges always visible */}
-                        {img.isPrimary && (
-                          <span className="absolute top-1 right-1 z-10 bg-amber-400 text-[9px] font-extrabold text-[#1a1a2e] px-1.5 py-0.5 rounded-md shadow-md">
-                            PRIMARY
-                          </span>
-                        )}
-                        <span className="absolute top-1.5 left-1.5 z-10 bg-secondary text-[10px] font-extrabold text-white w-6 h-6 rounded-full flex items-center justify-center shadow-md border border-white/20">
-                          {i + 1}
-                        </span>
-                      </div>
-
-                      {/* Mobile-only action buttons below image — no accidental deletes */}
-                      <div className="mt-1.5 flex gap-1.5 md:hidden">
-                        <button
-                          type="button"
-                          onClick={() => handleSetPrimaryImage(i)}
-                          className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${img.isPrimary
-                              ? 'bg-amber-50 border-amber-300 text-amber-700'
-                              : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-600'
-                            }`}
-                          title="Make Primary"
-                        >
-                          <Star className="h-3 w-3 fill-current" />
-                          {img.isPrimary ? 'Primary' : 'Set Primary'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImage(i, img.url)}
-                          className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 transition-all cursor-pointer"
-                          title="Remove Image"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                          Remove
-                        </button>
-                      </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEndImages}
+                >
+                  <SortableContext
+                    items={images.map(img => img.url)}
+                    strategy={rectSortingStrategy}
+                  >
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      {images.map((img, i) => (
+                        <SortableImageItem
+                          key={img.url}
+                          img={img}
+                          index={i}
+                          handleSetPrimaryImage={handleSetPrimaryImage}
+                          handleRemoveImage={handleRemoveImage}
+                        />
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </DndContext>
               )}
             </div>
 

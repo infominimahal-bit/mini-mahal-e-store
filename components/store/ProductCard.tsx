@@ -329,8 +329,8 @@ export default function ProductCard({ product, currencySymbol = 'Rs.', settings 
   const aspectClass = getAspectClass(settings?.imageAspectRatio);
   const titleClampClass = getTitleClampClass(settings?.titleLineLimit);
 
-  const hasSecondImage = settings?.imageHoverStyle === 'second_image' && product.images.length > 1;
-  const secondImage = hasSecondImage ? (product.images.find(img => !img.isPrimary)?.url || product.images[1]?.url) : null;
+  const hasSecondImage = product.images.length > 1;
+  const secondImage = hasSecondImage ? (product.images[1]?.url || product.images[0]?.url) : null;
 
   const alignClass = cardAlignment === 'center' ? 'items-center text-center' :
     cardAlignment === 'right' ? 'items-end text-right' :
