@@ -106,6 +106,8 @@ export async function POST(request: NextRequest) {
           let title = '';
           let description = '';
           let caption = '';
+          let aiGenerated = false;
+          let aiEnabled = true;
 
           try {
             const { data: media } = await supabaseAdmin
@@ -122,6 +124,8 @@ export async function POST(request: NextRequest) {
               originalFilename = media.original_filename || originalFilename;
               if (media.file_size) fileSize = Number(media.file_size);
               if (media.mime_type) mimeType = media.mime_type;
+              aiGenerated = media.ai_generated || false;
+              aiEnabled = media.ai_enabled ?? true;
             }
           } catch (dbErr) {
             console.warn(`[Export API] Error fetching media_library metadata for ${img.url}:`, dbErr);
@@ -138,7 +142,9 @@ export async function POST(request: NextRequest) {
             mimeType,
             originalUrl: img.url,
             fileName: originalFilename,
-            fileSize
+            fileSize,
+            aiGenerated,
+            aiEnabled
           };
         })
       );
@@ -150,10 +156,28 @@ export async function POST(request: NextRequest) {
       const variants = await Promise.all(
         (product.product_variants || []).map(async (v: any) => {
           let imageMimeType = 'image/webp';
+          let aiGenerated = false;
+          let aiEnabled = true;
           if (v.image_url) {
             // No Base64 download, keep JSON light
             const ext = v.image_url.split('.').pop() || 'webp';
             imageMimeType = `image/${ext}`;
+
+            // Fetch media_library metadata if available
+            try {
+              const { data: media } = await supabaseAdmin
+                .from('media_library')
+                .select('ai_generated, ai_enabled')
+                .eq('file_url', v.image_url)
+                .maybeSingle();
+
+              if (media) {
+                aiGenerated = media.ai_generated || false;
+                aiEnabled = media.ai_enabled ?? true;
+              }
+            } catch (dbErr) {
+              console.warn(`[Export API] Error fetching media_library metadata for variant image ${v.image_url}:`, dbErr);
+            }
           }
 
           return {
@@ -172,7 +196,9 @@ export async function POST(request: NextRequest) {
             imageMimeType: v.image_url ? imageMimeType : undefined,
             showImageSwatch: v.show_image_swatch || false,
             active: v.active ?? true,
-            sortOrder: v.sort_order || 0
+            sortOrder: v.sort_order || 0,
+            aiGenerated,
+            aiEnabled
           };
         })
       );

@@ -279,8 +279,8 @@ export async function POST(request: NextRequest) {
                         description: img.description || '',
                         caption: img.caption || '',
                         bucket: 'product-images',
-                        ai_generated: false,
-                        ai_enabled: true,
+                        ai_generated: img.aiGenerated || false,
+                        ai_enabled: img.aiEnabled ?? true,
                         file_size: img.fileSize || 0,
                         mime_type: img.mimeType || 'image/webp'
                       });
@@ -332,8 +332,8 @@ export async function POST(request: NextRequest) {
                       description: img.description || '',
                       caption: img.caption || '',
                       bucket: 'product-images',
-                      ai_generated: false,
-                      ai_enabled: true,
+                      ai_generated: img.aiGenerated || false,
+                      ai_enabled: img.aiEnabled ?? true,
                       file_size: img.fileSize || buffer.length,
                       mime_type: mimeType
                     });
@@ -388,6 +388,8 @@ export async function POST(request: NextRequest) {
                       alt_text: `${finalName} Variant`,
                       title: `${finalName} Variant`,
                       bucket: 'product-images',
+                      ai_generated: v.aiGenerated || false,
+                      ai_enabled: v.aiEnabled ?? true,
                       file_size: 0,
                       mime_type: 'image/webp'
                     });
@@ -432,6 +434,8 @@ export async function POST(request: NextRequest) {
                         alt_text: `${finalName} Variant`,
                         title: `${finalName} Variant`,
                         bucket: 'product-images',
+                        ai_generated: v.aiGenerated || false,
+                        ai_enabled: v.aiEnabled ?? true,
                         file_size: buffer.length,
                         mime_type: mimeType
                       });

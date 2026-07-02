@@ -664,6 +664,8 @@ export interface ExportedImage {
   originalUrl: string;
   fileName?: string;
   fileSize?: number;
+  aiGenerated?: boolean;
+  aiEnabled?: boolean;
 }
 
 export interface ExportedVariant {
@@ -683,6 +685,8 @@ export interface ExportedVariant {
   showImageSwatch?: boolean;
   active: boolean;
   sortOrder: number;
+  aiGenerated?: boolean;
+  aiEnabled?: boolean;
 }
 
 export interface ExportedModifier {
