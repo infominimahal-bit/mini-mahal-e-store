@@ -36,6 +36,7 @@ export default function ProductCard({ product, currencySymbol = 'Rs.', settings 
   const [touchActive, setTouchActive] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
+  const [userSelectedColor, setUserSelectedColor] = useState(false);
 
   // Settings properties
   const showStars = settings?.card_show_stars !== false;
@@ -73,6 +74,7 @@ export default function ProductCard({ product, currencySymbol = 'Rs.', settings 
     setSelectedSize(defaultVar?.size || null);
     setSelectedMaterial(defaultVar?.material || null);
     setSelectedCustom(defaultVar?.customValue || null);
+    setUserSelectedColor(false);
   }, [defaultVar]);
 
   // Find currently matched variant based on selections
@@ -88,7 +90,7 @@ export default function ProductCard({ product, currencySymbol = 'Rs.', settings 
     return colorMatch && sizeMatch;
   }) || activeVariants.find(v => v.color === selectedColor) || activeVariants.find(v => v.size === selectedSize) || defaultVar;
 
-  const currentImage = (currentVariant && currentVariant.imageUrl) || primaryImage;
+  const currentImage = (userSelectedColor && currentVariant && currentVariant.imageUrl) || primaryImage;
   const currentPrice = (currentVariant && currentVariant.price) ? currentVariant.price : product.price;
   const currentComparePrice = (currentVariant && currentVariant.comparePrice) ? currentVariant.comparePrice : product.comparePrice;
 
@@ -286,6 +288,8 @@ export default function ProductCard({ product, currencySymbol = 'Rs.', settings 
     if (!matched) {
       matched = activeVariants.find(v => v[attr] === val);
     }
+
+    setUserSelectedColor(true);
 
     if (matched) {
       setSelectedColor(matched.color || null);
