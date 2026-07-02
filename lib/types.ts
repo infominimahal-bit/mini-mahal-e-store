@@ -692,6 +692,15 @@ export interface ExportedModifier {
   sortOrder: number;
 }
 
+export interface ExportedCategoryData {
+  name: string;
+  slug: string;
+  description?: string;
+  imageUrl?: string;
+  sortOrder: number;
+  active: boolean;
+}
+
 export interface ExportedProduct {
   name: string;
   slug: string;
@@ -711,14 +720,8 @@ export interface ExportedProduct {
   tags: string[];
   categoryName?: string;
   categorySlug?: string;
-  categoryData?: {
-    name: string;
-    slug: string;
-    description?: string;
-    imageUrl?: string;
-    sortOrder: number;
-    active: boolean;
-  };
+  categoryData?: ExportedCategoryData;
+  categories?: ExportedCategoryData[];
   images: ExportedImage[];
   variants: ExportedVariant[];
   modifiers: ExportedModifier[];

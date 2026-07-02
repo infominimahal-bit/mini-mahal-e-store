@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No products found' }, { status: 404 });
     }
 
-    // Pre-fetch categories for all products in one batch query
+    // Pre-fetch categories for all products in one batch query (primary category_id)
     const categoryIds = [...new Set(productsData.map((p: any) => p.category_id).filter(Boolean))];
     const categoryMap: Record<string, any> = {};
     if (categoryIds.length > 0) {
@@ -62,6 +62,32 @@ export async function POST(request: NextRequest) {
           sortOrder: cat.sort_order,
           active: cat.active
         };
+      });
+    }
+
+    // Pre-fetch ALL product_categories junction records for exported products
+    const allProductIds = productsData.map((p: any) => p.id);
+    const productCategoriesMap: Record<string, any[]> = {};
+    if (allProductIds.length > 0) {
+      const { data: pcData } = await supabaseAdmin
+        .from('product_categories')
+        .select('product_id, category_id, categories(*)')
+        .in('product_id', allProductIds);
+      
+      (pcData || []).forEach((pc: any) => {
+        if (!productCategoriesMap[pc.product_id]) {
+          productCategoriesMap[pc.product_id] = [];
+        }
+        if (pc.categories) {
+          productCategoriesMap[pc.product_id].push({
+            name: pc.categories.name,
+            slug: pc.categories.slug,
+            description: pc.categories.description || undefined,
+            imageUrl: pc.categories.image_url || undefined,
+            sortOrder: pc.categories.sort_order || 0,
+            active: pc.categories.active ?? true
+          });
+        }
       });
     }
 
@@ -165,6 +191,10 @@ export async function POST(request: NextRequest) {
       const categorySlug = cat?.slug;
       const categoryData = cat ? { ...cat } : undefined;
 
+      // 5. Resolve all multi-category assignments from junction table
+      const allCategories = (productCategoriesMap[product.id] || [])
+        .filter((c: any) => c.slug !== 'shop'); // Exclude system category from export
+
       exportedProducts.push({
         name: product.name,
         slug: product.slug,
@@ -185,6 +215,7 @@ export async function POST(request: NextRequest) {
         categoryName,
         categorySlug,
         categoryData,
+        categories: allCategories.length > 0 ? allCategories : undefined,
         images: validImages,
         variants,
         modifiers

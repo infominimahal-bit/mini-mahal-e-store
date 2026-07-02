@@ -3,6 +3,22 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { ExportBundle } from '@/lib/types';
 
+const IMAGE_FETCH_TIMEOUT_MS = 15000; // 15 seconds per image
+
+/**
+ * Fetch with a timeout to prevent import from hanging on slow/dead image URLs.
+ */
+async function fetchWithTimeout(url: string, timeoutMs: number = IMAGE_FETCH_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const isOwnStorageUrl = (url: string) => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!supabaseUrl) return false;
@@ -127,10 +143,11 @@ export async function POST(request: NextRequest) {
                 productId = existing.id;
                 statusAction = 'overwritten';
 
-                // Delete variant and modifier associations to prevent conflicts/duplicates
+                // Delete variant, modifier, and category associations to prevent conflicts/duplicates
                 await supabaseAdmin.from('product_images').delete().eq('product_id', productId);
                 await supabaseAdmin.from('product_variants').delete().eq('product_id', productId);
                 await supabaseAdmin.from('product_modifiers').delete().eq('product_id', productId);
+                await supabaseAdmin.from('product_categories').delete().eq('product_id', productId);
 
                 // Update existing product details
                 const { error: updateErr } = await supabaseAdmin
@@ -152,6 +169,7 @@ export async function POST(request: NextRequest) {
                     show_swatches_on_archive: p.showSwatchesOnArchive,
                     tags: p.tags,
                     category_id: categoryId,
+                    deleted_at: null,
                     updated_at: new Date().toISOString()
                   })
                   .eq('id', productId);
@@ -269,7 +287,7 @@ export async function POST(request: NextRequest) {
                   }
                 } else if (img.originalUrl) {
                   // Fetch the external image to our bucket
-                  const imageRes = await fetch(img.originalUrl);
+                  const imageRes = await fetchWithTimeout(img.originalUrl);
                   if (!imageRes.ok) throw new Error('Failed to fetch image from URL');
                   
                   const arrayBuffer = await imageRes.arrayBuffer();
@@ -376,7 +394,7 @@ export async function POST(request: NextRequest) {
                 }
               } else if (v.imageUrl) {
                 try {
-                  const varImgRes = await fetch(v.imageUrl);
+                  const varImgRes = await fetchWithTimeout(v.imageUrl);
                   if (varImgRes.ok) {
                     const arrayBuffer = await varImgRes.arrayBuffer();
                     const buffer = Buffer.from(arrayBuffer);
@@ -456,6 +474,90 @@ export async function POST(request: NextRequest) {
                   active: m.active ?? true,
                   sort_order: m.sortOrder || 0
                 });
+            }
+
+            // 5. Create product_categories junction records for all categories
+            const categoryIdsToLink: string[] = [];
+            
+            // Add primary category if set
+            if (categoryId) {
+              categoryIdsToLink.push(categoryId);
+            }
+
+            // Process multi-category array from export bundle
+            if (p.categories && Array.isArray(p.categories)) {
+              for (const catItem of p.categories) {
+                if (!catItem.slug || catItem.slug === 'shop') continue;
+                
+                // Check cache first
+                if (categoryCache[catItem.slug]) {
+                  const cachedId = categoryCache[catItem.slug];
+                  if (!categoryIdsToLink.includes(cachedId)) {
+                    categoryIdsToLink.push(cachedId);
+                  }
+                  continue;
+                }
+
+                // Resolve or create category
+                const { data: existingCat } = await supabaseAdmin
+                  .from('categories')
+                  .select('id')
+                  .eq('slug', catItem.slug)
+                  .maybeSingle();
+
+                if (existingCat) {
+                  categoryCache[catItem.slug] = existingCat.id;
+                  if (!categoryIdsToLink.includes(existingCat.id)) {
+                    categoryIdsToLink.push(existingCat.id);
+                  }
+                } else {
+                  // Create the category
+                  const { data: newCat, error: catCreateErr } = await supabaseAdmin
+                    .from('categories')
+                    .insert({
+                      name: catItem.name,
+                      slug: catItem.slug,
+                      description: catItem.description || null,
+                      image_url: catItem.imageUrl || null,
+                      active: catItem.active ?? true,
+                      sort_order: catItem.sortOrder || 0
+                    })
+                    .select('id')
+                    .single();
+
+                  if (!catCreateErr && newCat) {
+                    categoryCache[catItem.slug] = newCat.id;
+                    if (!categoryIdsToLink.includes(newCat.id)) {
+                      categoryIdsToLink.push(newCat.id);
+                    }
+                  } else {
+                    console.error(`[Import API] Failed to create category '${catItem.slug}':`, catCreateErr);
+                  }
+                }
+              }
+            }
+
+            // Always include the system "shop" category
+            const SHOP_CATEGORY_ID = '00000000-0000-4000-8000-000000000099';
+            if (!categoryIdsToLink.includes(SHOP_CATEGORY_ID)) {
+              categoryIdsToLink.push(SHOP_CATEGORY_ID);
+            }
+
+            // Insert junction records (skip duplicates with upsert-like pattern)
+            if (categoryIdsToLink.length > 0) {
+              const junctionRows = categoryIdsToLink.map(catId => ({
+                product_id: productId,
+                category_id: catId
+              }));
+
+              // Use onConflict to avoid duplicate key errors
+              const { error: junctionErr } = await supabaseAdmin
+                .from('product_categories')
+                .upsert(junctionRows, { onConflict: 'product_id,category_id', ignoreDuplicates: true });
+
+              if (junctionErr) {
+                console.error(`[Import API] Failed to insert product_categories for ${finalName}:`, junctionErr);
+              }
             }
 
             // Success progress push

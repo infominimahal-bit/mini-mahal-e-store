@@ -1111,6 +1111,21 @@ export const deleteProduct = async (id: string): Promise<void> => {
     } else {
       (revalidateTag as any)('products');
     }
+
+    // Fire Meta DELETE sync as a safety net (non-blocking)
+    // The webhook will also handle this, but this ensures it happens even if webhook fails
+    try {
+      const { syncProductToMeta } = await import('@/lib/meta/syncProduct');
+      // Get full product data including variants for Meta sync
+      const fullProduct = await getProductById(id);
+      if (fullProduct) {
+        syncProductToMeta(fullProduct, 'DELETE').catch((metaErr: any) => {
+          console.warn('[products] Meta DELETE sync failed for product:', id, metaErr?.message);
+        });
+      }
+    } catch {
+      // Non-blocking
+    }
   } catch (error) {
     console.error('[products] deleteProduct failed:', error);
     throw error;

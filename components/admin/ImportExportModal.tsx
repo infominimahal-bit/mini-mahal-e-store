@@ -247,7 +247,7 @@ export default function ImportExportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 md:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 md:p-6 overflow-y-auto">
       <div 
         className="relative flex flex-col bg-white dark:bg-[#121224] w-full max-w-4xl h-[90vh] md:h-[85vh] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800/80 overflow-hidden"
         onClick={e => e.stopPropagation()}
