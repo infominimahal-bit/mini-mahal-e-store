@@ -1565,7 +1565,7 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
             )}
 
             {/* Product List */}
-            <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1">
+            <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1 overscroll-contain touch-pan-y" style={{ WebkitOverflowScrolling: 'touch' }}>
               {loadingAllProducts ? (
                 <div className="flex justify-center items-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-[#e94560]" />
