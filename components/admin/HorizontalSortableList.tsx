@@ -147,7 +147,7 @@ export default function HorizontalSortableList<T extends SortableItem>({
 
       <DragOverlay dropAnimation={null} zIndex={9999}>
         {activeItem ? (
-          <div className="rotate-2 scale-105 shadow-xl opacity-90">
+          <div className="rotate-3 scale-[1.15] shadow-2xl ring-2 ring-[#e94560] bg-white dark:bg-[#16162a] rounded-full cursor-grabbing overflow-hidden">
             {renderItem(activeItem, items.findIndex((i) => getId(i) === activeId))}
           </div>
         ) : null}
