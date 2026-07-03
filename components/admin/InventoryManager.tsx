@@ -166,7 +166,6 @@ export default function InventoryManager({ products: initialProducts, categories
     const skuMatch = product.sku?.toLowerCase().includes(q) || false;
     const variantMatch = product.variants?.some(v => 
       (v.sku && v.sku.toLowerCase().includes(q)) ||
-      (v.name && v.name.toLowerCase().includes(q)) ||
       (v.color && v.color.toLowerCase().includes(q)) ||
       (v.size && v.size.toLowerCase().includes(q)) ||
       (v.material && v.material.toLowerCase().includes(q)) ||

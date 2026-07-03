@@ -190,7 +190,6 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
       p.name.toLowerCase().includes(q) ||
       (p.sku && p.sku.toLowerCase().includes(q)) ||
       (p.variants && p.variants.some(v => 
-        (v.name && v.name.toLowerCase().includes(q)) ||
         (v.sku && v.sku.toLowerCase().includes(q)) ||
         (v.color && v.color.toLowerCase().includes(q)) ||
         (v.size && v.size.toLowerCase().includes(q)) ||
@@ -256,7 +255,6 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
       const nameMatch = product.name.toLowerCase().includes(q);
       const skuMatch = product.sku?.toLowerCase().includes(q) || false;
       const variantMatch = product.variants && product.variants.some(v => 
-        (v.name && v.name.toLowerCase().includes(q)) ||
         (v.sku && v.sku.toLowerCase().includes(q)) ||
         (v.color && v.color.toLowerCase().includes(q)) ||
         (v.size && v.size.toLowerCase().includes(q)) ||

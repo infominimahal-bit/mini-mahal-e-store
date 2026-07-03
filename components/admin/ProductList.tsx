@@ -232,7 +232,6 @@ export default function ProductList({ initialProducts, settings }: ProductListPr
         p.name.toLowerCase().includes(q) ||
         (p.sku && p.sku.toLowerCase().includes(q)) ||
         (p.variants && p.variants.some(v => 
-          (v.name && v.name.toLowerCase().includes(q)) ||
           (v.sku && v.sku.toLowerCase().includes(q)) ||
           (v.color && v.color.toLowerCase().includes(q)) ||
           (v.size && v.size.toLowerCase().includes(q)) ||

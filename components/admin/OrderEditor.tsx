@@ -247,7 +247,6 @@ export default function OrderEditor({ order: initialOrder, settings, products, o
       p.name.toLowerCase().includes(lowerQ) || 
       (p.sku && p.sku.toLowerCase().includes(lowerQ)) ||
       (p.variants && p.variants.some(v => 
-        (v.name && v.name.toLowerCase().includes(lowerQ)) ||
         (v.sku && v.sku.toLowerCase().includes(lowerQ)) ||
         (v.color && v.color.toLowerCase().includes(lowerQ)) ||
         (v.size && v.size.toLowerCase().includes(lowerQ)) ||
