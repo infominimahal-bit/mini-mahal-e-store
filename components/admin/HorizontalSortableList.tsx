@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   DndContext,
   DragOverlay,
-  closestCenter,
   pointerWithin,
   PointerSensor,
   TouchSensor,
@@ -53,18 +53,17 @@ function DraggablePill<T extends SortableItem>({
     isDragging,
   } = useSortable({ id: getId(item) });
 
-  const style = {
-    transform: transform ? CSS.Translate.toString(transform) : undefined,
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
     transition,
-    zIndex: isDragging ? 9999 : undefined,
-    position: isDragging ? 'relative' : undefined,
-  } as React.CSSProperties;
+    opacity: isDragging ? 0.35 : 1,
+  };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center ${isDragging ? 'scale-105 shadow-md z-50' : ''}`}
+      className="flex items-center"
       {...attributes}
       {...listeners}
     >
@@ -80,6 +79,13 @@ export default function HorizontalSortableList<T extends SortableItem>({
   getId = (item) => item.id,
   className = 'flex flex-wrap gap-1.5 min-h-[28px]',
 }: HorizontalSortableListProps<T>) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setPortalTarget(document.body);
+  }, []);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 6 },
@@ -89,8 +95,18 @@ export default function HorizontalSortableList<T extends SortableItem>({
     })
   );
 
+  const activeItem = useMemo(
+    () => items.find((item) => getId(item) === activeId),
+    [activeId, items, getId]
+  );
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  }, []);
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
+      setActiveId(null);
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
@@ -104,16 +120,35 @@ export default function HorizontalSortableList<T extends SortableItem>({
     [items, onReorder, getId]
   );
 
+  const handleDragCancel = useCallback(() => {
+    setActiveId(null);
+  }, []);
+
   const itemIds = useMemo(
     () => items.map((item) => getId(item)),
     [items, getId]
+  );
+
+  const overlayContent = (
+    <DragOverlay dropAnimation={null} zIndex={999999}>
+      {activeItem ? (
+        <div
+          className="flex items-center gap-1 px-2.5 py-1 rounded-full border-2 border-[#e94560] bg-white dark:bg-[#16162a] text-xs font-semibold shadow-2xl cursor-grabbing scale-110 rotate-2"
+          style={{ pointerEvents: 'none' }}
+        >
+          {renderItem(activeItem, items.findIndex((i) => getId(i) === activeId), true)}
+        </div>
+      ) : null}
+    </DragOverlay>
   );
 
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={pointerWithin}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
       <SortableContext items={itemIds} strategy={rectSortingStrategy}>
         <div className={className}>
@@ -128,6 +163,8 @@ export default function HorizontalSortableList<T extends SortableItem>({
           ))}
         </div>
       </SortableContext>
+
+      {portalTarget ? createPortal(overlayContent, portalTarget) : null}
     </DndContext>
   );
 }
