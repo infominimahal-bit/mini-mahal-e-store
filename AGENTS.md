@@ -251,3 +251,11 @@ When adding a new page, category, or route:
 3. Use `md:hidden` with stacked Flexbox cards (`space-y-3 p-4`) for mobile views.
 4. Follow the exact implementation pattern defined in [admin_mobile_responsive_ui_pattern.md](file:///Users/shoaib/Documents/zaynahsestore-tv-main/docs/prompts/admin_mobile_responsive_ui_pattern.md).
 <!-- END:admin-mobile-responsive-rule -->
+
+<!-- BEGIN:touch-first-scrolling-rule -->
+# Touch-First and Smooth Desktop Scrollable Overlays Rule
+
+1. **Touch Scrolling (Mobile/Tablets)**: All overlays, modals, dropdowns, and drawers that open on mobile/tablet screen viewports MUST use `overscroll-contain touch-pan-y` and declare the inline style `style={{ WebkitOverflowScrolling: 'touch' }}` (or `-webkit-overflow-scrolling: touch` in CSS) to enable native iOS Safari momentum inertia scrolling.
+2. **GPU Acceleration & Jitter Prevention (Desktop)**: To prevent scrolling lags, jitter, and paint delays on high-resolution desktop screens, modal backdrop overlays must NEVER use CPU-heavy blur filters (e.g. `backdrop-blur-sm`, `backdrop-blur-xs`). Always use high-contrast solid/opacity overlays (e.g. `bg-black/60`). 
+3. **Hardware Rendering**: Add GPU acceleration triggers like `will-change-transform` and `transform-gpu` to scrollable containers and modal cards to delegate paint layers to the GPU, guaranteeing 60fps scrolling on all screens.
+<!-- END:touch-first-scrolling-rule -->

@@ -1501,8 +1501,8 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
 
       {/* Add Product Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity duration-350">
-          <div className="relative w-full max-w-2xl bg-white dark:bg-[#16162a] p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden overscroll-contain animate-in fade-in-50 zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 transition-opacity duration-350">
+          <div className="relative w-full max-w-2xl bg-white dark:bg-[#16162a] p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden overscroll-contain animate-in fade-in-50 zoom-in-95 duration-200 flex flex-col max-h-[85vh] will-change-transform transform-gpu">
             <div className="flex items-center justify-between pb-4 border-b border-gray-150 dark:border-gray-800">
               <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
                 Add Products to {category.name}
@@ -1565,7 +1565,7 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
             )}
 
             {/* Product List */}
-            <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1 overscroll-contain touch-pan-y" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-1 overscroll-contain touch-pan-y transform-gpu will-change-transform" style={{ WebkitOverflowScrolling: 'touch' }}>
               {loadingAllProducts ? (
                 <div className="flex justify-center items-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-[#e94560]" />
