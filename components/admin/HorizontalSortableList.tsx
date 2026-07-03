@@ -56,7 +56,7 @@ function DraggablePill<T extends SortableItem>({
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
     transition,
-    opacity: isDragging ? 0.35 : 1,
+    opacity: isDragging ? 0.3 : 1,
   };
 
   return (
@@ -67,7 +67,7 @@ function DraggablePill<T extends SortableItem>({
       {...attributes}
       {...listeners}
     >
-      {renderItem(item, index, isDragging)}
+      {renderItem(item, index, false)}
     </div>
   );
 }
@@ -129,16 +129,10 @@ export default function HorizontalSortableList<T extends SortableItem>({
     [items, getId]
   );
 
+  // DragOverlay just renders the item directly with isDragging=true — no extra wrapper
   const overlayContent = (
     <DragOverlay dropAnimation={null} zIndex={999999}>
-      {activeItem ? (
-        <div
-          className="flex items-center gap-1 px-2.5 py-1 rounded-full border-2 border-[#e94560] bg-white dark:bg-[#16162a] text-xs font-semibold shadow-2xl cursor-grabbing"
-          style={{ pointerEvents: 'none' }}
-        >
-          {renderItem(activeItem, items.findIndex((i) => getId(i) === activeId), true)}
-        </div>
-      ) : null}
+      {activeItem ? renderItem(activeItem, items.findIndex((i) => getId(i) === activeId), true) : null}
     </DragOverlay>
   );
 
