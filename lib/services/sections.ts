@@ -30,15 +30,22 @@ const fetchHomepageSections = async (onlyActive: boolean): Promise<HomepageSecti
   }
 };
 
-const cachedSections = unstable_cache(
-  async (onlyActive: boolean) => fetchHomepageSections(onlyActive),
-  ['homepage-sections'],
+// Separate caches for active-only vs all sections so revalidation hits both
+const cachedActiveSections = unstable_cache(
+  async () => fetchHomepageSections(true),
+  ['homepage-sections-active'],
+  { revalidate: 86400, tags: ['homepage', 'banners', 'homepage_sections'] }
+);
+
+const cachedAllSections = unstable_cache(
+  async () => fetchHomepageSections(false),
+  ['homepage-sections-all'],
   { revalidate: 86400, tags: ['homepage', 'banners', 'homepage_sections'] }
 );
 
 export const getHomepageSections = async (onlyActive = false): Promise<HomepageSection[]> => {
   try {
-    return await cachedSections(onlyActive);
+    return onlyActive ? await cachedActiveSections() : await cachedAllSections();
   } catch (error) {
     console.error('[sections] getHomepageSections failed:', error);
     throw error;
@@ -60,7 +67,8 @@ export const updateHomepageSection = async (
 
     if (error) throw error;
     revalidatePath('/');
-    try { await revalidateBanner(); } catch (e) { console.error('[sections] revalidateBanner failed:', e); }
+    revalidatePath('/shop');
+    await revalidateBanner();
     return data;
   } catch (error) {
     console.error('[sections] updateHomepageSection failed:', error);
@@ -82,7 +90,8 @@ export const reorderHomepageSections = async (
     );
     await Promise.all(promises);
     revalidatePath('/');
-    try { await revalidateBanner(); } catch (e) { console.error('[sections] revalidateBanner failed:', e); }
+    revalidatePath('/shop');
+    await revalidateBanner();
   } catch (error) {
     console.error('[sections] reorderHomepageSections failed:', error);
     throw error;
@@ -137,7 +146,8 @@ export const addHomepageSection = async (
 
     if (error) throw error;
     revalidatePath('/');
-    try { await revalidateBanner(); } catch (e) { console.error('[sections] revalidateBanner failed:', e); }
+    revalidatePath('/shop');
+    await revalidateBanner();
     return data;
   } catch (error) {
     console.error('[sections] addHomepageSection failed:', error);
@@ -155,7 +165,8 @@ export const deleteHomepageSection = async (id: string): Promise<void> => {
 
     if (error) throw error;
     revalidatePath('/');
-    try { await revalidateBanner(); } catch (e) { console.error('[sections] revalidateBanner failed:', e); }
+    revalidatePath('/shop');
+    await revalidateBanner();
   } catch (error) {
     console.error('[sections] deleteHomepageSection failed:', error);
     throw error;

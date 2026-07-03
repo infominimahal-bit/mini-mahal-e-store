@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { HomepageSection, Category } from '@/lib/types';
-import { Trash2, ChevronUp, ChevronDown } from '@/components/common/Icons';
+import { Trash2, ChevronUp, ChevronDown, CheckSquare } from '@/components/common/Icons';
 
 interface CategoryGridSettingsProps {
   section: HomepageSection;
@@ -24,6 +24,9 @@ export default function CategoryGridSettings({
 }: CategoryGridSettingsProps) {
   const contentData = section.content_data || {};
   const items = contentData.items || [];
+  
+  const [showBulkAdd, setShowBulkAdd] = useState(false);
+  const [selectedBulkIds, setSelectedBulkIds] = useState<string[]>([]);
 
   const handleItemsChange = (updatedItems: any[]) => {
     onUpdateSection({
@@ -33,6 +36,19 @@ export default function CategoryGridSettings({
 
   const handleAddCard = () => {
     handleItemsChange([{ title: '', link: '', imageUrl: '' }, ...items]);
+  };
+
+  const handleBulkAddSubmit = () => {
+    const newCards = categories
+      .filter(c => selectedBulkIds.includes(c.id))
+      .map(cat => ({
+        title: cat.name,
+        link: `/shop?category=${cat.slug}`,
+        imageUrl: cat.image_url || ''
+      }));
+    handleItemsChange([...newCards, ...items]);
+    setSelectedBulkIds([]);
+    setShowBulkAdd(false);
   };
 
   return (
@@ -60,18 +76,66 @@ export default function CategoryGridSettings({
         </select>
       </div>
 
-      <div className="flex items-center justify-between">
-        <h4 className="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-wider">Grid Cards</h4>
-        <button
-          onClick={handleAddCard}
-          className="px-2 py-1 text-[10px] font-bold bg-[#e94560] text-white hover:bg-[#d83550] rounded-lg cursor-pointer transition-colors"
-        >
-          + Add Card
-        </button>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-wider">Grid Cards</h4>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowBulkAdd(!showBulkAdd)}
+              className={`px-2 py-1 text-[10px] font-bold rounded-lg cursor-pointer transition-colors ${showBulkAdd ? 'bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+            >
+              {showBulkAdd ? 'Cancel Bulk Add' : 'Bulk Add'}
+            </button>
+            <button
+              onClick={handleAddCard}
+              className="px-2 py-1 text-[10px] font-bold bg-[#e94560] text-white hover:bg-[#d83550] rounded-lg cursor-pointer transition-colors"
+            >
+              + Add Empty
+            </button>
+          </div>
+        </div>
+        
+        {/* Bulk Add UI */}
+        {showBulkAdd && (
+          <div className="space-y-2 p-3 bg-gray-50 dark:bg-[#0f0f1b] border border-gray-200 dark:border-gray-800 rounded-xl">
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">
+                Select Categories to Add
+              </label>
+              <span className="text-[10px] font-bold text-blue-500">{selectedBulkIds.length} Selected</span>
+            </div>
+            <div className="max-h-40 overflow-y-auto space-y-1.5 border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#16162a] rounded-lg p-2">
+              {categories.filter(c => c.slug !== 'shop').map(cat => (
+                <label key={cat.id} className="flex items-center gap-2 text-xs text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 p-1 rounded">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedBulkIds.includes(cat.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedBulkIds([...selectedBulkIds, cat.id]);
+                      } else {
+                        setSelectedBulkIds(selectedBulkIds.filter(id => id !== cat.id));
+                      }
+                    }}
+                    className="accent-blue-500"
+                  />
+                  {cat.name}
+                </label>
+              ))}
+            </div>
+            <button
+              onClick={handleBulkAddSubmit}
+              disabled={selectedBulkIds.length === 0}
+              className="w-full mt-2 py-1.5 text-xs font-bold bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-lg transition-colors cursor-pointer"
+            >
+              Add {selectedBulkIds.length} Selected Categories
+            </button>
+          </div>
+        )}
       </div>
       
       {items.length === 0 ? (
-        <p className="text-xs text-gray-500">No cards added yet. Click "+ Add Card" to start.</p>
+        <p className="text-xs text-gray-500">No cards added yet. Use "Quick Add" or "Add Empty Card" to start.</p>
       ) : (
         <div className="space-y-3">
           {items.map((item: any, idx: number) => {

@@ -909,21 +909,25 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
   const handleDownloadMedia = async (url: string, filename: string) => {
     try {
       toast.loading('Downloading media...', { id: 'downloading' });
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Network response was not ok');
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // If it's a Supabase storage URL, append the ?download parameter
+      // This forces the server to return Content-Disposition: attachment
+      const downloadUrl = url.includes('supabase.co') 
+        ? `${url}${url.includes('?') ? '&' : '?'}download=${encodeURIComponent(filename)}`
+        : url;
+
       const a = document.createElement('a');
-      a.href = blobUrl;
+      a.href = downloadUrl;
+      // Also set the HTML5 download attribute
       a.download = filename || 'download';
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
+      
       toast.success('Media downloaded successfully', { id: 'downloading' });
     } catch (error) {
       console.error('Download failed', error);
-      toast.error('Failed to download media. It might be blocked by CORS.', { id: 'downloading' });
+      toast.error('Failed to download media.', { id: 'downloading' });
     }
   };
 
