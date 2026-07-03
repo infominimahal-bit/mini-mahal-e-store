@@ -365,7 +365,11 @@ export default function NavigationTab({
                           return (
                             <div 
                               key={c.id} 
-                              onClick={() => { setMenuItemCategoryId(c.id); setIsCategoryDropdownOpen(false); }}
+                              onClick={() => { 
+                                setMenuItemCategoryId(c.id); 
+                                setIsCategoryDropdownOpen(false); 
+                                setMenuItemLabel(c.name);
+                              }}
                               className={`px-3 py-1.5 text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between gap-3 ${menuItemCategoryId === c.id ? 'bg-[#e94560]/10 text-[#e94560] font-medium' : 'text-gray-700 dark:text-gray-300'}`}
                             >
                               <span className="truncate">{c.name}</span>
@@ -427,7 +431,11 @@ export default function NavigationTab({
                           return (
                             <div 
                               key={p.id} 
-                              onClick={() => { setMenuItemProductId(p.id); setIsProductDropdownOpen(false); }}
+                              onClick={() => { 
+                                setMenuItemProductId(p.id); 
+                                setIsProductDropdownOpen(false); 
+                                setMenuItemLabel(p.name);
+                              }}
                               className={`px-3 py-1.5 text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between gap-3 ${menuItemProductId === p.id ? 'bg-[#e94560]/10 text-[#e94560] font-medium' : 'text-gray-700 dark:text-gray-300'}`}
                             >
                               <span className="truncate">{p.name}</span>
@@ -451,7 +459,19 @@ export default function NavigationTab({
                   <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5">Select Page *</label>
                   <select
                     value={menuItemSystemPage}
-                    onChange={(e) => setMenuItemSystemPage(e.target.value as any)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setMenuItemSystemPage(val as any);
+                      const pageNames: Record<string, string> = {
+                        home: 'Home',
+                        shop: 'Shop',
+                        cart: 'Cart',
+                        wishlist: 'Wishlist'
+                      };
+                      if (pageNames[val]) {
+                        setMenuItemLabel(pageNames[val]);
+                      }
+                    }}
                     className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#0f0f1b] px-4 py-2.5 text-sm focus:outline-none focus:border-[#e94560] text-gray-900 dark:text-white"
                   >
                     <option value="home">Home Page (Catalog Storefront)</option>
