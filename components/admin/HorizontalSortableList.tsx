@@ -16,7 +16,7 @@ import {
 import {
   SortableContext,
   useSortable,
-  horizontalListSortingStrategy,
+  rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -77,7 +77,7 @@ export default function HorizontalSortableList<T extends SortableItem>({
   onReorder,
   renderItem,
   getId = (item) => item.id,
-  className = 'flex overflow-x-auto gap-1.5 min-h-[28px] pb-2 hide-scrollbar',
+  className = 'flex flex-wrap gap-1.5 min-h-[28px]',
 }: HorizontalSortableListProps<T>) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -132,7 +132,7 @@ export default function HorizontalSortableList<T extends SortableItem>({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <SortableContext items={itemIds} strategy={horizontalListSortingStrategy}>
+      <SortableContext items={itemIds} strategy={rectSortingStrategy}>
         <div className={className}>
           {items.map((item, index) => (
             <DraggablePill
