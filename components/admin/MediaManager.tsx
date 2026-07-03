@@ -906,6 +906,27 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
 
   const handleCopyUrl = (url: string) => { navigator.clipboard.writeText(url); toast.success('Image URL copied'); };
 
+  const handleDownloadMedia = async (url: string, filename: string) => {
+    try {
+      toast.loading('Downloading media...', { id: 'downloading' });
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename || 'download';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(blobUrl);
+      document.body.removeChild(a);
+      toast.success('Media downloaded successfully', { id: 'downloading' });
+    } catch (error) {
+      console.error('Download failed', error);
+      toast.error('Failed to download media. It might be blocked by CORS.', { id: 'downloading' });
+    }
+  };
+
   // ════════════════════════════════════════════════════════════════════════
   // 10. VISION AI
   // ════════════════════════════════════════════════════════════════════════
@@ -1887,6 +1908,15 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
                           Edit ALT & Description Tags
                         </button>
                       )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadMedia(previewItem.file_url, previewItem.original_filename)}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 font-bold text-xs hover:bg-gray-50 dark:hover:bg-gray-800 transition-all cursor-pointer min-h-[44px]"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download Media
+                      </button>
                     </div>
                   </div>
                 ) : (
