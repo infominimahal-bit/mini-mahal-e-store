@@ -124,6 +124,11 @@ export default function HorizontalSortableList<T extends SortableItem>({
     [items, getId]
   );
 
+  const [isMounted, setIsMounted] = useState(false);
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <DndContext
       sensors={sensors}
@@ -145,13 +150,15 @@ export default function HorizontalSortableList<T extends SortableItem>({
         </div>
       </SortableContext>
 
-      <DragOverlay dropAnimation={null} zIndex={9999}>
-        {activeItem ? (
-          <div className="rotate-3 scale-[1.15] shadow-2xl ring-2 ring-[#e94560] bg-white dark:bg-[#16162a] rounded-full cursor-grabbing overflow-hidden">
-            {renderItem(activeItem, items.findIndex((i) => getId(i) === activeId))}
-          </div>
-        ) : null}
-      </DragOverlay>
+      {isMounted && (
+        <DragOverlay dropAnimation={null} zIndex={99999}>
+          {activeItem ? (
+            <div className="rotate-3 scale-[1.15] shadow-2xl ring-2 ring-[#e94560] bg-white dark:bg-[#16162a] rounded-full cursor-grabbing overflow-hidden">
+              {renderItem(activeItem, items.findIndex((i) => getId(i) === activeId))}
+            </div>
+          ) : null}
+        </DragOverlay>
+      )}
     </DndContext>
   );
 }
