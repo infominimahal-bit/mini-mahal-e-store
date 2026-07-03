@@ -383,6 +383,9 @@ export default function CategoryManager({ initialCategories, aiEnabled, storeUrl
           return b.name.localeCompare(a.name);
         case 'sort-order':
         default:
+          if ((a.sortOrder ?? 0) === (b.sortOrder ?? 0)) {
+            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+          }
           return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
       }
     });
@@ -559,7 +562,7 @@ export default function CategoryManager({ initialCategories, aiEnabled, storeUrl
 
       {/* Slide / Inline Modal overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 ">
           {/* Centered spacious max-w-3xl modal on all screens, keeping the backdrop menu visible */}
           <div className="bg-white dark:bg-[#16162a] w-full max-w-3xl max-h-[90vh] rounded-2xl border border-gray-250 dark:border-gray-800 shadow-2xl overflow-hidden flex flex-col animate-scale-in text-gray-900 dark:text-white overscroll-contain">
             

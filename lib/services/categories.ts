@@ -48,7 +48,8 @@ const fetchCategories = async (): Promise<Category[]> => {
       .select('*')
       .eq('active', true)
       .is('deleted_at', null)
-      .order('sort_order', { ascending: true });
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
     return (data ?? []).map(mapCategory);
@@ -98,7 +99,8 @@ export const getAllCategories = async (): Promise<Category[]> => {
       .from('categories')
       .select('*')
       .is('deleted_at', null)
-      .order('sort_order', { ascending: true });
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
     return (data ?? []).map(mapCategory);

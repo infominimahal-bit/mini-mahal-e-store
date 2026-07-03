@@ -311,7 +311,7 @@ function HeroBannerSection({ section, settings }: HeroBannerSectionProps) {
   // Global settings
   const showBackdrop = section.settings?.show_backdrop_container ?? false;
   const backdropClass = showBackdrop 
-    ? 'backdrop-blur-md bg-black/35 border border-white/10 p-5 md:p-8 rounded-2xl shadow-xl' 
+    ? ' bg-black/35 border border-white/10 p-5 md:p-8 rounded-2xl shadow-xl' 
     : 'bg-transparent border-none p-0';
 
   // Desktop alignments

@@ -2227,7 +2227,7 @@ export default function TrashConsole({
 
       {/* Confirmation modal for single hard delete */}
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity duration-350">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60  transition-opacity duration-350">
           <div className="relative w-full max-w-md bg-white dark:bg-[#16162a] p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden overscroll-contain animate-in fade-in-50 zoom-in-95 duration-200">
             <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
               Confirm Permanent Deletion
@@ -2261,7 +2261,7 @@ export default function TrashConsole({
 
       {/* Confirmation modal for bulk hard delete */}
       {confirmBulkDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity duration-350">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60  transition-opacity duration-350">
           <div className="relative w-full max-w-md bg-white dark:bg-[#16162a] p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden overscroll-contain animate-in fade-in-50 zoom-in-95 duration-200">
             <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
               Confirm Permanent Deletion
@@ -2295,7 +2295,7 @@ export default function TrashConsole({
 
       {/* Confirmation modal for emptying complete tab */}
       {confirmEmptyTab && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity duration-350">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60  transition-opacity duration-350">
           <div className="relative w-full max-w-md bg-white dark:bg-[#16162a] p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden overscroll-contain animate-in fade-in-50 zoom-in-95 duration-200">
             <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
               Confirm Emptying Tab Trash
@@ -2329,7 +2329,7 @@ export default function TrashConsole({
 
       {/* Confirmation modal for emptying complete trash bin */}
       {confirmEmptyCompleteTrash && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity duration-350">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60  transition-opacity duration-350">
           <div className="relative w-full max-w-md bg-white dark:bg-[#16162a] p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden overscroll-contain animate-in fade-in-50 zoom-in-95 duration-200">
             <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
               Confirm Emptying Entire Trash Bin

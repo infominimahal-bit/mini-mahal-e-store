@@ -525,7 +525,7 @@ function AdminCustomersPageInner() {
       {selectedCustomer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
+          <div className="absolute inset-0 bg-black/60 " onClick={closeModal} />
 
           {/* Modal Panel */}
           <div className="relative w-full sm:max-w-2xl max-h-[80vh] flex flex-col bg-gray-50 dark:bg-[#0f0f1b] sm:rounded-3xl rounded-2xl shadow-2xl overflow-hidden">

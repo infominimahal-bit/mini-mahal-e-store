@@ -15,6 +15,7 @@ import { trackEvent } from '@/lib/trackEvent';
 import { animateFlyTo } from '@/lib/utils/flyAnimation';
 import { useScrollRestoration } from '@/lib/hooks/useScrollRestoration';
 import { useSettings } from '@/lib/hooks/useSettings';
+import { getSwatchStyle } from '@/lib/utils/swatch';
 
 interface ShopPageProps {
   initialProducts: Product[];
@@ -702,7 +703,7 @@ export default function ShopPage({
                     {hex ? (
                       <span
                         className="w-3.5 h-3.5 rounded-full border border-black/10 dark:border-white/10 shrink-0"
-                        style={{ backgroundColor: hex }}
+                        style={getSwatchStyle(hex)}
                       />
                     ) : (
                       <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-gray-400 to-gray-200 shrink-0" />

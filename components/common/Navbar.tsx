@@ -697,7 +697,7 @@ export default function Navbar({
             window.parent.postMessage({ type: 'select_global_tab', subTab: 'header' }, '*');
           }
         }}
-        className={`${stickyClass} z-[100] w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-[#0f0f1b]/85 backdrop-blur-md transition-colors duration-200 ${isPreview ? 'cursor-pointer hover:ring-2 hover:ring-[#e94560] hover:ring-offset-2' : ''
+        className={`${stickyClass} z-[100] w-full border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-[#0f0f1b]/85  transition-colors duration-200 ${isPreview ? 'cursor-pointer hover:ring-2 hover:ring-[#e94560] hover:ring-offset-2' : ''
           }`}
         style={{
           backgroundColor: headerBg !== '#ffffff' ? headerBg : undefined,

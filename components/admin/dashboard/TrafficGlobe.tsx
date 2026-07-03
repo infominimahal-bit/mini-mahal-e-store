@@ -199,7 +199,7 @@ export default function TrafficGlobe({ visitorDots, orderDots, countries = [], h
       {/* Empty state */}
       {!hasData && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-          <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full px-4 py-2 shadow-md">
+          <div className="bg-white/90  border border-gray-200 rounded-full px-4 py-2 shadow-md">
             <span className="text-sm font-semibold text-gray-500 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
               Waiting for traffic data

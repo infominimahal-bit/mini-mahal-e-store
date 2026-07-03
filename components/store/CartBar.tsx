@@ -26,7 +26,7 @@ export default function CartBar({ currencySymbol = 'Rs.' }: CartBarProps) {
   if (!mounted || totalItems === 0 || pathname === '/cart') return null;
 
   return (
-    <div className="fixed bottom-16 left-0 right-0 z-40 px-4 py-2 bg-white/95 dark:bg-[#16162a]/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] md:hidden">
+    <div className="fixed bottom-16 left-0 right-0 z-40 px-4 py-2 bg-white/95 dark:bg-[#16162a]/95  border-t border-gray-200 dark:border-gray-800 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] md:hidden">
       <Link
         href="/cart"
         className="w-full flex items-center justify-between rounded-xl bg-[#1a1a2e] hover:bg-[#e94560] active:scale-[0.98] text-white px-5 py-3 transition-all duration-200 cursor-pointer"

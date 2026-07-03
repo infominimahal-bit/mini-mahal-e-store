@@ -245,10 +245,40 @@ textarea::placeholder {
    PERFORMANCE: GPU-accelerated compositing hints
    ============================================================ */
 
-/* Smooth momentum scrolling on iOS */
+/* Smooth momentum scrolling on iOS and Touch Devices */
 .overflow-y-auto,
-.overflow-y-scroll {
-  -webkit-overflow-scrolling: touch;
+.overflow-y-scroll,
+.overflow-x-auto,
+.overflow-x-scroll,
+.overflow-auto {
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Touch action optimizations */
+.overflow-y-auto,
+.overflow-y-scroll,
+.overflow-auto {
+  touch-action: pan-y !important;
+}
+.overflow-x-auto,
+.overflow-x-scroll {
+  touch-action: pan-x !important;
+}
+
+/* Hardware GPU Acceleration for scrollable layers & modals (Jitter Prevention) */
+.overflow-y-auto,
+.overflow-y-scroll,
+.overflow-x-auto,
+.overflow-x-scroll,
+.overflow-auto,
+.fixed.z-50,
+.fixed.inset-0,
+[role="dialog"],
+[role="menu"] {
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 /* Store product grid: skip rendering for off-screen items */
@@ -271,7 +301,8 @@ textarea::placeholder {
 /* Touch scroll improvements */
 .touch-scroll {
   overscroll-behavior: contain;
-  touch-action: pan-y;
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
 /* ============================================================

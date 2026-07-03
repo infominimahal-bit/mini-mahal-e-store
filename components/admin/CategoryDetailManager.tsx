@@ -18,6 +18,7 @@ import {
 import { updateCategory } from '@/lib/services/categories';
 import { toast } from 'sonner';
 import { formatPrice } from '@/lib/utils/whatsapp';
+import { getSwatchStyle } from '@/lib/utils/swatch';
 import {
   Search,
   ChevronDown,
@@ -875,7 +876,7 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
                                     <td className="py-2.5 px-4 font-semibold text-gray-855 dark:text-gray-200">
                                       <div className="flex items-center gap-2">
                                         {variant.colorHex && (
-                                          <span className="h-3 w-3 rounded-full flex-shrink-0 border border-gray-300" style={{ background: variant.colorHex }} />
+                                          <span className="h-3 w-3 rounded-full flex-shrink-0 border border-gray-300" style={getSwatchStyle(variant.colorHex)} />
                                         )}
                                         {variantLabel}
                                       </div>
@@ -1256,7 +1257,7 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
                                         className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-3.5 w-3.5 cursor-pointer flex-shrink-0"
                                       />
                                       {variant.colorHex && (
-                                        <span className="h-3.5 w-3.5 rounded-full border border-gray-300 flex-shrink-0" style={{ background: variant.colorHex }} />
+                                        <span className="h-3.5 w-3.5 rounded-full border border-gray-300 flex-shrink-0" style={getSwatchStyle(variant.colorHex)} />
                                       )}
                                       {variantLabel}
                                     </div>

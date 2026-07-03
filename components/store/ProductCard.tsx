@@ -12,6 +12,7 @@ import dynamic from 'next/dynamic';
 import { animateFlyTo } from '@/lib/utils/flyAnimation';
 import { saveScrollPosition } from '@/lib/hooks/useScrollRestoration';
 import { useTheme } from 'next-themes';
+import { getSwatchStyle } from '@/lib/utils/swatch';
 
 // Lazy load QuickViewModal to reduce initial JS bundle
 const QuickViewModal = dynamic(() => import('./QuickViewModal'), {
@@ -368,7 +369,7 @@ export default function ProductCard({ product, currencySymbol = 'Rs.', settings 
                   shadow-sm ${isActive ? 'scale-110' : 'hover:scale-110'}
                 `}
                 style={{
-                  backgroundColor: bg || '#e5e7eb',
+                  ...getSwatchStyle(v.colorHex),
                   borderColor: isActive ? 'var(--color-accent)' : 'var(--color-border)',
                   boxShadow: isActive ? '0 0 0 1.5px var(--color-accent)' : 'none',
                 }}

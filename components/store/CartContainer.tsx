@@ -1304,7 +1304,7 @@ function CartItemCard({ item, compact = false, settings, removeItem, updateQuant
           )}
         </div>
         {compact && (
-          <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-800/90 dark:bg-gray-100/90 backdrop-blur-sm text-[10px] font-bold text-white dark:text-black ring-2 ring-white dark:ring-[#16162a] z-10 shadow-sm">
+          <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-800/90 dark:bg-gray-100/90  text-[10px] font-bold text-white dark:text-black ring-2 ring-white dark:ring-[#16162a] z-10 shadow-sm">
             {item.quantity}
           </span>
         )}

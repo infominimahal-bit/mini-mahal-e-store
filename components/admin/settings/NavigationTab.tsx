@@ -266,7 +266,7 @@ export default function NavigationTab({
 
       {/* Menu Item Form Modal */}
       {isMenuModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60  flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#16162a] w-full max-w-md rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl p-6 relative scale-up">
             <div className="flex items-center justify-between mb-4 border-b border-gray-200 dark:border-gray-800 pb-2">
               <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white">

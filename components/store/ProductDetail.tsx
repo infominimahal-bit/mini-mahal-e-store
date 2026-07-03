@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import VariantSelector from './VariantSelector';
 import { trackEvent } from '@/lib/trackEvent';
 import { animateFlyTo } from '@/lib/utils/flyAnimation';
+import { getSwatchStyle } from '@/lib/utils/swatch';
 
 interface ProductDetailProps {
   product: Product;
@@ -1191,7 +1192,7 @@ export default function ProductDetail({ product, settings, averageRating, social
                                         onClick={(e) => { e.stopPropagation(); selectBpVariant(color); }}
                                         className={`w-6 h-6 rounded-full border-2 transition-all cursor-pointer overflow-hidden flex-shrink-0 ${isActive ? 'border-amber-500 scale-110 shadow' : 'border-white dark:border-gray-700 hover:scale-105'
                                           }`}
-                                        style={{ backgroundColor: bg }}
+                                        style={getSwatchStyle(bg)}
                                       >
                                         {matchV?.imageUrl && (matchV.showImageSwatch || !bg) && (
                                           <img src={matchV.imageUrl} alt={color} className="w-full h-full object-cover" />

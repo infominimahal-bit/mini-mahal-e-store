@@ -659,7 +659,7 @@ export default function AbandonedCartsPage() {
         <>
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-xs z-45 transition-opacity animate-fade-in"
+            className="fixed inset-0 bg-black/50  z-45 transition-opacity animate-fade-in"
             onClick={() => setSelectedCartId(null)}
           />
 

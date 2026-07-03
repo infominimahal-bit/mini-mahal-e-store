@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ProductVariant, StoreSettings } from '@/lib/types';
+import { getSwatchStyle } from '@/lib/utils/swatch';
 
 interface VariantSelectorProps {
   variants: ProductVariant[];
@@ -181,7 +182,7 @@ export default function VariantSelector({
                     overflow-hidden
                   `}
                   style={{
-                    backgroundColor: bg || '#e5e7eb',
+                    ...getSwatchStyle(bg),
                     borderColor: isSelected ? 'var(--color-accent)' : 'var(--color-border)',
                     boxShadow: isSelected ? '0 0 0 2px var(--color-accent)' : 'none',
                   }}

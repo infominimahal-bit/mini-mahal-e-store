@@ -34,6 +34,8 @@ import { getBadges } from '@/lib/services/badges';
 import { createClient } from '@/lib/supabase/client';
 import { getClientSiteUrl } from '@/lib/site-url';
 import { toast } from 'sonner';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { getSwatchStyle } from '@/lib/utils/swatch';
 
 
 interface ProductFormProps {
@@ -139,7 +141,7 @@ function SortableImageItem({
         )}
         
         {/* Combined Grip handle and index number badge */}
-        <div className="absolute top-1.5 left-1.5 z-30 flex items-center gap-1 bg-[#1a1a2e]/80 backdrop-blur-xs text-white px-2 py-0.5 rounded-lg shadow-md border border-white/10 select-none">
+        <div className="absolute top-1.5 left-1.5 z-30 flex items-center gap-1 bg-[#1a1a2e]/80  text-white px-2 py-0.5 rounded-lg shadow-md border border-white/10 select-none">
           <GripVertical className="h-3 w-3 text-gray-300 flex-shrink-0" />
           <span className="text-[10px] font-extrabold tabular-nums">
             {index + 1}
@@ -1728,29 +1730,86 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                           <span className="text-[10px] font-black uppercase text-gray-400">Color Settings (hex + linked image)</span>
                           {axis.values.map((val, valIdx) => (
                             <div key={valIdx} className="flex items-center gap-3 bg-white dark:bg-[#16162a] border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 shadow-sm">
-                              {/* Premium Color Picker Swatch Container */}
-                              <div className="relative h-8 w-8 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shrink-0">
-                                <input
-                                  type="color"
-                                  value={val.hex || '#888888'}
-                                  onChange={(e) => {
-                                    const newHex = e.target.value;
-                                    setVariantAxes(prev => prev.map((a, i) =>
-                                      i === axisIdx ? {
-                                        ...a,
-                                        values: a.values.map((v, vi) =>
-                                          vi === valIdx ? { ...v, hex: newHex } : v
-                                        )
-                                      } : a
-                                    ));
-                                    // SYNC TO VARIANTS
-                                    setVariants(prev => prev.map(v =>
-                                      v.color === val.label ? { ...v, colorHex: newHex } : v
-                                    ));
-                                  }}
-                                  className="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer scale-150"
-                                  title="Pick color"
-                                />
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {(val.hex || '#888888').split(',').map((colorValue, colorIndex, colorsArr) => (
+                                  <div key={colorIndex} className="relative group h-8 w-8 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shrink-0">
+                                    <input
+                                      type="color"
+                                      value={colorValue.trim() || '#888888'}
+                                      onChange={(e) => {
+                                        const newHex = e.target.value;
+                                        const newColorsArr = [...colorsArr];
+                                        newColorsArr[colorIndex] = newHex;
+                                        const joinedHex = newColorsArr.join(',');
+                                        
+                                        setVariantAxes(prev => prev.map((a, i) =>
+                                          i === axisIdx ? {
+                                            ...a,
+                                            values: a.values.map((v, vi) =>
+                                              vi === valIdx ? { ...v, hex: joinedHex } : v
+                                            )
+                                          } : a
+                                        ));
+                                        // SYNC TO VARIANTS
+                                        setVariants(prev => prev.map(v =>
+                                          v.color === val.label ? { ...v, colorHex: joinedHex } : v
+                                        ));
+                                      }}
+                                      className="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer scale-150"
+                                      title="Pick color"
+                                    />
+                                    {colorsArr.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newColorsArr = colorsArr.filter((_, ci) => ci !== colorIndex);
+                                          const joinedHex = newColorsArr.join(',');
+                                          
+                                          setVariantAxes(prev => prev.map((a, i) =>
+                                            i === axisIdx ? {
+                                              ...a,
+                                              values: a.values.map((v, vi) =>
+                                                vi === valIdx ? { ...v, hex: joinedHex } : v
+                                              )
+                                            } : a
+                                          ));
+                                          // SYNC TO VARIANTS
+                                          setVariants(prev => prev.map(v =>
+                                            v.color === val.label ? { ...v, colorHex: joinedHex } : v
+                                          ));
+                                        }}
+                                        className="absolute top-0 right-0 hidden group-hover:flex h-4 w-4 items-center justify-center bg-red-500/90 hover:bg-red-500 text-white text-[12px] leading-none cursor-pointer"
+                                      >
+                                        ×
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                                {(val.hex || '#888888').split(',').length < 3 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const joinedHex = (val.hex || '#888888') + ',#ffffff';
+                                      
+                                      setVariantAxes(prev => prev.map((a, i) =>
+                                        i === axisIdx ? {
+                                          ...a,
+                                          values: a.values.map((v, vi) =>
+                                            vi === valIdx ? { ...v, hex: joinedHex } : v
+                                          )
+                                        } : a
+                                      ));
+                                      // SYNC TO VARIANTS
+                                      setVariants(prev => prev.map(v =>
+                                        v.color === val.label ? { ...v, colorHex: joinedHex } : v
+                                      ));
+                                    }}
+                                    className="h-8 w-8 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#0f0f1b] flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-white shrink-0 cursor-pointer transition-colors"
+                                    title="Add split color"
+                                  >
+                                    +
+                                  </button>
+                                )}
                               </div>
 
                               {/* Color Label with fixed width & shrink-0 */}
@@ -2286,7 +2345,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                                 <td className="py-2.5 px-3 font-semibold text-gray-900 dark:text-white">
                                   <div className="flex items-center gap-1.5 min-h-[28px]">
                                     {variant.colorHex && (
-                                      <span className="h-3 w-3 rounded-full flex-shrink-0 border border-gray-300" style={{ background: variant.colorHex }} />
+                                      <span className="h-3 w-3 rounded-full flex-shrink-0 border border-gray-300" style={getSwatchStyle(variant.colorHex)} />
                                     )}
                                     <span className="truncate">{label}</span>
                                   </div>
@@ -2294,12 +2353,33 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                                 <td className="py-2.5 px-3">
                                   <div className="flex items-center justify-center min-h-[28px]">
                                     {variant.color && (
-                                      <input
-                                        type="color"
-                                        value={variant.colorHex || '#888888'}
-                                        onChange={(e) => handleUpdateVariant(idx, { colorHex: e.target.value })}
-                                        className="h-7 w-7 rounded cursor-pointer border-0 p-0.5 bg-transparent"
-                                      />
+                                      <div className="flex items-center gap-1">
+                                        {(variant.colorHex || '#888888').split(',').map((hexVal, hexIdx, hexArr) => (
+                                          <div key={hexIdx} className="relative group h-7 w-7 rounded border border-gray-200 dark:border-gray-700 overflow-hidden shrink-0">
+                                            <input
+                                              type="color"
+                                              value={hexVal.trim() || '#888888'}
+                                              onChange={(e) => {
+                                                const newArr = [...hexArr];
+                                                newArr[hexIdx] = e.target.value;
+                                                handleUpdateVariant(idx, { colorHex: newArr.join(',') });
+                                              }}
+                                              className="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer scale-150"
+                                            />
+                                            {hexArr.length > 1 && (
+                                              <button type="button" onClick={() => {
+                                                const newArr = hexArr.filter((_, i) => i !== hexIdx);
+                                                handleUpdateVariant(idx, { colorHex: newArr.join(',') });
+                                              }} className="absolute -top-1 -right-1 hidden group-hover:flex h-3 w-3 items-center justify-center bg-red-500 text-white rounded-full text-[8px] z-10 cursor-pointer">×</button>
+                                            )}
+                                          </div>
+                                        ))}
+                                        {(variant.colorHex || '#888888').split(',').length < 3 && (
+                                          <button type="button" onClick={() => {
+                                            handleUpdateVariant(idx, { colorHex: (variant.colorHex || '#888888') + ',#ffffff' });
+                                          }} className="h-4 w-4 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center justify-center text-[10px] cursor-pointer" title="Add split color">+</button>
+                                        )}
+                                      </div>
                                     )}
                                   </div>
                                 </td>
@@ -2410,7 +2490,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                                   className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-4 w-4 cursor-pointer"
                                 />
                                 {variant.colorHex && (
-                                  <span className="h-4 w-4 rounded-full flex-shrink-0 border border-gray-300" style={{ background: variant.colorHex }} />
+                                  <span className="h-4 w-4 rounded-full flex-shrink-0 border border-gray-300" style={getSwatchStyle(variant.colorHex)} />
                                 )}
                                 <span className="text-sm font-bold text-gray-900 dark:text-white">{label}</span>
                               </div>
@@ -2426,12 +2506,33 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                               {variant.color && (
                                 <div>
                                   <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Color</label>
-                                  <input
-                                    type="color"
-                                    value={variant.colorHex || '#888888'}
-                                    onChange={(e) => handleUpdateVariant(idx, { colorHex: e.target.value })}
-                                    className="h-8 w-full rounded cursor-pointer border-0 p-0.5 bg-transparent"
-                                  />
+                                  <div className="flex items-center gap-1">
+                                    {(variant.colorHex || '#888888').split(',').map((hexVal, hexIdx, hexArr) => (
+                                      <div key={hexIdx} className="relative group h-8 w-8 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shrink-0">
+                                        <input
+                                          type="color"
+                                          value={hexVal.trim() || '#888888'}
+                                          onChange={(e) => {
+                                            const newArr = [...hexArr];
+                                            newArr[hexIdx] = e.target.value;
+                                            handleUpdateVariant(idx, { colorHex: newArr.join(',') });
+                                          }}
+                                          className="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer scale-150"
+                                        />
+                                        {hexArr.length > 1 && (
+                                          <button type="button" onClick={() => {
+                                            const newArr = hexArr.filter((_, i) => i !== hexIdx);
+                                            handleUpdateVariant(idx, { colorHex: newArr.join(',') });
+                                          }} className="absolute -top-1 -right-1 hidden group-hover:flex h-3.5 w-3.5 items-center justify-center bg-red-500 text-white rounded-full text-[8px] z-10 cursor-pointer">×</button>
+                                        )}
+                                      </div>
+                                    ))}
+                                    {(variant.colorHex || '#888888').split(',').length < 3 && (
+                                      <button type="button" onClick={() => {
+                                        handleUpdateVariant(idx, { colorHex: (variant.colorHex || '#888888') + ',#ffffff' });
+                                      }} className="h-5 w-5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center justify-center text-xs font-bold cursor-pointer" title="Add split color">+</button>
+                                    )}
+                                  </div>
                                 </div>
                               )}
                               <div>

@@ -1800,7 +1800,7 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
 
       {/* ── IMAGE PREVIEW & LIGHT IMAGE EDITOR MODAL ───────────────────────── */}
       {previewItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85  animate-fade-in">
           <div className="bg-white dark:bg-[#16162a] rounded-3xl max-w-5xl w-full border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] md:max-h-[85vh] will-change-transform">
             
             {/* Left/Center: Image Viewport */}
@@ -1825,7 +1825,7 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
 
               {/* Top Bar for close/exit */}
               <div className="absolute top-4 left-4 z-10 flex gap-2">
-                <span className="text-[10px] font-mono text-gray-400 bg-black/45 px-2.5 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm">
+                <span className="text-[10px] font-mono text-gray-400 bg-black/45 px-2.5 py-1 rounded-full uppercase tracking-wider ">
                   {previewItem.mime_type?.split('/')[1] || 'media'} • {formatBytes(previewItem.file_size)}
                 </span>
               </div>

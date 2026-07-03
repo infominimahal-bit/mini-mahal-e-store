@@ -11,6 +11,7 @@ import {
   deleteVariantPreset,
   updateVariantPreset
 } from '@/lib/services/variantPresets';
+import { getSwatchStyle } from '@/lib/utils/swatch';
 import { toast } from 'sonner';
 
 const standardColorMap: Record<string, string> = {
@@ -270,17 +271,57 @@ export default function VariantPresetsPage() {
             {newValues.map((v, i) => (
               <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-[#0f0f1b] border border-gray-200 dark:border-gray-800 text-xs font-semibold text-gray-800 dark:text-gray-200 shadow-sm">
                 {newAttr === 'color' && (
-                  <input
-                    type="color"
-                    value={v.hex || '#888888'}
-                    onChange={(e) => {
-                      setNewValues(prev => prev.map((item, idx) =>
-                        idx === i ? { ...item, hex: e.target.value } : item
-                      ));
-                    }}
-                    className="h-5 w-5 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0"
-                    title="Select color"
-                  />
+                  <div className="flex items-center gap-1">
+                    {(v.hex || '#888888').split(',').map((colorValue, colorIndex, colorsArr) => (
+                      <div key={colorIndex} className="relative group flex items-center">
+                        <input
+                          type="color"
+                          value={colorValue.trim() || '#888888'}
+                          onChange={(e) => {
+                            const newColor = e.target.value;
+                            setNewValues(prev => prev.map((item, idx) => {
+                              if (idx !== i) return item;
+                              const newColorsArr = [...colorsArr];
+                              newColorsArr[colorIndex] = newColor;
+                              return { ...item, hex: newColorsArr.join(',') };
+                            }));
+                          }}
+                          className="h-5 w-5 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0"
+                          title="Select color"
+                        />
+                        {colorsArr.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNewValues(prev => prev.map((item, idx) => {
+                                if (idx !== i) return item;
+                                const newColorsArr = colorsArr.filter((_, ci) => ci !== colorIndex);
+                                return { ...item, hex: newColorsArr.join(',') };
+                              }));
+                            }}
+                            className="absolute -top-1.5 -right-1.5 hidden group-hover:flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-white text-[8px] cursor-pointer"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {(v.hex || '#888888').split(',').length < 3 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewValues(prev => prev.map((item, idx) => {
+                            if (idx !== i) return item;
+                            return { ...item, hex: (item.hex || '#888888') + ',#ffffff' };
+                          }));
+                        }}
+                        className="h-4 w-4 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 hover:text-gray-700 dark:hover:text-white"
+                        title="Add split color"
+                      >
+                        +
+                      </button>
+                    )}
+                  </div>
                 )}
                 <span>{v.label}</span>
                 <button type="button" onClick={() => setNewValues(prev => prev.filter((_, j) => j !== i))} className="ml-1.5 text-gray-400 hover:text-red-500 font-bold cursor-pointer">×</button>
@@ -477,7 +518,7 @@ export default function VariantPresetsPage() {
                             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#16162a] text-xs font-semibold text-gray-800 dark:text-gray-200"
                           >
                             {preset.attribute === 'color' && v.hex && (
-                              <span className="h-3 w-3 rounded-full border border-gray-200 flex-shrink-0" style={{ background: v.hex }} />
+                              <span className="h-3 w-3 rounded-full border border-gray-200 dark:border-gray-700 flex-shrink-0" style={getSwatchStyle(v.hex)} />
                             )}
                             {v.label}
                           </div>
