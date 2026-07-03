@@ -233,11 +233,7 @@ export default function ProductDetail({ product, settings, averageRating, social
   };
 
   // Selection states
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
-    product.hasVariants && product.variants.length > 0
-      ? product.variants.filter(v => v.active)[0]
-      : undefined
-  );
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(undefined);
 
   const [selectedModifiers, setSelectedModifiers] = useState<ProductModifier[]>([]);
   const [quantity, setQuantity] = useState(1);
@@ -526,6 +522,10 @@ export default function ProductDetail({ product, settings, averageRating, social
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
+    if (product.hasVariants && product.variants.filter(v => v.active).length > 0 && !selectedVariant) {
+      toast.error('Please select a variant first');
+      return;
+    }
     if (quantity > stockAvailable) {
       toast.error(`Only ${stockAvailable} items left in stock`);
       return;

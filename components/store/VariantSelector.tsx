@@ -32,21 +32,28 @@ export default function VariantSelector({
   const customOptionName = activeVariants[0]?.customOption;
   const customValues = React.useMemo(() => Array.from(new Set(activeVariants.map(v => v.customValue).filter(Boolean))) as string[], [activeVariants]);
 
-  const [selectedColor, setSelectedColor] = React.useState<string | undefined>(selectedVariant?.color || colors[0]);
-  const [selectedSize, setSelectedSize] = React.useState<string | undefined>(selectedVariant?.size || sizes[0]);
-  const [selectedMaterial, setSelectedMaterial] = React.useState<string | undefined>(selectedVariant?.material || materials[0]);
-  const [selectedCustomValue, setSelectedCustomValue] = React.useState<string | undefined>(selectedVariant?.customValue || customValues[0]);
+  const [selectedColor, setSelectedColor] = React.useState<string | undefined>(selectedVariant?.color);
+  const [selectedSize, setSelectedSize] = React.useState<string | undefined>(selectedVariant?.size);
+  const [selectedMaterial, setSelectedMaterial] = React.useState<string | undefined>(selectedVariant?.material);
+  const [selectedCustomValue, setSelectedCustomValue] = React.useState<string | undefined>(selectedVariant?.customValue);
 
   React.useEffect(() => {
     if (selectedVariant) {
-      setSelectedColor(selectedVariant.color || colors[0]);
-      setSelectedSize(selectedVariant.size || sizes[0]);
-      setSelectedMaterial(selectedVariant.material || materials[0]);
-      setSelectedCustomValue(selectedVariant.customValue || customValues[0]);
+      setSelectedColor(selectedVariant.color);
+      setSelectedSize(selectedVariant.size);
+      setSelectedMaterial(selectedVariant.material);
+      setSelectedCustomValue(selectedVariant.customValue);
     }
-  }, [selectedVariant, colors, sizes, materials, customValues]);
+  }, [selectedVariant]);
 
   React.useEffect(() => {
+    // Only auto-match when ALL required axes have been selected by user
+    const colorOk = !colors.length || !!selectedColor;
+    const sizeOk = !sizes.length || !!selectedSize;
+    const materialOk = !materials.length || !!selectedMaterial;
+    const customOk = !customValues.length || !!selectedCustomValue;
+    if (!colorOk || !sizeOk || !materialOk || !customOk) return;
+
     const match = activeVariants.find(v => {
       const colorMatch = !colors.length || v.color === selectedColor;
       const sizeMatch = !sizes.length || v.size === selectedSize;
@@ -403,7 +410,7 @@ export default function VariantSelector({
             <div className="flex items-center gap-2 mb-2.5">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500">{section.label}</span>
               {section.selectedLabel && (
-                <span className="text-xs font-bold text-[#1a1a2e]">: {section.selectedLabel}</span>
+                <span className="text-xs font-bold text-[#1a1a2e] dark:text-white">: {section.selectedLabel}</span>
               )}
             </div>
             {section.render()}
