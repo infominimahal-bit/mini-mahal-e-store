@@ -44,7 +44,7 @@ export default function CategoryGridSettings({
       .map(cat => ({
         title: cat.name,
         link: `/shop?category=${cat.slug}`,
-        imageUrl: cat.image_url || ''
+        imageUrl: cat.imageUrl || ''
       }));
     handleItemsChange([...newCards, ...items]);
     setSelectedBulkIds([]);
