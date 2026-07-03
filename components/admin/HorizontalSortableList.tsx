@@ -64,7 +64,7 @@ function DraggablePill<T extends SortableItem>({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center ${isDragging ? 'scale-105 shadow-md pointer-events-none' : ''}`}
+      className={`flex items-center ${isDragging ? 'scale-105 shadow-md z-50' : ''}`}
       {...attributes}
       {...listeners}
     >
