@@ -28,7 +28,7 @@ interface SortableItem {
 interface HorizontalSortableListProps<T extends SortableItem> {
   items: T[];
   onReorder: (items: T[]) => void;
-  renderItem: (item: T, index: number) => React.ReactNode;
+  renderItem: (item: T, index: number, isDragging?: boolean) => React.ReactNode;
   getId?: (item: T) => string;
   className?: string;
 }
@@ -37,12 +37,12 @@ function DraggablePill<T extends SortableItem>({
   item,
   renderItem,
   index,
-  isDragOverlay,
+  getId,
 }: {
   item: T;
-  renderItem: (item: T, index: number) => React.ReactNode;
+  renderItem: (item: T, index: number, isDragging?: boolean) => React.ReactNode;
   index: number;
-  isDragOverlay?: boolean;
+  getId: (item: T) => string;
 }) {
   const {
     attributes,
@@ -51,23 +51,24 @@ function DraggablePill<T extends SortableItem>({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: item.id });
+  } = useSortable({ id: getId(item) });
 
   const style = {
-    transform: CSS.Translate.toString(transform),
+    transform: transform ? CSS.Translate.toString(transform) : undefined,
     transition,
-    opacity: isDragging && !isDragOverlay ? 0.4 : 1,
-  };
+    zIndex: isDragging ? 9999 : undefined,
+    position: isDragging ? 'relative' : undefined,
+  } as React.CSSProperties;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center"
+      className={`flex items-center ${isDragging ? 'scale-105 shadow-md pointer-events-none' : ''}`}
       {...attributes}
       {...listeners}
     >
-      {renderItem(item, index)}
+      {renderItem(item, index, isDragging)}
     </div>
   );
 }
@@ -79,8 +80,6 @@ export default function HorizontalSortableList<T extends SortableItem>({
   getId = (item) => item.id,
   className = 'flex flex-wrap gap-1.5 min-h-[28px]',
 }: HorizontalSortableListProps<T>) {
-  const [activeId, setActiveId] = useState<string | null>(null);
-
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 6 },
@@ -90,18 +89,8 @@ export default function HorizontalSortableList<T extends SortableItem>({
     })
   );
 
-  const activeItem = useMemo(
-    () => items.find((item) => getId(item) === activeId),
-    [activeId, items, getId]
-  );
-
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  }, []);
-
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
-      setActiveId(null);
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
@@ -115,27 +104,16 @@ export default function HorizontalSortableList<T extends SortableItem>({
     [items, onReorder, getId]
   );
 
-  const handleDragCancel = useCallback(() => {
-    setActiveId(null);
-  }, []);
-
   const itemIds = useMemo(
     () => items.map((item) => getId(item)),
     [items, getId]
   );
 
-  const [isMounted, setIsMounted] = useState(false);
-  React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={pointerWithin}
-      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
     >
       <SortableContext items={itemIds} strategy={rectSortingStrategy}>
         <div className={className}>
@@ -145,20 +123,11 @@ export default function HorizontalSortableList<T extends SortableItem>({
               item={item}
               renderItem={renderItem}
               index={index}
+              getId={getId}
             />
           ))}
         </div>
       </SortableContext>
-
-      {isMounted && (
-        <DragOverlay dropAnimation={null} zIndex={99999}>
-          {activeItem ? (
-            <div className="rotate-3 scale-[1.15] shadow-2xl ring-2 ring-[#e94560] bg-white dark:bg-[#16162a] rounded-full cursor-grabbing overflow-hidden">
-              {renderItem(activeItem, items.findIndex((i) => getId(i) === activeId))}
-            </div>
-          ) : null}
-        </DragOverlay>
-      )}
     </DndContext>
   );
 }

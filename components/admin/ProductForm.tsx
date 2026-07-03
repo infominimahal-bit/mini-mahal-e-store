@@ -1646,8 +1646,12 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                           items={axis.values.map(v => ({ ...v, id: v.label }))}
                           onReorder={(reordered) => handleReorderAxisValues(axisIdx, reordered.map(r => ({ label: r.label, hex: r.hex, imageUrl: r.imageUrl, showImageSwatch: r.showImageSwatch })))}
                           getId={(v) => v.label}
-                          renderItem={(val) => (
-                            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#16162a] text-xs font-semibold text-gray-800 dark:text-gray-200 cursor-grab active:cursor-grabbing select-none">
+                          renderItem={(val, idx, isDragging) => (
+                            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs font-semibold select-none cursor-grab transition-all ${
+                              isDragging 
+                                ? 'border-[#e94560] bg-[#e94560]/10 text-[#e94560] shadow-lg ring-2 ring-[#e94560] scale-105 rotate-1 active:cursor-grabbing' 
+                                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-[#16162a] text-gray-800 dark:text-gray-200 active:cursor-grabbing'
+                            }`}>
                               <GripVertical className="w-3 h-3 text-gray-400 flex-shrink-0" />
                               {axis.type === 'color' && (
                                 <span
