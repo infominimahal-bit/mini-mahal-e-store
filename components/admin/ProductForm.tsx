@@ -1655,7 +1655,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                                   style={{ background: (val as any).hex || '#ccc' }}
                                 />
                               )}
-                              <span>{val.label}</span>
+                              <span className="whitespace-nowrap">{val.label}</span>
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -2878,12 +2878,26 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
               </div>
 
               <div className="border border-gray-200 dark:border-gray-800 rounded-xl max-h-60 overflow-y-auto p-3 space-y-2 bg-gray-50 dark:bg-[#0f0f1b] overscroll-contain">
-                {productList.filter(product => product.name.toLowerCase().includes(productSearchQuery.toLowerCase()) || product.sku?.toLowerCase().includes(productSearchQuery.toLowerCase())).length === 0 ? (
-                  <span className="text-xs text-gray-500">No matching products found.</span>
-                ) : (
-                  productList
-                    .filter(product => product.name.toLowerCase().includes(productSearchQuery.toLowerCase()) || product.sku?.toLowerCase().includes(productSearchQuery.toLowerCase()))
-                    .map((product) => {
+                {(() => {
+                  const q = productSearchQuery.toLowerCase();
+                  const filteredList = productList.filter(product => 
+                    product.name.toLowerCase().includes(q) || 
+                    (product.sku && product.sku.toLowerCase().includes(q)) ||
+                    (product.variants && product.variants.some(v => 
+                      (v.name && v.name.toLowerCase().includes(q)) ||
+                      (v.sku && v.sku.toLowerCase().includes(q)) ||
+                      (v.color && v.color.toLowerCase().includes(q)) ||
+                      (v.size && v.size.toLowerCase().includes(q)) ||
+                      (v.material && v.material.toLowerCase().includes(q)) ||
+                      (v.customValue && v.customValue.toLowerCase().includes(q))
+                    ))
+                  );
+
+                  if (filteredList.length === 0) {
+                    return <span className="text-xs text-gray-500">No matching products found.</span>;
+                  }
+
+                  return filteredList.map((product) => {
                       const isChecked = frequentlyBoughtTogetherIds.includes(product.id);
                       return (
                         <label
@@ -2913,8 +2927,8 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                           </div>
                         </label>
                       );
-                    })
-                )}
+                    });
+                })()}
               </div>
             </div>
 

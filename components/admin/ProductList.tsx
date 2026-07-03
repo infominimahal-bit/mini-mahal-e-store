@@ -225,10 +225,22 @@ export default function ProductList({ initialProducts, settings }: ProductListPr
   };
 
   const filteredProducts = products
-    .filter(p =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
+    .filter(p => {
+      const q = searchQuery.toLowerCase();
+      if (!q) return true;
+      return (
+        p.name.toLowerCase().includes(q) ||
+        (p.sku && p.sku.toLowerCase().includes(q)) ||
+        (p.variants && p.variants.some(v => 
+          (v.name && v.name.toLowerCase().includes(q)) ||
+          (v.sku && v.sku.toLowerCase().includes(q)) ||
+          (v.color && v.color.toLowerCase().includes(q)) ||
+          (v.size && v.size.toLowerCase().includes(q)) ||
+          (v.material && v.material.toLowerCase().includes(q)) ||
+          (v.customValue && v.customValue.toLowerCase().includes(q))
+        ))
+      );
+    })
     .filter(p => {
       if (selectedCategory === 'all') return true;
       if (p.productCategories && p.productCategories.length > 0) {

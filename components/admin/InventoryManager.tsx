@@ -161,11 +161,18 @@ export default function InventoryManager({ products: initialProducts, categories
 
   // Filtering Logic
   const filteredProducts = products.filter(product => {
-    // 1. Search Query
-    const nameMatch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const skuMatch = product.sku?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
-    const variantSkuMatch = product.variants?.some(v => v.sku?.toLowerCase().includes(searchQuery.toLowerCase())) || false;
-    const matchesSearch = nameMatch || skuMatch || variantSkuMatch;
+    const q = searchQuery.toLowerCase();
+    const nameMatch = product.name.toLowerCase().includes(q);
+    const skuMatch = product.sku?.toLowerCase().includes(q) || false;
+    const variantMatch = product.variants?.some(v => 
+      (v.sku && v.sku.toLowerCase().includes(q)) ||
+      (v.name && v.name.toLowerCase().includes(q)) ||
+      (v.color && v.color.toLowerCase().includes(q)) ||
+      (v.size && v.size.toLowerCase().includes(q)) ||
+      (v.material && v.material.toLowerCase().includes(q)) ||
+      (v.customValue && v.customValue.toLowerCase().includes(q))
+    ) || false;
+    const matchesSearch = nameMatch || skuMatch || variantMatch;
 
     if (!matchesSearch) return false;
 

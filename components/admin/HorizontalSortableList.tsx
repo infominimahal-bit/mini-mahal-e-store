@@ -15,7 +15,7 @@ import {
 import {
   SortableContext,
   useSortable,
-  rectSortingStrategy,
+  horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -53,7 +53,7 @@ function DraggablePill<T extends SortableItem>({
   } = useSortable({ id: item.id });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
     opacity: isDragging && !isDragOverlay ? 0.4 : 1,
   };
@@ -76,7 +76,7 @@ export default function HorizontalSortableList<T extends SortableItem>({
   onReorder,
   renderItem,
   getId = (item) => item.id,
-  className = 'flex flex-wrap gap-1.5 min-h-[28px]',
+  className = 'flex overflow-x-auto gap-1.5 min-h-[28px] pb-2 hide-scrollbar',
 }: HorizontalSortableListProps<T>) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -131,7 +131,7 @@ export default function HorizontalSortableList<T extends SortableItem>({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <SortableContext items={itemIds} strategy={rectSortingStrategy}>
+      <SortableContext items={itemIds} strategy={horizontalListSortingStrategy}>
         <div className={className}>
           {items.map((item, index) => (
             <DraggablePill
@@ -144,7 +144,7 @@ export default function HorizontalSortableList<T extends SortableItem>({
         </div>
       </SortableContext>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={null} zIndex={9999}>
         {activeItem ? (
           <div className="rotate-2 scale-105 shadow-xl opacity-90">
             {renderItem(activeItem, items.findIndex((i) => getId(i) === activeId))}

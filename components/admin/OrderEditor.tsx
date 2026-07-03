@@ -245,7 +245,15 @@ export default function OrderEditor({ order: initialOrder, settings, products, o
     const lowerQ = searchQuery.toLowerCase();
     return products.filter(p => 
       p.name.toLowerCase().includes(lowerQ) || 
-      (p.sku && p.sku.toLowerCase().includes(lowerQ))
+      (p.sku && p.sku.toLowerCase().includes(lowerQ)) ||
+      (p.variants && p.variants.some(v => 
+        (v.name && v.name.toLowerCase().includes(lowerQ)) ||
+        (v.sku && v.sku.toLowerCase().includes(lowerQ)) ||
+        (v.color && v.color.toLowerCase().includes(lowerQ)) ||
+        (v.size && v.size.toLowerCase().includes(lowerQ)) ||
+        (v.material && v.material.toLowerCase().includes(lowerQ)) ||
+        (v.customValue && v.customValue.toLowerCase().includes(lowerQ))
+      ))
     ).slice(0, 10);
   }, [searchQuery, products]);
 

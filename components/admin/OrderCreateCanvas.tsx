@@ -236,10 +236,19 @@ export default function OrderCreateCanvas({ isOpen, onClose, onOrderCreated, set
   if (!isOpen) return null;
 
   // Filter products based on search
-  const filteredProducts = dbProducts.filter(p =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredProducts = dbProducts.filter(p => {
+    const q = searchQuery.toLowerCase();
+    return p.name.toLowerCase().includes(q) ||
+    (p.sku && p.sku.toLowerCase().includes(q)) ||
+    (p.variants && p.variants.some(v => 
+      (v.name && v.name.toLowerCase().includes(q)) ||
+      (v.sku && v.sku.toLowerCase().includes(q)) ||
+      (v.color && v.color.toLowerCase().includes(q)) ||
+      (v.size && v.size.toLowerCase().includes(q)) ||
+      (v.material && v.material.toLowerCase().includes(q)) ||
+      (v.customValue && v.customValue.toLowerCase().includes(q))
+    ));
+  });
 
   const handleProductSelect = (product: Product) => {
     setSelectedProduct(product);

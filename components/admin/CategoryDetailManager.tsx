@@ -183,10 +183,22 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
   const assignedProductIds = new Set(products.map(p => p.id));
   const availableProducts = allStoreProducts.filter(p => !assignedProductIds.has(p.id));
 
-  const filteredModalProducts = availableProducts.filter(p =>
-    p.name.toLowerCase().includes(modalSearchQuery.toLowerCase()) ||
-    (p.sku && p.sku.toLowerCase().includes(modalSearchQuery.toLowerCase()))
-  );
+  const filteredModalProducts = availableProducts.filter(p => {
+    const q = modalSearchQuery.toLowerCase();
+    if (!q) return true;
+    return (
+      p.name.toLowerCase().includes(q) ||
+      (p.sku && p.sku.toLowerCase().includes(q)) ||
+      (p.variants && p.variants.some(v => 
+        (v.name && v.name.toLowerCase().includes(q)) ||
+        (v.sku && v.sku.toLowerCase().includes(q)) ||
+        (v.color && v.color.toLowerCase().includes(q)) ||
+        (v.size && v.size.toLowerCase().includes(q)) ||
+        (v.material && v.material.toLowerCase().includes(q)) ||
+        (v.customValue && v.customValue.toLowerCase().includes(q))
+      ))
+    );
+  });
 
   const toggleExpand = (productId: string) => {
     setExpandedProducts(prev => ({
@@ -239,9 +251,19 @@ export default function CategoryDetailManager({ category, initialProducts }: Cat
   // Filter + sort products
   const filteredProducts = products
     .filter(product => {
-      const nameMatch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const skuMatch = product.sku?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
-      return nameMatch || skuMatch;
+      const q = searchQuery.toLowerCase();
+      if (!q) return true;
+      const nameMatch = product.name.toLowerCase().includes(q);
+      const skuMatch = product.sku?.toLowerCase().includes(q) || false;
+      const variantMatch = product.variants && product.variants.some(v => 
+        (v.name && v.name.toLowerCase().includes(q)) ||
+        (v.sku && v.sku.toLowerCase().includes(q)) ||
+        (v.color && v.color.toLowerCase().includes(q)) ||
+        (v.size && v.size.toLowerCase().includes(q)) ||
+        (v.material && v.material.toLowerCase().includes(q)) ||
+        (v.customValue && v.customValue.toLowerCase().includes(q))
+      );
+      return nameMatch || skuMatch || variantMatch;
     })
     .sort((a, b) => {
       if (sortBy === 'manual') return 0;
