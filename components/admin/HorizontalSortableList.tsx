@@ -133,7 +133,7 @@ export default function HorizontalSortableList<T extends SortableItem>({
     <DragOverlay dropAnimation={null} zIndex={999999}>
       {activeItem ? (
         <div
-          className="flex items-center gap-1 px-2.5 py-1 rounded-full border-2 border-[#e94560] bg-white dark:bg-[#16162a] text-xs font-semibold shadow-2xl cursor-grabbing scale-110 rotate-2"
+          className="flex items-center gap-1 px-2.5 py-1 rounded-full border-2 border-[#e94560] bg-white dark:bg-[#16162a] text-xs font-semibold shadow-2xl cursor-grabbing"
           style={{ pointerEvents: 'none' }}
         >
           {renderItem(activeItem, items.findIndex((i) => getId(i) === activeId), true)}
