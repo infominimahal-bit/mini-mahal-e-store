@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { HomepageSection, Category } from '@/lib/types';
-import { Trash2, ChevronUp, ChevronDown, CheckSquare } from '@/components/common/Icons';
+import { Trash2, ChevronUp, ChevronDown } from '@/components/common/Icons';
 
 interface CategoryGridSettingsProps {
   section: HomepageSection;
