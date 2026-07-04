@@ -229,10 +229,38 @@ export function extractKeys(settings: AISettings): { vision: Record<string, stri
   for (const section of ['content', 'vision'] as const) {
     const sectionKeys = allKeys[section] || {};
     for (const [provider, key] of Object.entries(sectionKeys)) {
-      if (key.trim()) {
-        if (section === 'vision') vision[provider] = key.trim();
-        else text[provider] = key.trim();
+      const cleanKey = key?.trim();
+      if (cleanKey) {
+        const dest = section === 'vision' ? vision : text;
+        dest[provider] = cleanKey;
+        if (provider === 'gemini') {
+          dest['google'] = cleanKey;
+        } else if (provider === 'google') {
+          dest['gemini'] = cleanKey;
+        }
       }
+    }
+  }
+
+  // Fallback to legacy single key fields
+  if (settings.vision_keys?.trim() && !vision[settings.vision_provider || 'gemini']) {
+    const cleanKey = settings.vision_keys.trim();
+    const provider = settings.vision_provider || 'gemini';
+    vision[provider] = cleanKey;
+    if (provider === 'gemini') {
+      vision['google'] = cleanKey;
+    } else if (provider === 'google') {
+      vision['gemini'] = cleanKey;
+    }
+  }
+  if (settings.content_keys?.trim() && !text[settings.content_provider || 'groq']) {
+    const cleanKey = settings.content_keys.trim();
+    const provider = settings.content_provider || 'groq';
+    text[provider] = cleanKey;
+    if (provider === 'gemini') {
+      text['google'] = cleanKey;
+    } else if (provider === 'google') {
+      text['gemini'] = cleanKey;
     }
   }
 
