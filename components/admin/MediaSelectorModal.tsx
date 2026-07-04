@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X } from '@/components/common/Icons';
 import MediaManager from './MediaManager';
 
@@ -14,7 +15,9 @@ interface MediaSelectorModalProps {
 export default function MediaSelectorModal({ isOpen, onClose, onSelect, multiple = false }: MediaSelectorModalProps) {
   if (!isOpen) return null;
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 animate-fade-in overscroll-contain">
       <div className="bg-white dark:bg-[#16162a] rounded-2xl max-w-4xl w-full max-h-[85vh] flex flex-col border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden transition-all scale-up will-change-transform">
         
@@ -44,6 +47,7 @@ export default function MediaSelectorModal({ isOpen, onClose, onSelect, multiple
         />
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, 
   Search, 
@@ -1753,7 +1754,7 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
       {mode === 'library' && mainTab === 'cleaner' && renderCleanerTab()}
 
       {/* ── EDIT METADATA MODAL ──────────────────────────────────────────── */}
-      {mode === 'library' && editingItem && (
+      {mode === 'library' && editingItem && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
           <div className="bg-white dark:bg-[#16162a] rounded-2xl max-w-md w-full border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden will-change-transform">
             <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-800">
@@ -1795,11 +1796,12 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── IMAGE PREVIEW & LIGHT IMAGE EDITOR MODAL ───────────────────────── */}
-      {previewItem && (
+      {previewItem && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85  animate-fade-in">
           <div className="bg-white dark:bg-[#16162a] rounded-3xl max-w-5xl w-full border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] md:max-h-[85vh] will-change-transform">
             
@@ -2112,11 +2114,12 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── WEBM WARNING MODAL ───────────────────────────────────────────── */}
-      {pendingVideoUpload && (
+      {pendingVideoUpload && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/75 animate-fade-in">
           <div className="bg-white dark:bg-[#16162a] rounded-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-800 shadow-2xl space-y-4 will-change-transform">
             <div className="flex items-center gap-3 text-amber-500">
@@ -2135,7 +2138,8 @@ export default function MediaManager({ mode, onSelect, multiple = false, onClose
                 className="w-full py-2 text-gray-400 hover:text-gray-500 font-bold text-xs text-center transition-colors cursor-pointer">Cancel Upload</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
