@@ -86,7 +86,7 @@ function SortableImageItem({
   } = useSortable({ id: img.url });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
     opacity: isDragging ? 0.3 : 1,
     zIndex: isDragging ? 50 : 'auto',
@@ -331,7 +331,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
         const [b, sg, prods] = await Promise.all([
           getBadges(),
           getSizeGuides(),
-          supabaseClient.from('products').select('id, name, price, sku').is('deleted_at', null).order('name')
+          supabaseClient.from('products').select('id, name, price, sku, product_images(url, is_primary, sort_order)').is('deleted_at', null).order('name')
         ]);
         setAllBadges(b);
         setSizeGuidesList(sg);
@@ -2714,9 +2714,9 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                       ))}
                     </div>
                   </SortableContext>
-                  <DragOverlay adjustScale={true}>
+                  <DragOverlay dropAnimation={null} zIndex={999999}>
                     {activeImageId ? (
-                      <div className="rounded-xl overflow-hidden border-2 border-primary shadow-2xl relative aspect-[3/4]">
+                      <div className="rounded-xl overflow-hidden border-2 border-primary shadow-2xl relative aspect-square">
                         <img 
                           src={images.find(img => img.url === activeImageId)?.url || ''} 
                           alt="Dragging" 
@@ -2903,32 +2903,50 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                   return filteredList.map((product) => {
                       const isChecked = frequentlyBoughtTogetherIds.includes(product.id);
                       return (
-                        <label
+                        <div
                           key={product.id}
-                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer select-none"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (isChecked) {
+                              setFrequentlyBoughtTogetherIds(prev => prev.filter(id => id !== product.id));
+                            } else {
+                              if (frequentlyBoughtTogetherIds.length < 2) {
+                                setFrequentlyBoughtTogetherIds(prev => [...prev, product.id]);
+                              } else {
+                                toast.warning('You can choose a maximum of 2 bought-together items.');
+                              }
+                            }
+                          }}
+                          className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer select-none transition-colors ${
+                            !isChecked && frequentlyBoughtTogetherIds.length >= 2
+                              ? 'opacity-60 hover:bg-transparent'
+                              : 'hover:bg-gray-100 dark:hover:bg-white/5'
+                          }`}
                         >
                           <input
                             type="checkbox"
                             checked={isChecked}
-                            disabled={!isChecked && frequentlyBoughtTogetherIds.length >= 2}
-                            onChange={() => {
-                              if (isChecked) {
-                                setFrequentlyBoughtTogetherIds(prev => prev.filter(id => id !== product.id));
-                              } else {
-                                if (frequentlyBoughtTogetherIds.length < 2) {
-                                  setFrequentlyBoughtTogetherIds(prev => [...prev, product.id]);
-                                } else {
-                                  toast.warning('You can choose a maximum of 2 bought-together items.');
-                                }
-                              }
-                            }}
-                            className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-4 w-4"
+                            readOnly
+                            className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-4 w-4 pointer-events-none"
                           />
+                          {product.product_images && product.product_images.length > 0 ? (
+                            <div className="h-10 w-10 shrink-0 rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#0f0f1b]">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={(product.product_images as any[]).find((img: any) => img.is_primary)?.url || product.product_images[0].url} alt={product.name} className="h-full w-full object-cover" />
+                            </div>
+                          ) : (
+                            <div className="h-10 w-10 shrink-0 rounded-md border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-[#0f0f1b] flex items-center justify-center">
+                              <ImageIcon className="h-4 w-4 text-gray-400" />
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-semibold text-gray-850 dark:text-gray-200 truncate">{product.name}</p>
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500">Rs. {product.price}</p>
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                              {product.sku ? <span className="mr-2">SKU: {product.sku}</span> : <span className="mr-2">No SKU</span>}
+                              Rs. {product.price}
+                            </p>
                           </div>
-                        </label>
+                        </div>
                       );
                     });
                 })()}
