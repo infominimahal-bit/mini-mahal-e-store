@@ -33,9 +33,10 @@ interface FlashSaleSectionProps {
   products: Product[];
   currencySymbol: string;
   settings: StoreSettings;
+  isPreview?: boolean;
 }
 
-function FlashSaleSection({ section, products, currencySymbol, settings }: FlashSaleSectionProps) {
+function FlashSaleSection({ section, products, currencySymbol, settings, isPreview }: FlashSaleSectionProps) {
   if (settings.flash_sale_enabled === false) return null;
   const startTimeStr = section.settings?.startTime;
   const endTimeStr = section.settings?.endTime;
@@ -113,7 +114,18 @@ function FlashSaleSection({ section, products, currencySymbol, settings }: Flash
       return (b.createdAt || '').localeCompare(a.createdAt || '');
     });
 
-  if (displayProducts.length === 0) return null;
+  if (displayProducts.length === 0) {
+    if (isPreview) {
+      return (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 mb-6 border border-dashed border-[#e94560]/50 rounded-3xl bg-[#e94560]/5 flex flex-col items-center justify-center text-center space-y-2 min-h-[150px]">
+          <span className="text-2xl">🏷️</span>
+          <p className="text-xs font-bold text-[#e94560] uppercase tracking-wider">Empty Flash Sale Section</p>
+          <p className="text-[10px] text-gray-500 font-semibold max-w-xs">Please select this section and add products or category discounts to make it visible.</p>
+        </div>
+      );
+    }
+    return null;
+  }
 
   const viewAllLink = section.settings?.viewAllUrl || '/shop';
   const viewAllText = section.settings?.viewAllText || 'View All';
@@ -1321,8 +1333,30 @@ export default function StoreFront({
   };
 
   const renderSocialFeed = (section: HomepageSection) => {
-    if (activeSettings.social_feeds_enabled === false) return null;
-    if (activeSettings.social_feeds_homepage_enabled === false) return null;
+    if (activeSettings.social_feeds_enabled === false) {
+      if (isPreview) {
+        return (
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 mb-6 border border-dashed border-gray-300 dark:border-gray-700 rounded-3xl bg-gray-50 dark:bg-white/5 flex flex-col items-center justify-center text-center space-y-2 min-h-[150px]">
+            <span className="text-2xl">🔒</span>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Social Feed Disabled</p>
+            <p className="text-[10px] text-gray-400 font-semibold max-w-xs">Enable Social Feeds Embeds in General Settings &gt; Premium Tab to display this section.</p>
+          </div>
+        );
+      }
+      return null;
+    }
+    if (activeSettings.social_feeds_homepage_enabled === false) {
+      if (isPreview) {
+        return (
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 mb-6 border border-dashed border-gray-300 dark:border-gray-700 rounded-3xl bg-gray-50 dark:bg-white/5 flex flex-col items-center justify-center text-center space-y-2 min-h-[150px]">
+            <span className="text-2xl">👁️‍🗨️</span>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Social Feed Hidden on Homepage</p>
+            <p className="text-[10px] text-gray-400 font-semibold max-w-xs">Enable "Show on Homepage" in Social Feed settings.</p>
+          </div>
+        );
+      }
+      return null;
+    }
     
     return (
       <div key={section.id}>
@@ -1424,6 +1458,7 @@ export default function StoreFront({
                 products={filteredProducts}
                 currencySymbol={activeSettings.currencySymbol}
                 settings={activeSettings}
+                isPreview={isPreview}
               />
             );
             break;
