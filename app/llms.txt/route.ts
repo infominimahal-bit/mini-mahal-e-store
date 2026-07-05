@@ -4,7 +4,7 @@ import { getSettings } from '@/lib/services/settings';
 export async function GET() {
   try {
     const settings = await getSettings();
-    const brandName = settings.storeName || 'Zaynahs E-Store';
+    const brandName = settings.storeName || process.env.NEXT_PUBLIC_BRAND_NAME || 'Your Store';
     const tagline = settings.tagline || 'Premium Pakistani E-Commerce Store';
 
     const { data: products } = await supabaseAdmin

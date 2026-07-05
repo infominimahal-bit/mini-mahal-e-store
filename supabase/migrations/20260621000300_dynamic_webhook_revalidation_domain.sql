@@ -48,8 +48,8 @@ BEGIN
         url := replace(url, 'https://www.zaynahs.pk', resolved_store_url);
       ELSIF url LIKE 'https://zaynahs.pk%' THEN
         url := replace(url, 'https://zaynahs.pk', resolved_store_url);
-      ELSIF url LIKE 'https://zaynahs.com%' THEN
-        url := replace(url, 'https://zaynahs.com', resolved_store_url);
+      ELSIF url LIKE 'https://domain.com%' THEN
+        url := replace(url, 'https://domain.com', resolved_store_url);
       END IF;
     END IF;
   EXCEPTION WHEN OTHERS THEN

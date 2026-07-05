@@ -76,7 +76,7 @@ VALUES (
   'gemini',
   'gemini-2.0-flash',
   '',
-  'Zaynahs E-Store',
+  'Your Store',
   'General',
   'Pakistan',
   'Professional',

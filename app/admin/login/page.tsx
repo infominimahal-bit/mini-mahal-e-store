@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { settings } = useSettings();
 
-  const storeName = settings?.storeName || 'Zaynahs E-Store';
+  const storeName = settings?.storeName || process.env.NEXT_PUBLIC_BRAND_NAME || 'Your Store';
   const logoUrl = settings?.logoUrl || null;
 
   const handleLogin = async (e: React.FormEvent) => {

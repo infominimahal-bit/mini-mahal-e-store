@@ -64,7 +64,7 @@ export async function buildVariables(emailType: string, data: Record<string, any
 
   // Start with standard variables
   const vars: Record<string, any> = {
-    brand_name: settings.storeName || 'Zaynahs E-Store',
+    brand_name: settings.storeName || process.env.NEXT_PUBLIC_BRAND_NAME || 'Your Store',
     site_url: await getSiteUrl(settings),
     customer_name: data.customer?.name || data.user?.name || 'Customer',
     customer_email: data.customer?.email || data.user?.email || '',

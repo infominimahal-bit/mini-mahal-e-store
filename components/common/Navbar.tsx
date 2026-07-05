@@ -50,7 +50,7 @@ export default function Navbar({
         ? 'sticky top-0 md:relative'
         : 'relative';
   const showTopBar = settings?.headerShowTopBar ?? true;
-  const topBarPhone = settings?.headerTopBarPhone ?? '0328-4114551';
+  const topBarPhone = settings?.headerTopBarPhone ?? '';
   const topBarEmail = settings?.headerTopBarEmail ?? '';
   const showNewsletter = settings?.headerShowNewsletter ?? true;
   const newsletterText = settings?.headerNewsletterText ?? 'Summer sale discount off 50%. Shop Sale';

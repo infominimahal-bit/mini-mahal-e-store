@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { cookies } from 'next/headers';
 
-const SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY || 'default-fallback-secret-key-123-zaynahs-estore-portal';
+const SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.CUSTOMER_AUTH_SECRET || 'fallback-change-in-env';
 const COOKIE_NAME = 'customer_session';
 
 export interface CustomerSession {

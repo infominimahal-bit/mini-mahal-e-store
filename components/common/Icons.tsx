@@ -1,6 +1,6 @@
 'use client';
 
-// Centralized Icon Registry for Zaynahs E-Store
+// Centralized Icon Registry
 // All icons should be imported from this file to ensure consistency and modularity.
 
 export {

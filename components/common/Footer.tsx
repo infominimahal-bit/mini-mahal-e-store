@@ -193,7 +193,7 @@ export default function Footer({ settings, brandName }: FooterProps) {
               {settings.footerCol2Title || 'Customer Support'}
             </h3>
             <p className="text-sm font-semibold leading-relaxed whitespace-pre-line text-gray-500 dark:text-gray-400">
-              {settings.footerCol2Text || 'Call/WhatsApp: 0328-4114551\nEmail: contact@store.com\nTimings: 10 AM - 10 PM'}
+              {settings.footerCol2Text || 'Call/WhatsApp: \nEmail: \nTimings: 10 AM - 10 PM'}
             </p>
           </div>
 

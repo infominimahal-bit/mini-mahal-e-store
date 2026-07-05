@@ -8,15 +8,15 @@ import { getSiteUrl } from '@/lib/site-url-server';
 
 const mockData: Record<string, any> = {
   customer: {
-    name: 'Ali Khan',
-    email: 'alikhan@gmail.com',
+    name: 'Test Customer',
+    email: 'customer@example.com',
     phone: '+92 300 1234567'
   },
   user: {
-    name: 'Ali Khan',
-    email: 'alikhan@gmail.com'
+    name: 'Test Customer',
+    email: 'customer@example.com'
   },
-  resetLink: 'https://zaynahs.com/reset-password?token=mock_token_123',
+  resetLink: 'https://example.com/reset-password?token=mock_token_123',
   order: {
     id: 'ZE-1052',
     orderNumber: 'ZE-1052',

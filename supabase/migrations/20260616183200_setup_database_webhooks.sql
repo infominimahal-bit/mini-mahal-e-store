@@ -59,8 +59,8 @@ BEGIN
         url := replace(url, 'https://www.zaynahs.pk', resolved_store_url);
       ELSIF url LIKE 'https://zaynahs.pk%' THEN
         url := replace(url, 'https://zaynahs.pk', resolved_store_url);
-      ELSIF url LIKE 'https://zaynahs.com%' THEN
-        url := replace(url, 'https://zaynahs.com', resolved_store_url);
+      ELSIF url LIKE 'https://domain.com%' THEN
+        url := replace(url, 'https://domain.com', resolved_store_url);
       END IF;
     END IF;
   EXCEPTION WHEN OTHERS THEN
@@ -117,7 +117,7 @@ CREATE TRIGGER "revalidate-products"
   ON public.products
   FOR EACH ROW
   EXECUTE FUNCTION supabase_functions.http_request(
-    'https://www.zaynahs.pk/api/revalidate',
+    'https://domain.com/api/revalidate',
     'POST',
     '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
     '{}',
@@ -131,7 +131,7 @@ CREATE TRIGGER "revalidate-categories"
   ON public.categories
   FOR EACH ROW
   EXECUTE FUNCTION supabase_functions.http_request(
-    'https://www.zaynahs.pk/api/revalidate',
+    'https://domain.com/api/revalidate',
     'POST',
     '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
     '{}',
@@ -145,7 +145,7 @@ CREATE TRIGGER "revalidate-reviews"
   ON public.reviews
   FOR EACH ROW
   EXECUTE FUNCTION supabase_functions.http_request(
-    'https://www.zaynahs.pk/api/revalidate',
+    'https://domain.com/api/revalidate',
     'POST',
     '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
     '{}',
@@ -159,7 +159,7 @@ CREATE TRIGGER "revalidate-homepage"
   ON public.homepage_sections
   FOR EACH ROW
   EXECUTE FUNCTION supabase_functions.http_request(
-    'https://www.zaynahs.pk/api/revalidate',
+    'https://domain.com/api/revalidate',
     'POST',
     '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
     '{}',
@@ -173,7 +173,7 @@ CREATE TRIGGER "revalidate-settings"
   ON public.store_settings
   FOR EACH ROW
   EXECUTE FUNCTION supabase_functions.http_request(
-    'https://www.zaynahs.pk/api/revalidate',
+    'https://domain.com/api/revalidate',
     'POST',
     '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
     '{}',

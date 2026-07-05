@@ -16,5 +16,5 @@ export async function getDomainBrand(): Promise<{ name: string; tagline: string;
 
 export function cleanBrandName(text: string | null | undefined, currentBrandName: string): string {
   if (!text) return '';
-  return text.replace(/Zaynahs E-Store|Zaynahs|TotVogue\.pk|TotVogue/gi, currentBrandName);
+  return text;
 }

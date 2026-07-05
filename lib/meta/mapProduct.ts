@@ -116,7 +116,7 @@ export function mapProductToMeta(
   // 2. Resolve Site URL and Brand Name fallbacks
   let siteUrl = getClientSiteUrl(settings);
   
-  const brandName = settings.storeName || process.env.NEXT_PUBLIC_BRAND_NAME || 'Zaynahs E-Store';
+  const brandName = settings.storeName || process.env.NEXT_PUBLIC_BRAND_NAME || 'Your Store';
   const currency = settings.currency || 'PKR';
   
   // 3. Resolve and clean image links (preventing localhost leakage)

@@ -1,7 +1,7 @@
 -- Alter store_settings to support header layouts, contacts, newsletter announcement, and styling customization
 ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS header_show_top_bar BOOLEAN DEFAULT true;
-ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS header_top_bar_phone TEXT DEFAULT '0328-4114551';
-ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS header_top_bar_email TEXT DEFAULT 'Totvoguepk@gmail.com';
+ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS header_top_bar_phone TEXT DEFAULT '';
+ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS header_top_bar_email TEXT DEFAULT '';
 ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS header_show_newsletter BOOLEAN DEFAULT true;
 ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS header_newsletter_text TEXT DEFAULT 'Summer sale discount off 50%. Shop Sale';
 

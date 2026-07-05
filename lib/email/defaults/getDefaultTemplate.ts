@@ -1,7 +1,7 @@
 import { replaceVariables } from '../variables';
 
 function wrapLayout(content: string, vars: Record<string, any>, title: string): string {
-  const brandName = vars.brand_name || 'Zaynahs E-Store';
+  const brandName = vars.brand_name || process.env.NEXT_PUBLIC_BRAND_NAME || 'Your Store';
   const siteUrl = vars.site_url || '';
   const logoHtml = vars.logo_url 
     ? `<a href="${siteUrl}" target="_blank"><img src="${vars.logo_url}" alt="${brandName}" style="max-height: 50px; margin-bottom: 20px; border: 0;" /></a>` 

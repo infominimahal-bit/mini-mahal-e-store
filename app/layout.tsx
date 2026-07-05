@@ -123,14 +123,16 @@ export async function generateMetadata(): Promise<Metadata> {
       }
     };
   } catch {
+    const brandName = process.env.NEXT_PUBLIC_BRAND_NAME || 'Store';
+    const tagline = process.env.NEXT_PUBLIC_BRAND_TAGLINE || 'Online Store';
     return {
-      title: 'Store',
-      description: 'Premium online store.',
+      title: brandName,
+      description: tagline,
       metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
       appleWebApp: {
         capable: true,
         statusBarStyle: "default",
-        title: 'Store',
+        title: brandName,
       },
       verification: {
         google: process.env.GOOGLE_SITE_VERIFICATION || '',
@@ -140,15 +142,15 @@ export async function generateMetadata(): Promise<Metadata> {
       },
       openGraph: {
         type: 'website',
-        title: 'Store',
-        description: 'Premium online store.',
-        siteName: 'Store',
+        title: brandName,
+        description: tagline,
+        siteName: brandName,
         images: [{ url: '/favicon.ico' }],
       },
       twitter: {
         card: 'summary_large_image',
-        title: 'Store',
-        description: 'Premium online store.',
+        title: brandName,
+        description: tagline,
         images: ['/favicon.ico'],
       }
     };
@@ -156,7 +158,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#1a1a2e",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -190,6 +191,7 @@ export default async function RootLayout({
     >
       <head>
         <ThemeStyleRegistry settings={settings} />
+        <meta name="theme-color" content={settings.theme_config?.colors?.primary || '#1a1a2e'} />
       </head>
       <body suppressHydrationWarning className={`${jakarta.variable} ${outfit.variable} font-body min-h-full flex flex-col bg-gray-50 dark:bg-[#0f0f1b] text-gray-900 dark:text-gray-100 overflow-x-clip`}>
         {/* Conditional Script Injection for Tracking Pixels */}

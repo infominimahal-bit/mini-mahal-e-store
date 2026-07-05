@@ -5,7 +5,7 @@ export const revalidate = 0; // Serve dynamically to ensure dynamic branding upd
 export async function GET() {
   try {
     const settings = await getSettings();
-    const brandName = settings.storeName || process.env.NEXT_PUBLIC_BRAND_NAME || 'Store';
+    const brandName = settings.storeName || process.env.NEXT_PUBLIC_BRAND_NAME || 'Your Store';
     // Use only settings-driven URLs — /favicon.ico itself reads from settings dynamically
     const faviconUrl = settings.faviconUrl || settings.logoUrl || '/favicon.ico';
     const logoUrl = settings.logoUrl || settings.faviconUrl || '/favicon.ico';

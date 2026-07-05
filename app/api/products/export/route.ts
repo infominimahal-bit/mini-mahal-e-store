@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       .select('store_name')
       .eq('id', '00000000-0000-4000-8000-000000000001')
       .single();
-    const storeName = settings?.store_name || 'Zaynahs E-Store';
+    const storeName = settings?.store_name || process.env.NEXT_PUBLIC_BRAND_NAME || 'Your Store';
 
     // Fetch products with images, variants, modifiers
     // NOTE: Omit categories(*) join — it causes "ambiguous relationship" error because

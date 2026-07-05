@@ -25,7 +25,7 @@ export function buildSystemPrompt(settings: AISettings, storeSettings?: any, sit
   const audienceStr = settings.target_audiences ? `\nTarget Audiences: ${settings.target_audiences}` : '';
   const typesStr = settings.product_types ? `\nProduct Types: ${settings.product_types}` : '';
   
-  let brandInfo = `Brand Name: ${settings.brand_name || storeSettings?.store_name || 'Zaynahs E-Store'}`;
+  let brandInfo = `Brand Name: ${settings.brand_name || storeSettings?.store_name || process.env.NEXT_PUBLIC_BRAND_NAME || 'Your Store'}`;
   if (storeSettings?.address) {
     brandInfo += `\nPhysical Address / Location: ${storeSettings.address}`;
   }
@@ -64,7 +64,7 @@ export function buildSystemPrompt(settings: AISettings, storeSettings?: any, sit
     customPromptInstructions += `\n- Product Short Description Length: Must be approximately ${settings.product_short_limit} words.`;
   }
 
-  return `You are an expert SEO copywriter and marketing specialist for the brand "${settings.brand_name || storeSettings?.store_name || 'Zaynahs E-Store'}".
+  return `You are an expert SEO copywriter and marketing specialist for the brand "${settings.brand_name || storeSettings?.store_name || process.env.NEXT_PUBLIC_BRAND_NAME || 'Your Store'}".
 ${brandInfo}
 Store Type: ${settings.store_type || 'General'} clothing & fashion store.${audienceStr}${typesStr}
 Target Market: ${settings.target_market || 'Pakistan'}.

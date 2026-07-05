@@ -2,7 +2,7 @@
  * Pings IndexNow search engine indexing API with lists of created/modified page URLs.
  * Automatically notifies Bing, Yandex, Naver, Seznam, and other supporting engines.
  * 
- * @param urls Array of absolute page URLs to index (e.g., ['https://zaynahs.pk/products/cotton-shirt'])
+ * @param urls Array of absolute page URLs to index (e.g., ['https://example.com/products/cotton-shirt'])
  */
 export async function pingIndexNow(urls: string[], siteUrlOverride?: string): Promise<boolean> {
   try {

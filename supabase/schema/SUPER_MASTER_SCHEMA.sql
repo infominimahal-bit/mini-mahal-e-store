@@ -231,7 +231,7 @@ CREATE POLICY "Admin all social_proof_products" ON social_proof_products FOR ALL
 -- ============================================================
 CREATE TABLE IF NOT EXISTS store_settings (
   id UUID PRIMARY KEY DEFAULT '00000000-0000-4000-8000-000000000001',
-  store_name TEXT DEFAULT 'Zaynahs E-Store',
+  store_name TEXT DEFAULT 'Your Store',
   store_url TEXT,
   whatsapp_number TEXT DEFAULT '',         -- format: 923001234567 (no + or spaces)
   currency TEXT DEFAULT 'PKR',
@@ -288,8 +288,8 @@ CREATE TABLE IF NOT EXISTS store_settings (
   header_sticky_desktop BOOLEAN DEFAULT true,
   header_sticky_mobile BOOLEAN DEFAULT true,
   header_show_top_bar BOOLEAN DEFAULT true,
-  header_top_bar_phone TEXT DEFAULT '0328-4114551',
-  header_top_bar_email TEXT DEFAULT 'Totvoguepk@gmail.com',
+  header_top_bar_phone TEXT DEFAULT '',
+  header_top_bar_email TEXT DEFAULT '',
   header_show_newsletter BOOLEAN DEFAULT true,
   header_newsletter_text TEXT DEFAULT 'Summer sale discount off 50%. Shop Sale',
 
@@ -313,7 +313,7 @@ CREATE TABLE IF NOT EXISTS store_settings (
 
   faq_content TEXT DEFAULT '<h3>Frequently Asked Questions</h3><p>Add your store FAQs here. You can edit this content in the Admin Settings panel.</p>',
   return_policy_content TEXT DEFAULT '<h3>Return & Exchange Policy</h3><p>Add your store Return & Exchange policy here. You can edit this content in the Admin Settings panel.</p>',
-  privacy_policy_content TEXT DEFAULT '<h3>Privacy Policy</h3><p>At Zaynahs E-Store, we are committed to maintaining the trust and confidence of our visitors and customers. Read our privacy policy to understand how we collect, use, and protect your personal data.</p>',
+  privacy_policy_content TEXT DEFAULT '<h3>Privacy Policy</h3><p>We are committed to maintaining the trust and confidence of our visitors and customers. Read our privacy policy to understand how we collect, use, and protect your personal data.</p>',
   show_faq_in_nav BOOLEAN DEFAULT true,
   show_returns_in_nav BOOLEAN DEFAULT true,
   show_privacy_in_nav BOOLEAN DEFAULT true,
@@ -344,7 +344,7 @@ CREATE TABLE IF NOT EXISTS store_settings (
 
   footer_col_1_title TEXT DEFAULT 'About Our Store',
   footer_col_2_title TEXT DEFAULT 'Customer Support',
-  footer_col_2_text TEXT DEFAULT 'Call/WhatsApp: 0328-4114551' || CHR(10) || 'Email: Totvoguepk@gmail.com' || CHR(10) || 'Timings: 10 AM - 10 PM',
+  footer_col_2_text TEXT DEFAULT 'Call/WhatsApp: ' || CHR(10) || 'Email: ' || CHR(10) || 'Timings: 10 AM - 10 PM',
   footer_col_3_title TEXT DEFAULT 'Quick Links',
   footer_col_4_title TEXT DEFAULT 'Newsletter',
   footer_col_4_text TEXT DEFAULT 'Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.',
@@ -421,7 +421,7 @@ CREATE TABLE IF NOT EXISTS store_settings (
   social_feeds_homepage_enabled BOOLEAN DEFAULT true,
   social_feeds_product_enabled BOOLEAN DEFAULT true,
   social_feeds_title TEXT DEFAULT 'Follow Us On Instagram',
-  social_feeds_subtitle TEXT DEFAULT '@Zaynahs.pk',
+  social_feeds_subtitle TEXT DEFAULT '@YourStore',
   social_feeds_desc TEXT DEFAULT 'Tag us in your post to get featured on our page',
   social_feeds_items JSONB DEFAULT '[]'::jsonb,
   cart_timer_message TEXT DEFAULT 'Items in your cart are reserved for {timer} minutes.',
@@ -1625,8 +1625,8 @@ BEGIN
         url := replace(url, 'https://www.zaynahs.pk', resolved_store_url);
       ELSIF url LIKE 'https://zaynahs.pk%' THEN
         url := replace(url, 'https://zaynahs.pk', resolved_store_url);
-      ELSIF url LIKE 'https://zaynahs.com%' THEN
-        url := replace(url, 'https://zaynahs.com', resolved_store_url);
+      ELSIF url LIKE 'https://domain.com%' THEN
+        url := replace(url, 'https://domain.com', resolved_store_url);
       END IF;
     END IF;
   EXCEPTION WHEN OTHERS THEN
@@ -1683,7 +1683,7 @@ CREATE TRIGGER "revalidate-products"
   ON public.products
   FOR EACH ROW
   EXECUTE FUNCTION supabase_functions.http_request(
-    'https://www.zaynahs.pk/api/revalidate',
+    'https://domain.com/api/revalidate',
     'POST',
     '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
     '{}',
@@ -1697,7 +1697,7 @@ CREATE TRIGGER "revalidate-categories"
   ON public.categories
   FOR EACH ROW
   EXECUTE FUNCTION supabase_functions.http_request(
-    'https://www.zaynahs.pk/api/revalidate',
+    'https://domain.com/api/revalidate',
     'POST',
     '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
     '{}',
@@ -1711,7 +1711,7 @@ CREATE TRIGGER "revalidate-reviews"
   ON public.reviews
   FOR EACH ROW
   EXECUTE FUNCTION supabase_functions.http_request(
-    'https://www.zaynahs.pk/api/revalidate',
+    'https://domain.com/api/revalidate',
     'POST',
     '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
     '{}',
@@ -1725,7 +1725,7 @@ CREATE TRIGGER "revalidate-homepage"
   ON public.homepage_sections
   FOR EACH ROW
   EXECUTE FUNCTION supabase_functions.http_request(
-    'https://www.zaynahs.pk/api/revalidate',
+    'https://domain.com/api/revalidate',
     'POST',
     '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
     '{}',
@@ -1739,7 +1739,7 @@ CREATE TRIGGER "revalidate-settings"
   ON public.store_settings
   FOR EACH ROW
   EXECUTE FUNCTION supabase_functions.http_request(
-    'https://www.zaynahs.pk/api/revalidate',
+    'https://domain.com/api/revalidate',
     'POST',
     '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
     '{}',

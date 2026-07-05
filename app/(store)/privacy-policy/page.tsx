@@ -38,7 +38,7 @@ export default async function PrivacyPolicyPage() {
     supportEmail = `support@${domain}`;
   }
 
-  const supportPhone = settings.headerTopBarPhone || '0328-4114551';
+  const supportPhone = settings.headerTopBarPhone || '';
   const privacyContent = settings.privacyPolicyContent;
 
   return (

@@ -13,12 +13,6 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'ziucrfpebpxijqhwmqre.supabase.co',
-        port: '',
-        pathname: '/storage/v1/object/public/**',
-      },
-      {
-        protocol: 'https',
         hostname: '*.supabase.co',
         port: '',
         pathname: '/**',
@@ -29,6 +23,14 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      ...(process.env.NEXT_PUBLIC_IMAGE_HOSTNAME
+        ? [{
+            protocol: 'https' as const,
+            hostname: process.env.NEXT_PUBLIC_IMAGE_HOSTNAME as string,
+            port: '',
+            pathname: '/**',
+          }]
+        : []),
     ],
   },
   // Allow large HEIC/RAW file uploads to the image API route (up to 25MB)
@@ -140,6 +142,10 @@ const nextConfig: NextConfig = {
       {
         source: '/:key.txt',
         destination: '/api/indexnow/key?key=:key',
+      },
+      {
+        source: '/google:code.html',
+        destination: '/api/google-verify?code=:code',
       },
     ];
   },
