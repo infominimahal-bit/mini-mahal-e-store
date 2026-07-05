@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -91,6 +91,12 @@ export default function Navbar({
   // Desktop hover open state for dropdowns
   const [desktopHoverOpen, setDesktopHoverOpen] = useState<string | null>(null);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Overflow nav: tracks how many top-level items fit in the available nav width
+  const navContainerRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState<number>(999); // default: show all
+  const moreOpenRef = useRef(false);
+  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
 
   const navigationMenu: NavigationItem[] = settings?.navigationMenu ?? [];
   const headerDesktopMenuAlign = settings?.headerDesktopMenuAlign ?? 'center';
@@ -439,54 +445,179 @@ export default function Navbar({
   };
 
 
-  // Desktop dynamic navigation menu renderer
-  const renderDesktopNavMenu = () => {
-    if (isAdmin || navigationMenu.length === 0 || headerDesktopMenuAlign === 'hidden') return null;
+  // ── Overflow-aware desktop nav ──────────────────────────────────────────────
+  // Invisible measurement row: render ALL items off-screen to get their widths,
+  // then show only as many as fit, collapsing the rest into "More ▼".
+  const itemWidthsRef = useRef<number[]>([]);
+  const measureRowRef = useRef<HTMLDivElement>(null);
+
+  const recalcVisibleCount = useCallback(() => {
+    const container = navContainerRef.current;
+    const measureRow = measureRowRef.current;
+    if (!container || !measureRow) return;
+
+    const availableWidth = container.offsetWidth;
+    const MORE_BTN_WIDTH = 80; // reserve space for "More" button
+    const children = Array.from(measureRow.children) as HTMLElement[];
+    itemWidthsRef.current = children.map((el) => el.offsetWidth);
+
+    let used = 0;
+    let count = 0;
+    for (let i = 0; i < itemWidthsRef.current.length; i++) {
+      const willNeedMore = i < itemWidthsRef.current.length - 1;
+      const budget = willNeedMore ? availableWidth - MORE_BTN_WIDTH : availableWidth;
+      if (used + itemWidthsRef.current[i] <= budget) {
+        used += itemWidthsRef.current[i];
+        count++;
+      } else {
+        break;
+      }
+    }
+    setVisibleCount(count);
+  }, [navigationMenu]);
+
+  // Re-measure whenever the container resizes
+  useEffect(() => {
+    const container = navContainerRef.current;
+    if (!container) return;
+    const ro = new ResizeObserver(() => recalcVisibleCount());
+    ro.observe(container);
+    // Also measure after a tick so fonts/layout are painted
+    const t = setTimeout(recalcVisibleCount, 60);
+    return () => { ro.disconnect(); clearTimeout(t); };
+  }, [recalcVisibleCount]);
+
+  // Close "More" dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      // Don't close if clicking inside the more button or the overflow row itself
+      const target = e.target as HTMLElement;
+      if (target.closest('.more-dropdown-container') || target.closest('.more-button-toggle')) {
+        return;
+      }
+      if (moreOpenRef.current) {
+        setMoreDropdownOpen(false);
+        moreOpenRef.current = false;
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Single nav item renderer (reused for both visible and More dropdown)
+  const renderNavItem = (item: NavigationItem, compact = false) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isOpen = desktopHoverOpen === item.id;
+    const px = compact ? 'px-2.5' : 'px-3';
+    const textSize = compact ? 'text-xs' : 'text-sm';
     return (
-      <nav key="desktop-nav" className="flex items-center gap-0.5">
-        {navigationMenu.map((item) => {
-          const hasChildren = item.children && item.children.length > 0;
-          const isOpen = desktopHoverOpen === item.id;
-          return (
-            <div
-              key={item.id}
-              className="relative"
-              onMouseEnter={() => {
-                if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-                setDesktopHoverOpen(item.id);
-              }}
-              onMouseLeave={() => {
-                hoverTimerRef.current = setTimeout(() => setDesktopHoverOpen(null), 150);
-              }}
-            >
-              <Link
-                href={item.url}
-                className={`flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap relative group/item ${isOpen
-                  ? 'text-[#e94560] bg-gray-50 dark:bg-white/5'
-                  : 'text-gray-700 dark:text-gray-200 hover:text-[#e94560] hover:bg-gray-50 dark:hover:bg-white/5'
-                  }`}
-                style={customTextColorStyle}
-              >
-                <span>{item.label}</span>
-                {hasChildren && (
-                  <ChevronDown
-                    className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                  />
-                )}
-                {/* Underline line transition */}
-                <span
-                  className={`absolute bottom-0.5 left-3 right-3 h-[2px] bg-[#e94560] rounded-full transition-all duration-300 transform origin-left ${isOpen ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0 group-hover/item:scale-x-100 group-hover/item:opacity-100'
-                    }`}
-                />
-              </Link>
-              {/* Dropdown sub-menu */}
-              {hasChildren && isOpen && renderDesktopDropdown(item)}
-            </div>
-          );
-        })}
-      </nav>
+      <div
+        key={item.id}
+        className="relative shrink-0"
+        onMouseEnter={() => {
+          if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+          setDesktopHoverOpen(item.id);
+        }}
+        onMouseLeave={() => {
+          hoverTimerRef.current = setTimeout(() => setDesktopHoverOpen(null), 150);
+        }}
+      >
+        <Link
+          href={item.url}
+          className={`flex items-center gap-1 ${px} py-2 rounded-xl ${textSize} font-semibold transition-all duration-200 whitespace-nowrap relative group/nav-item ${isOpen
+            ? 'text-[#e94560] bg-gray-50 dark:bg-white/5'
+            : 'text-gray-700 dark:text-gray-200 hover:text-[#e94560] hover:bg-gray-50 dark:hover:bg-white/5'
+            }`}
+          style={customTextColorStyle}
+        >
+          <span>{item.label}</span>
+          {hasChildren && (
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+            />
+          )}
+          <span
+            className={`absolute bottom-0.5 left-2 right-2 h-[2px] bg-[#e94560] rounded-full transition-all duration-300 transform origin-left ${isOpen ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0 group-hover/nav-item:scale-x-100 group-hover/nav-item:opacity-100'
+              }`}
+          />
+        </Link>
+        {hasChildren && isOpen && renderDesktopDropdown(item)}
+      </div>
     );
   };
+
+  // Desktop dynamic navigation menu renderer (first row: visible items + More button)
+  const renderDesktopNavMenu = () => {
+    if (isAdmin || navigationMenu.length === 0 || headerDesktopMenuAlign === 'hidden') return null;
+
+    const visibleItems = navigationMenu.slice(0, visibleCount);
+    const overflowItems = navigationMenu.slice(visibleCount);
+    const hasOverflow = overflowItems.length > 0;
+
+    return (
+      <div ref={navContainerRef} key="desktop-nav" className="flex items-center gap-0 min-w-0 w-full">
+        {/* Hidden measurement row — renders all items off-screen to measure widths */}
+        <div
+          ref={measureRowRef}
+          aria-hidden="true"
+          className="absolute opacity-0 pointer-events-none flex items-center gap-0 top-0 left-0"
+          style={{ visibility: 'hidden', zIndex: -1 }}
+        >
+          {navigationMenu.map((item) => (
+            <div key={item.id} className="flex items-center gap-1 px-3 py-2 text-sm font-semibold whitespace-nowrap shrink-0">
+              <span>{item.label}</span>
+              {item.children && item.children.length > 0 && <ChevronDown className="h-3.5 w-3.5" />}
+            </div>
+          ))}
+        </div>
+
+        {/* Visible items */}
+        <nav className="flex items-center gap-0">
+          {visibleItems.map((item) => renderNavItem(item))}
+        </nav>
+
+        {/* More button — toggles second row */}
+        {hasOverflow && (
+          <button
+            type="button"
+            className="more-button-toggle flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200 text-gray-700 dark:text-gray-200 hover:text-[#e94560] hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer shrink-0"
+            onClick={() => {
+              const next = !moreDropdownOpen;
+              setMoreDropdownOpen(next);
+              moreOpenRef.current = next;
+            }}
+            style={customTextColorStyle}
+          >
+            <span>More</span>
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition-transform duration-200 ${moreDropdownOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  // Overflow items row — shown below the header when More is clicked
+  const renderOverflowRow = () => {
+    if (isAdmin || navigationMenu.length === 0 || headerDesktopMenuAlign === 'hidden') return null;
+    const overflowItems = navigationMenu.slice(visibleCount);
+    if (overflowItems.length === 0 || !moreDropdownOpen) return null;
+
+    return (
+      <div
+        className="more-dropdown-container hidden md:block w-full border-t border-gray-100 dark:border-gray-800 animate-fade-in"
+        style={{
+          backgroundColor: headerBg !== '#ffffff' ? headerBg : undefined,
+        }}
+      >
+        <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-center gap-0 py-1">
+          {overflowItems.map((item) => renderNavItem(item))}
+        </nav>
+      </div>
+    );
+  };
+
 
   // Helper to recursively collect all descendant item IDs under a navigation item
   const getDescendantIds = (node: NavigationItem): string[] => {
@@ -706,17 +837,19 @@ export default function Navbar({
         }}
       >
         {/* Desktop Header Layout */}
-        <div className="mx-auto hidden md:flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
-          <div className="flex items-center gap-4 justify-start shrink-0">
+        <div className="mx-auto hidden md:flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 gap-3">
+          <div className="flex items-center gap-3 justify-start shrink-0">
             {desktopLeftElements}
           </div>
-          <div className="flex items-center gap-4 justify-center flex-grow min-w-0">
+          <div className="flex items-center justify-center flex-1 min-w-0 overflow-visible">
             {desktopCenterElements}
           </div>
-          <div className="flex items-center gap-4 justify-end shrink-0">
+          <div className="flex items-center gap-2 justify-end shrink-0">
             {desktopRightElements}
           </div>
         </div>
+        {/* Overflow nav row — appears when More is clicked */}
+        {renderOverflowRow()}
 
         {/* Mobile Header Layout */}
         <div className="mx-auto md:hidden flex h-14 items-center justify-between px-4 relative">

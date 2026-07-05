@@ -261,7 +261,7 @@ export default function SortableMediaGrid<T extends SortableItem>({
           </div>
         </SortableContext>
 
-        <DragOverlay>
+        <DragOverlay dropAnimation={null} zIndex={999999}>
           {activeItem ? (
             <div className="rotate-3 scale-105 shadow-2xl opacity-90">
               {renderItem(
