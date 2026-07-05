@@ -34,9 +34,11 @@ interface FlashSaleSectionProps {
   currencySymbol: string;
   settings: StoreSettings;
   isPreview?: boolean;
+  loadMoreLimit?: number;
+  onLoadMore?: (sectionId: string, baseLimit: number) => void;
 }
 
-function FlashSaleSection({ section, products, currencySymbol, settings, isPreview }: FlashSaleSectionProps) {
+function FlashSaleSection({ section, products, currencySymbol, settings, isPreview, loadMoreLimit, onLoadMore }: FlashSaleSectionProps) {
   if (settings.flash_sale_enabled === false) return null;
   const startTimeStr = section.settings?.startTime;
   const endTimeStr = section.settings?.endTime;
@@ -98,10 +100,11 @@ function FlashSaleSection({ section, products, currencySymbol, settings, isPrevi
 
   const fsProducts = section.content_data?.products || [];
   const categoryDiscounts = section.content_data?.categoryDiscounts || [];
-  const displayProducts = products
+  
+  const allMatchedProducts = products
     .filter(p => 
       fsProducts.some((fsp: any) => fsp.productId === p.id) ||
-      categoryDiscounts.some((cd: any) => cd.categoryId === p.categoryId)
+      categoryDiscounts.some((cd: any) => cd.categoryId === p.categoryId || cd.categoryId === p.category?.slug || cd.categoryId === 'shop' || p.category?.id === cd.categoryId)
     )
     .sort((a, b) => {
       const idxA = fsProducts.findIndex((fsp: any) => fsp.productId === a.id);
@@ -113,6 +116,14 @@ function FlashSaleSection({ section, products, currencySymbol, settings, isPrevi
       if (idxB !== -1) return 1;
       return (b.createdAt || '').localeCompare(a.createdAt || '');
     });
+
+  const baseLimit = section.settings?.limit || 8;
+  const effectiveLimit = loadMoreLimit || baseLimit;
+  const bottomEnableViewAll = section.settings?.bottomEnableViewAll === true;
+  const bottomEnableLoadMore = section.settings?.bottomEnableLoadMore === true;
+
+  const displayProducts = allMatchedProducts.slice(0, effectiveLimit);
+  const hasMore = displayProducts.length < allMatchedProducts.length && displayProducts.length >= effectiveLimit;
 
   if (displayProducts.length === 0) {
     if (isPreview) {
@@ -184,8 +195,39 @@ function FlashSaleSection({ section, products, currencySymbol, settings, isPrevi
       <ProductGrid 
         products={displayProducts} 
         currencySymbol={currencySymbol} 
-        settings={settings} 
+        settings={settings}
+        isFlashSale={true}
       />
+
+      {(bottomEnableLoadMore || bottomEnableViewAll) && (
+        <div className="w-full flex items-center justify-center gap-3 mt-6 md:mt-8 px-4">
+          {bottomEnableLoadMore && hasMore && (
+            <button
+              type="button"
+              onClick={() => onLoadMore && onLoadMore(section.id, baseLimit)}
+              className="px-5 py-2.5 text-xs md:text-sm font-semibold tracking-wide uppercase rounded-full transition-all duration-200 shadow-sm active:scale-95 hover:brightness-90 cursor-pointer"
+              style={{
+                backgroundColor: section.settings?.bottomLoadMoreBgColor || '#f1f5f9',
+                color: section.settings?.bottomLoadMoreTextColor || '#1e293b',
+              }}
+            >
+              {section.settings?.bottomLoadMoreText || 'Load More'}
+            </button>
+          )}
+          {bottomEnableViewAll && (
+            <Link
+              href={viewAllLink}
+              className="px-5 py-2.5 text-xs md:text-sm font-semibold tracking-wide uppercase rounded-full transition-all duration-200 shadow-sm active:scale-95 hover:brightness-90"
+              style={{
+                backgroundColor: section.settings?.bottomViewAllBgColor || '#FFD147',
+                color: section.settings?.bottomViewAllTextColor || '#0f172a',
+              }}
+            >
+              {section.settings?.bottomViewAllText || 'View All'}
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1459,6 +1501,8 @@ export default function StoreFront({
                 currencySymbol={activeSettings.currencySymbol}
                 settings={activeSettings}
                 isPreview={isPreview}
+                loadMoreLimit={loadMoreLimits[section.id]}
+                onLoadMore={handleLoadMore}
               />
             );
             break;
