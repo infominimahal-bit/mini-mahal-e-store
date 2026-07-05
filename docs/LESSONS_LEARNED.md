@@ -1234,3 +1234,50 @@ Apply both fixes.
 ---
 
 > **Ek line mein:** "Mobile login loop fix karne ke liye explicitly cookie attach karein aur raw JSON code rokne ke liye proxy.ts ke redirect pe _nocache query lagayein." 🔑
+
+---
+
+# Masla 11: dnd-kit DragOverlay Offset in Scrollable/Sidebar Layouts (July 2026)
+
+---
+
+## Pehle Kya Tha (Symptom)
+Admin panel (Products, etc) mein images ya rows drag and drop karte waqt, dragged image (ghost image) mouse cursor se bohot door right ya left (offset) chali jati thi. Image ko control karna namumkin lagta tha.
+
+---
+
+## Issue Kya Tha (Root Cause)
+Hum `dnd-kit` library ka `DragOverlay` component use kar rahe the. `DragOverlay` default par dragged image ki ek nakli copy banata hai aur usko `document.body` par `position: fixed` or `position: absolute` lagata hai.
+Masla yeh tha ke hamara admin panel ek scrollable container (`<main id="admin-main-content">`) aur ek fixed sidebar (`w-72`) use karta hai. Jab aap sidebar open karte hain ya page scroll karte hain, toh `DragOverlay` ki screen coordinates (jo viewport se calculate hoti hain) aur grid ki local coordinates mismatch ho jati hain. Jiski wajah se image "ziada left" ya "ziada right" jump karti thi.
+
+---
+
+## Fix Kaise Hua
+`DragOverlay` ko mukammal taur par remove kar diya gaya! 
+Iske bajaye, CSS-based translation approach use ki:
+Jab item dragging mode mein ho (`isDragging: true`), toh usi **original** `SortableItem` par direct styles laga diye gaye (e.g. `zIndex: 9999`, `scale: 1.05`, `opacity: 0.9` aur thora shadow).
+`dnd-kit` automatically CSS `transform: translate3d(x, y, 0)` apply karta hai jo mouse cursor ko perfectly follow karta hai kyun ke wo element ki local position se offset calculate karta hai.
+Result: 100% pixel-perfect drag and drop bina kisi offset ke!
+
+---
+
+## Next Time Yeh Na Aaye — Rules
+
+```
+✅ RULE: Agar aap CSS Grid / Sidebar layout ke andar `dnd-kit` use kar rahe hain, toh `DragOverlay` ko bilkul avoid karein kyun ke wo screen coordinates par position calculate kar ke portal banata hai jis se offset bugs aate hain.
+
+✅ RULE: Sirf original `SortableItem` par `isDragging` ki conditions laga kar styling (shadow, scale, opacity) change karein.
+
+✅ RULE: `dnd-kit` grid items ke liye direct CSS `Translate` use karein taake element apne local parent container se relative move kare.
+```
+
+### Checklist — Nayi Drag & Drop List Banatay Waqt:
+```
+☐ Kya list ek aisi layout mein hai jis mein sidebar ya overflow-y-auto wali `main` body hai?
+☐ Agar haan, to `DragOverlay` use karne se parhez kiya gaya hai?
+☐ Original item ke component mein `isDragging` ki styling proper hai?
+```
+
+---
+
+> **Ek line mein:** "Sidebar aur scrollable dashboard layouts mein dnd-kit ka DragOverlay hamesha offset problems deta hai — isay nikaal kar direct element par dragging styles lagayein." 🖱️
