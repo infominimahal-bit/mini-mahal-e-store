@@ -347,7 +347,7 @@ export default function ProductCard({ product, currencySymbol = 'Rs.', settings 
     if (group.type === 'color') {
       return (
         <div key="colors" className={`flex items-center gap-1.5 flex-wrap ${swatchAlign}`}>
-          {group.variants.slice(0, settings?.swatchLimit ?? 8).map((v, i) => {
+          {group.variants.map((v, i) => {
             const bg = v.colorHex ? v.colorHex : undefined;
             const isActive = currentVariant?.color === v.color;
             const sSizeClass = getSwatchClasses('color', archiveSwatchSize, '');
@@ -384,18 +384,13 @@ export default function ProductCard({ product, currencySymbol = 'Rs.', settings 
               </button>
             );
           })}
-          {group.variants.length > (settings?.swatchLimit ?? 8) && (
-            <span className="text-[10px] text-gray-400 font-semibold">
-              +{group.variants.length - (settings?.swatchLimit ?? 8)}
-            </span>
-          )}
         </div>
       );
     } else {
       const attrKey = group.type === 'size' ? 'size' : group.type === 'material' ? 'material' : 'customValue';
       return (
         <div key={group.type} className={`flex items-center gap-1.5 flex-wrap ${swatchAlign}`}>
-          {group.variants.slice(0, settings?.swatchLimit ?? 8).map((v, i) => {
+          {group.variants.map((v, i) => {
             const val = group.type === 'size' ? v.size : group.type === 'material' ? v.material : v.customValue;
             const isActive = group.type === 'size'
               ? currentVariant?.size === v.size
@@ -429,11 +424,6 @@ export default function ProductCard({ product, currencySymbol = 'Rs.', settings 
               </button>
             );
           })}
-          {group.variants.length > (settings?.swatchLimit ?? 8) && (
-            <span className="text-[9px] text-gray-400 font-semibold">
-              +{group.variants.length - (settings?.swatchLimit ?? 8)}
-            </span>
-          )}
         </div>
       );
     }

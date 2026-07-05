@@ -91,6 +91,7 @@ export async function revalidateProduct(slug: string, action: 'UPDATED' | 'DELET
 
     revalidatePath('/');
     revalidatePath('/shop');
+    revalidatePath('/admin', 'layout');
     if (action !== 'DELETED') revalidatePath(`/product/${slug}`);
 
     await purgeCloudflareEverything();
@@ -122,6 +123,7 @@ export async function revalidateBanner() {
     // Purge page routing cache
     revalidatePath('/');
     revalidatePath('/shop');
+    revalidatePath('/admin', 'layout');
 
     const dynamicSiteUrl = await resolveSiteUrl();
     const urls = [
@@ -145,6 +147,7 @@ export async function revalidateCategory(slug: string, action: 'UPDATED' | 'DELE
 
     revalidatePath('/');
     revalidatePath('/shop');
+    revalidatePath('/admin', 'layout');
     if (action !== 'DELETED') revalidatePath(`/category/${slug}`);
 
     await purgeCloudflareEverything();
@@ -172,6 +175,7 @@ export async function revalidateHomepage() {
 
     revalidatePath('/');
     revalidatePath('/shop');
+    revalidatePath('/admin', 'layout');
 
     const dynamicSiteUrl = await resolveSiteUrl();
     const urls = [
@@ -201,6 +205,7 @@ export async function revalidateSettings() {
 
     // Revalidate the entire site (including layout metadata, favicon, titles)
     revalidatePath('/', 'layout');
+    revalidatePath('/admin', 'layout');
 
     await purgeCloudflareEverything();
     console.log('[revalidate] Settings revalidated + complete Cloudflare cache purged');
