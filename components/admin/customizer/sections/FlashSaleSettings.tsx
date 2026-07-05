@@ -182,6 +182,23 @@ export default function FlashSaleSettings({
         </div>
       </div>
 
+      <div className="space-y-1.5">
+        <label className="text-[11px] font-bold text-gray-500 dark:text-gray-400">
+          Sort Method
+        </label>
+        <select
+          value={settings.sortMethod || 'default'}
+          onChange={e => handleSettingsChange('sortMethod', e.target.value)}
+          className="w-full px-3 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#e94560] text-gray-900 dark:text-white"
+        >
+          <option value="default">Default</option>
+          <option value="category">Selected Category Order</option>
+          <option value="newest">Newest Arrivals</option>
+          <option value="price_low">Price: Low to High</option>
+          <option value="price_high">Price: High to Low</option>
+        </select>
+      </div>
+
       {/* CATEGORY LEVEL DISCOUNT MANAGER */}
       <div className="border border-gray-200 dark:border-gray-800 p-3.5 rounded-2xl bg-[#e94560]/5 space-y-3">
         <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#e94560] block">

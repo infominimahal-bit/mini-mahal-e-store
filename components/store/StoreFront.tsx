@@ -101,19 +101,37 @@ function FlashSaleSection({ section, products, currencySymbol, settings, isPrevi
   const fsProducts = section.content_data?.products || [];
   const categoryDiscounts = section.content_data?.categoryDiscounts || [];
   
+  const sortMethod = section.settings?.sortMethod || 'default';
+
   const allMatchedProducts = products
     .filter(p => 
       fsProducts.some((fsp: any) => fsp.productId === p.id) ||
-      categoryDiscounts.some((cd: any) => cd.categoryId === p.categoryId || cd.categoryId === p.category?.slug || cd.categoryId === 'shop' || p.category?.id === cd.categoryId)
+      categoryDiscounts.some((cd: any) => 
+        cd.categoryId === p.categoryId || 
+        cd.categoryId === p.category?.slug || 
+        cd.categoryId === 'shop' || 
+        p.category?.id === cd.categoryId ||
+        p.productCategories?.some((pc: any) => pc.categoryId === cd.categoryId || pc.category?.slug === cd.categoryId)
+      )
     )
     .sort((a, b) => {
+      // Priority sorting: Manual Additions first
       const idxA = fsProducts.findIndex((fsp: any) => fsp.productId === a.id);
       const idxB = fsProducts.findIndex((fsp: any) => fsp.productId === b.id);
-      if (idxA !== -1 && idxB !== -1) {
-        return idxA - idxB;
-      }
+      
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
       if (idxA !== -1) return -1;
       if (idxB !== -1) return 1;
+
+      // Apply standard sorting for category matches
+      if (sortMethod === 'newest') {
+        return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime();
+      } else if (sortMethod === 'price_low') {
+        return a.price - b.price;
+      } else if (sortMethod === 'price_high') {
+        return b.price - a.price;
+      }
+      
       return (b.createdAt || '').localeCompare(a.createdAt || '');
     });
 
