@@ -1745,3 +1745,45 @@ CREATE TRIGGER "revalidate-settings"
     '{}',
     '5000'
   );
+
+-- Trigger for product_variants table
+DROP TRIGGER IF EXISTS "revalidate-product_variants" ON public.product_variants;
+CREATE TRIGGER "revalidate-product_variants"
+  AFTER INSERT OR UPDATE OR DELETE
+  ON public.product_variants
+  FOR EACH ROW
+  EXECUTE FUNCTION supabase_functions.http_request(
+    'https://domain.com/api/revalidate',
+    'POST',
+    '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
+    '{}',
+    '5000'
+  );
+
+-- Trigger for product_images table
+DROP TRIGGER IF EXISTS "revalidate-product_images" ON public.product_images;
+CREATE TRIGGER "revalidate-product_images"
+  AFTER INSERT OR UPDATE OR DELETE
+  ON public.product_images
+  FOR EACH ROW
+  EXECUTE FUNCTION supabase_functions.http_request(
+    'https://domain.com/api/revalidate',
+    'POST',
+    '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
+    '{}',
+    '5000'
+  );
+
+-- Trigger for product_modifiers table
+DROP TRIGGER IF EXISTS "revalidate-product_modifiers" ON public.product_modifiers;
+CREATE TRIGGER "revalidate-product_modifiers"
+  AFTER INSERT OR UPDATE OR DELETE
+  ON public.product_modifiers
+  FOR EACH ROW
+  EXECUTE FUNCTION supabase_functions.http_request(
+    'https://domain.com/api/revalidate',
+    'POST',
+    '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
+    '{}',
+    '5000'
+  );
