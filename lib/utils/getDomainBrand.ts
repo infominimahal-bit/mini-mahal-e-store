@@ -28,5 +28,8 @@ export async function getDomainBrand(): Promise<{ name: string; tagline: string;
 
 export function cleanBrandName(text: string | null | undefined, currentBrandName: string): string {
   if (!text) return '';
-  return text;
+  // Case-insensitive replacement for legacy hardcoded names in DB
+  return text
+    .replace(/Zaynahs\s*E-Store/gi, currentBrandName)
+    .replace(/Zaynahs/gi, currentBrandName);
 }
