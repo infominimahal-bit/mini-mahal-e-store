@@ -2929,10 +2929,10 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                             readOnly
                             className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-4 w-4 pointer-events-none"
                           />
-                          {product.product_images && product.product_images.length > 0 ? (
+                          {(product as any).product_images && (product as any).product_images.length > 0 ? (
                             <div className="h-10 w-10 shrink-0 rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#0f0f1b]">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={(product.product_images as any[]).find((img: any) => img.is_primary)?.url || product.product_images[0].url} alt={product.name} className="h-full w-full object-cover" />
+                              <img src={((product as any).product_images as any[]).find((img: any) => img.is_primary)?.url || (product as any).product_images[0].url} alt={product.name} className="h-full w-full object-cover" />
                             </div>
                           ) : (
                             <div className="h-10 w-10 shrink-0 rounded-md border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-[#0f0f1b] flex items-center justify-center">
