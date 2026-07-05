@@ -44,8 +44,10 @@ function FlashSaleSection({ section, products, currencySymbol, settings, isPrevi
   const endTimeStr = section.settings?.endTime;
 
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0, expired: true, isIncoming: false, isInfinite: false });
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (!startTimeStr && !endTimeStr) {
       setTimeLeft({ hours: 0, minutes: 0, seconds: 0, expired: false, isIncoming: false, isInfinite: true });
       return;
@@ -96,7 +98,7 @@ function FlashSaleSection({ section, products, currencySymbol, settings, isPrevi
     return () => clearInterval(interval);
   }, [startTimeStr, endTimeStr]);
 
-  if (timeLeft.expired) return null;
+  if (!mounted || timeLeft.expired) return null;
 
   const fsProducts = section.content_data?.products || [];
   const categoryDiscounts = section.content_data?.categoryDiscounts || [];
