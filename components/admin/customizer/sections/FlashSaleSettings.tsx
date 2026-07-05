@@ -196,7 +196,7 @@ export default function FlashSaleSettings({
             className="w-full px-2.5 py-1.5 bg-white dark:bg-[#16162a] border border-gray-200 dark:border-gray-800 rounded-lg text-xs text-gray-900 dark:text-white"
           >
             <option value="">-- Choose Category --</option>
-            {categories.filter(c => c.slug !== 'shop').map(c => (
+            {categories.map(c => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
