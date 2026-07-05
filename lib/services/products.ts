@@ -125,7 +125,8 @@ const mapProduct = (row: DBProductRow): Product => {
     size: img.size || undefined,
     mimeType: img.mime_type || undefined,
     createdAt: img.created_at
-  })).sort((a: ProductImage, b: ProductImage) => a.sortOrder - b.sortOrder);
+  })).sort((a: ProductImage, b: ProductImage) => a.sortOrder - b.sortOrder)
+    .map((img, idx) => ({ ...img, isPrimary: idx === 0 }));
 
   const variants: ProductVariant[] = (row.product_variants ?? []).map((v: DBProductVariant) => ({
     id: v.id,

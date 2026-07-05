@@ -13,6 +13,7 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  MeasuringStrategy,
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
@@ -68,12 +69,10 @@ const standardColorMap: Record<string, string> = {
 function SortableImageItem({
   img,
   index,
-  handleSetPrimaryImage,
   handleRemoveImage,
 }: {
   img: any;
   index: number;
-  handleSetPrimaryImage: (idx: number) => void;
   handleRemoveImage: (idx: number, url: string) => void;
 }) {
   const {
@@ -88,8 +87,10 @@ function SortableImageItem({
   const style = {
     transform: CSS.Translate.toString(transform),
     transition,
-    opacity: isDragging ? 0.3 : 1,
-    zIndex: isDragging ? 50 : 'auto',
+    opacity: isDragging ? 0.9 : 1,
+    zIndex: isDragging ? 9999 : 1,
+    scale: isDragging ? '1.05' : '1',
+    boxShadow: isDragging ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' : 'none',
   };
 
   return (
@@ -100,7 +101,7 @@ function SortableImageItem({
     >
       {/* Image container */}
       <div 
-        className="relative aspect-square rounded-lg border border-gray-150 bg-gray-50 dark:bg-gray-850 dark:border-gray-800 overflow-hidden cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+        className="relative aspect-square rounded-lg border border-gray-150 bg-gray-50 dark:bg-gray-850 dark:border-gray-800 overflow-hidden cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
         {...attributes}
         {...listeners}
       >
@@ -108,25 +109,23 @@ function SortableImageItem({
         <img src={img.url} alt={`Preview ${index}`} className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
 
         {/* Desktop-only hover overlay (hidden on mobile) */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex items-center justify-center gap-2 z-20">
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex items-center justify-center gap-2 z-20 pointer-events-auto">
+          <button
+          type="button"
+          className={`p-1.5 rounded-lg text-white ${img.isPrimary ? 'text-amber-400' : 'opacity-0'}`}
+          title="Primary"
+        >
+          <Star className="h-4.5 w-4.5 fill-current" />
+        </button>
           <button
             type="button"
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
-              e.stopPropagation();
-              handleSetPrimaryImage(index);
-            }}
-            className={`p-1.5 rounded-lg text-white hover:bg-white/10 ${img.isPrimary ? 'text-amber-400' : ''}`}
-            title="Make Primary"
-          >
-            <Star className="h-4.5 w-4.5 fill-current" />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               handleRemoveImage(index, img.url);
             }}
-            className="p-1.5 rounded-lg text-red-400 hover:bg-white/10"
+            className="p-1.5 rounded-lg text-red-400 hover:bg-white/20"
             title="Delete Image"
           >
             <Trash2 className="h-4.5 w-4.5" />
@@ -141,7 +140,7 @@ function SortableImageItem({
         )}
         
         {/* Combined Grip handle and index number badge */}
-        <div className="absolute top-1.5 left-1.5 z-30 flex items-center gap-1 bg-[#1a1a2e]/80  text-white px-2 py-0.5 rounded-lg shadow-md border border-white/10 select-none">
+        <div className="absolute top-1.5 left-1.5 z-30 flex items-center gap-1 bg-[#1a1a2e]/80 text-white px-2 py-0.5 rounded-lg shadow-md border border-white/10 select-none">
           <GripVertical className="h-3 w-3 text-gray-300 flex-shrink-0" />
           <span className="text-[10px] font-extrabold tabular-nums">
             {index + 1}
@@ -151,21 +150,6 @@ function SortableImageItem({
 
       {/* Mobile-only action buttons below image — no accidental deletes */}
       <div className="mt-1.5 flex gap-1.5 md:hidden z-20 relative">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleSetPrimaryImage(index);
-          }}
-          className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${img.isPrimary
-              ? 'bg-amber-50 border-amber-300 text-amber-700'
-              : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-600'
-            }`}
-          title="Make Primary"
-        >
-          <Star className="h-3 w-3 fill-current" />
-          {img.isPrimary ? 'Primary' : 'Set Primary'}
-        </button>
         <button
           type="button"
           onClick={(e) => {
@@ -374,11 +358,11 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
 
   // 2. Images List
   const [images, setImages] = useState<Omit<ProductImage, 'id' | 'productId' | 'createdAt'>[]>(
-    initialProduct?.images.map(img => ({
+    initialProduct?.images.map((img: any, idx: number) => ({
       url: img.url,
       alt: img.alt,
       sortOrder: img.sortOrder,
-      isPrimary: img.isPrimary
+      isPrimary: idx === 0
     })) || []
   );
 
@@ -419,6 +403,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
       const updated = reordered.map((img, idx) => ({
         ...img,
         sortOrder: idx + 1,
+        isPrimary: idx === 0,
       }));
       setImages(updated);
     }
@@ -642,12 +627,15 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
             url,
             alt: file.name,
             sortOrder: images.length + idx,
-            isPrimary: images.length === 0 && idx === 0
+            isPrimary: false
           };
         })
       );
 
-      setImages(prev => [...prev, ...newImages]);
+      setImages(prev => {
+        const newArray = [...prev, ...newImages];
+        return newArray.map((img, idx) => ({ ...img, isPrimary: idx === 0 }));
+      });
       toast.success('Images uploaded successfully');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to upload images';
@@ -658,32 +646,17 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
     }
   };
 
-  // Set Primary Image
-  const handleSetPrimaryImage = (index: number) => {
-    setImages(prev =>
-      prev.map((img, i) => ({
-        ...img,
-        isPrimary: i === index
-      }))
-    );
-  };
-
   // Remove Image
   const handleRemoveImage = async (index: number, url: string) => {
     try {
       setImages(prev => {
         const filtered = prev.filter((_, i) => i !== index);
-        // Recalculate sortOrder and ensure at least one is primary if list is not empty
+        // Recalculate sortOrder and enforce index 0 is primary
         const updated = filtered.map((img, i) => ({
           ...img,
-          sortOrder: i
+          sortOrder: i,
+          isPrimary: i === 0
         }));
-
-        // If the removed image was primary, set the first one of the remaining as primary
-        const wasPrimary = prev[index]?.isPrimary;
-        if (wasPrimary && updated.length > 0) {
-          updated[0].isPrimary = true;
-        }
         return updated;
       });
 
@@ -735,7 +708,10 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
       });
 
     if (newImages.length > 0) {
-      setImages(prev => [...prev, ...newImages]);
+      setImages(prev => {
+        const newArray = [...prev, ...newImages];
+        return newArray.map((img, idx) => ({ ...img, isPrimary: idx === 0 }));
+      });
       toast.success(`Added ${newImages.length} image(s) from media library`);
     } else {
       toast.info('Selected images are already added to this product');
@@ -2694,6 +2670,7 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
+                  measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
                   onDragStart={handleDragStartImages}
                   onDragCancel={handleDragCancelImages}
                   onDragEnd={handleDragEndImages}
@@ -2708,23 +2685,11 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                           key={img.url}
                           img={img}
                           index={i}
-                          handleSetPrimaryImage={handleSetPrimaryImage}
                           handleRemoveImage={handleRemoveImage}
                         />
                       ))}
                     </div>
                   </SortableContext>
-                  <DragOverlay dropAnimation={null} zIndex={999999}>
-                    {activeImageId ? (
-                      <div className="rounded-xl overflow-hidden border-2 border-primary shadow-2xl relative aspect-square">
-                        <img 
-                          src={images.find(img => img.url === activeImageId)?.url || ''} 
-                          alt="Dragging" 
-                          className="w-full h-full object-cover" 
-                        />
-                      </div>
-                    ) : null}
-                  </DragOverlay>
                 </DndContext>
               )}
             </div>
@@ -2870,18 +2835,53 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
               <h3 className="text-base font-bold text-gray-900 dark:text-white">Bought Together Recommendations</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">Select up to 2 items to bundle and offer discounts at storefront.</p>
 
+              {/* Selected Items List */}
+              {frequentlyBoughtTogetherIds.length > 0 && (
+                <div className="flex flex-col gap-2 mb-4">
+                  {frequentlyBoughtTogetherIds.map((id) => {
+                    const product = productList.find(p => p.id === id);
+                    if (!product) return null;
+                    return (
+                      <div key={id} className="flex items-center gap-3 p-2 bg-gray-50/50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-lg">
+                        <div className="h-10 w-10 shrink-0 rounded border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#0f0f1b]">
+                          {(product as any).product_images && (product as any).product_images.length > 0 ? (
+                            <img src={((product as any).product_images as any[]).find((img: any) => img.is_primary)?.url || (product as any).product_images[0].url} alt={product.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800"><ImageIcon className="h-4 w-4 text-gray-400" /></div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">{product.name}</p>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                            {product.sku ? <span className="mr-2">SKU: {product.sku}</span> : <span className="mr-2">No SKU</span>}
+                            Rs. {product.price}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setFrequentlyBoughtTogetherIds(prev => prev.filter(pId => pId !== id))}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md transition-colors shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               <div className="relative mb-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search products by name or SKU..."
+                  placeholder="Search products by name or SKU to add..."
                   value={productSearchQuery}
                   onChange={(e) => setProductSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 bg-gray-50/50 text-xs focus:outline-none focus:border-[#1a1a2e] focus:bg-white transition-all dark:border-gray-800 dark:bg-[#111124] text-gray-900 dark:text-white"
                 />
               </div>
 
-              <div className="border border-gray-200 dark:border-gray-800 rounded-xl max-h-60 overflow-y-auto p-3 space-y-2 bg-gray-50 dark:bg-[#0f0f1b] overscroll-contain">
+              <div className="border border-gray-200 dark:border-gray-800 rounded-xl max-h-60 overflow-y-auto p-2 space-y-1 bg-gray-50 dark:bg-[#0f0f1b] overscroll-contain">
                 {(() => {
                   const q = productSearchQuery.toLowerCase();
                   const filteredList = productList.filter(product => 
@@ -2897,56 +2897,55 @@ export default function ProductForm({ categories, initialProduct, aiEnabled, sto
                   );
 
                   if (filteredList.length === 0) {
-                    return <span className="text-xs text-gray-500">No matching products found.</span>;
+                    return <div className="p-3 text-xs text-gray-500 text-center">No matching products found.</div>;
                   }
 
                   return filteredList.map((product) => {
                       const isChecked = frequentlyBoughtTogetherIds.includes(product.id);
                       return (
-                        <div
+                        <label
                           key={product.id}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (isChecked) {
-                              setFrequentlyBoughtTogetherIds(prev => prev.filter(id => id !== product.id));
-                            } else {
-                              if (frequentlyBoughtTogetherIds.length < 2) {
-                                setFrequentlyBoughtTogetherIds(prev => [...prev, product.id]);
-                              } else {
-                                toast.warning('You can choose a maximum of 2 bought-together items.');
-                              }
-                            }
-                          }}
-                          className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer select-none transition-colors ${
+                          className={`flex items-center gap-2 p-1.5 rounded-md cursor-pointer select-none border border-transparent transition-colors ${
                             !isChecked && frequentlyBoughtTogetherIds.length >= 2
-                              ? 'opacity-60 hover:bg-transparent'
-                              : 'hover:bg-gray-100 dark:hover:bg-white/5'
+                              ? 'opacity-50 hover:bg-transparent'
+                              : 'hover:bg-gray-100 dark:hover:bg-white/5 hover:border-gray-200 dark:hover:border-gray-800'
                           }`}
                         >
                           <input
                             type="checkbox"
                             checked={isChecked}
-                            readOnly
-                            className="rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-4 w-4 pointer-events-none"
+                            disabled={!isChecked && frequentlyBoughtTogetherIds.length >= 2}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                if (frequentlyBoughtTogetherIds.length < 2) {
+                                  setFrequentlyBoughtTogetherIds(prev => [...prev, product.id]);
+                                } else {
+                                  toast.warning('You can choose a maximum of 2 bought-together items.');
+                                }
+                              } else {
+                                setFrequentlyBoughtTogetherIds(prev => prev.filter(id => id !== product.id));
+                              }
+                            }}
+                            className="shrink-0 rounded border-gray-300 text-[#e94560] focus:ring-[#e94560] h-3.5 w-3.5 cursor-pointer disabled:cursor-not-allowed"
                           />
                           {(product as any).product_images && (product as any).product_images.length > 0 ? (
-                            <div className="h-10 w-10 shrink-0 rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#0f0f1b]">
+                            <div className="h-8 w-8 shrink-0 rounded border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-[#0f0f1b]">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={((product as any).product_images as any[]).find((img: any) => img.is_primary)?.url || (product as any).product_images[0].url} alt={product.name} className="h-full w-full object-cover" />
                             </div>
                           ) : (
-                            <div className="h-10 w-10 shrink-0 rounded-md border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-[#0f0f1b] flex items-center justify-center">
-                              <ImageIcon className="h-4 w-4 text-gray-400" />
+                            <div className="h-8 w-8 shrink-0 rounded border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-[#0f0f1b] flex items-center justify-center">
+                              <ImageIcon className="h-3 w-3 text-gray-400" />
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-gray-850 dark:text-gray-200 truncate">{product.name}</p>
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500">
-                              {product.sku ? <span className="mr-2">SKU: {product.sku}</span> : <span className="mr-2">No SKU</span>}
+                            <p className="text-[11px] font-medium text-gray-800 dark:text-gray-200 truncate leading-tight">{product.name}</p>
+                            <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">
+                              {product.sku ? <span className="mr-1.5">SKU: {product.sku}</span> : <span className="mr-1.5">No SKU</span>}
                               Rs. {product.price}
                             </p>
                           </div>
-                        </div>
+                        </label>
                       );
                     });
                 })()}
