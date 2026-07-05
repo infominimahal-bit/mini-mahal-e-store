@@ -256,6 +256,10 @@ export default function Navbar({
   // because those should preserve the user's scroll position.
   // Exception: when a scroll restoration is scheduled (store_scroll_restore)
   useEffect(() => {
+    if (moreOpenRef.current) {
+      setMoreDropdownOpen(false);
+      moreOpenRef.current = false;
+    }
     if (typeof window !== 'undefined') {
       const hasSavedScroll = sessionStorage.getItem('store_scroll_restore');
       if (!hasSavedScroll) {
