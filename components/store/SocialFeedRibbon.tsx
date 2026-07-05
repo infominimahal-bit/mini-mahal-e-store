@@ -164,7 +164,6 @@ export default function SocialFeedRibbon({
   isHomepage = false,
   items
 }: SocialFeedRibbonProps) {
-  const [activeVideo, setActiveVideo] = useState<any | null>(null);
   const [shouldRender, setShouldRender] = useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -203,20 +202,10 @@ export default function SocialFeedRibbon({
     }
   }, [items, settings.social_feeds_items]);
 
-  // Escape key listener to close modal
-  useEffect(() => {
-    if (!activeVideo) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setActiveVideo(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeVideo]);
+
 
   if (settings.social_feeds_enabled === false) return null;
-  
+
   if (isHomepage) {
     if (settings.social_feeds_homepage_enabled === false) return null;
   } else {
@@ -226,7 +215,7 @@ export default function SocialFeedRibbon({
   if (!shouldRender) {
     // Render a lightweight spacer to maintain structure, completely deferring image / script requests
     return (
-      <div 
+      <div
         ref={containerRef}
         className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 border-t border-gray-200 dark:border-gray-800 pt-10 h-[120px] flex items-center justify-center opacity-40"
       >
@@ -244,7 +233,7 @@ export default function SocialFeedRibbon({
   ];
 
   return (
-    <div 
+    <div
       className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 border-t border-gray-200 dark:border-gray-800 pt-10 animate-fade-in"
       style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 600px' } as React.CSSProperties}
     >
@@ -285,15 +274,9 @@ export default function SocialFeedRibbon({
           return (
             <a
               key={feed.id || idx}
-              href={feed.link || '#'}
+              href={feed.link || feed.videoUrl || '#'}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => {
-                if (hasVideo) {
-                  e.preventDefault();
-                  setActiveVideo(feed);
-                }
-              }}
               className="relative aspect-[9/16] bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden group border border-gray-100 dark:border-gray-800 block cursor-pointer"
             >
               <Image
@@ -304,7 +287,7 @@ export default function SocialFeedRibbon({
                 className="object-cover"
                 loading="lazy"
               />
-              
+
               {/* Permanent Play/Platform Indicator for Videos */}
               {hasVideo && (
                 <div className="absolute top-3 right-3 z-10 w-7 h-7 bg-white rounded-full flex items-center justify-center border border-gray-200 shadow-sm">
@@ -323,7 +306,7 @@ export default function SocialFeedRibbon({
                   {feed.caption && <p className="text-[9px] text-gray-300 line-clamp-2 mt-0.5 leading-tight">{feed.caption}</p>}
                 </div>
               </div>
-              
+
               {/* Default username tag */}
               <div className="absolute bottom-3 left-3 bg-black/80 text-white text-[9px] font-bold px-2.5 py-1 rounded-full max-w-[85%] truncate whitespace-nowrap">
                 @{feed.username}
@@ -333,67 +316,7 @@ export default function SocialFeedRibbon({
         })}
       </div>
 
-      {/* Video Modal Overlay */}
-      {activeVideo && (() => {
-        const videoInfo = parseSocialVideoUrl(activeVideo.videoUrl, activeVideo.videoAutoplay ?? true, activeVideo.platform);
-        
-        return (
-          <div 
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 overscroll-contain animate-fade-in p-4"
-            style={{ willChange: 'opacity' }}
-            onClick={() => setActiveVideo(null)}
-          >
-            {/* Floating Top-Right Screen Close Button */}
-            <button 
-              onClick={() => setActiveVideo(null)}
-              className="fixed top-4 right-4 md:top-6 md:right-6 z-[110] flex items-center justify-center gap-1 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-white border border-white/20 shadow-2xl transition-all active:scale-95 cursor-pointer text-xs font-bold uppercase tracking-wider select-none"
-              title="Close Video"
-            >
-              <span>✕ Close</span>
-            </button>
 
-            <div 
-              className="relative w-full bg-black rounded-3xl overflow-hidden shadow-2xl border border-gray-800 flex flex-col justify-center transition-all"
-              style={{ 
-                maxHeight: '82vh', 
-                willChange: 'transform',
-                maxWidth: videoInfo.type === 'instagram' ? '450px' : 
-                          videoInfo.type === 'tiktok' || (videoInfo.type === 'youtube' && videoInfo.isVertical) ? '360px' : '768px',
-                aspectRatio: videoInfo.type === 'instagram' ? '3/4' : 
-                             videoInfo.type === 'tiktok' || (videoInfo.type === 'youtube' && videoInfo.isVertical) ? '9/16' : 
-                             videoInfo.type === 'direct' ? 'auto' : '16/9',
-                height: videoInfo.type === 'direct' ? 'auto' : undefined
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Video Player */}
-              {videoInfo.type === 'direct' ? (
-                <video
-                  src={videoInfo.embedUrl}
-                  className="w-full h-auto max-h-[82vh] object-contain rounded-3xl"
-                  controls
-                  autoPlay={activeVideo.videoAutoplay ?? true}
-                  muted={activeVideo.videoAutoplay ?? true}
-                  loop={activeVideo.videoAutoplay ?? true}
-                  playsInline
-                />
-              ) : videoInfo.type ? (
-                <iframe
-                  src={videoInfo.embedUrl}
-                  className="w-full h-full border-0"
-                  allow="autoplay; encrypted-media; picture-in-picture; accelerometer; gyroscope; unload"
-                  allowFullScreen
-                  loading="lazy"
-                />
-              ) : (
-                <div className="text-center p-8 text-gray-400 text-sm">
-                  Invalid video link or unsupported platform.
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 }
