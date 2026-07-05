@@ -114,26 +114,39 @@ function FlashSaleSection({ section, products, currencySymbol, settings, isPrevi
         p.productCategories?.some((pc: any) => pc.categoryId === cd.categoryId || pc.category?.slug === cd.categoryId)
       )
     )
-    .sort((a, b) => {
-      // Priority sorting: Manual Additions first
-      const idxA = fsProducts.findIndex((fsp: any) => fsp.productId === a.id);
-      const idxB = fsProducts.findIndex((fsp: any) => fsp.productId === b.id);
-      
-      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-      if (idxA !== -1) return -1;
-      if (idxB !== -1) return 1;
+      .sort((a, b) => {
+        // Priority sorting: Manual Additions first
+        const idxA = fsProducts.findIndex((fsp: any) => fsp.productId === a.id);
+        const idxB = fsProducts.findIndex((fsp: any) => fsp.productId === b.id);
+        
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
 
-      // Apply standard sorting for category matches
-      if (sortMethod === 'newest') {
-        return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime();
-      } else if (sortMethod === 'price_low') {
-        return a.price - b.price;
-      } else if (sortMethod === 'price_high') {
-        return b.price - a.price;
-      }
-      
-      return (b.createdAt || '').localeCompare(a.createdAt || '');
-    });
+        // Category Order Sort
+        if (sortMethod === 'category') {
+          const catIdxA = categoryDiscounts.findIndex((cd: any) => 
+            cd.categoryId === a.categoryId || cd.categoryId === a.category?.slug || cd.categoryId === 'shop' || a.category?.id === cd.categoryId || a.productCategories?.some((pc: any) => pc.categoryId === cd.categoryId || pc.category?.slug === cd.categoryId)
+          );
+          const catIdxB = categoryDiscounts.findIndex((cd: any) => 
+            cd.categoryId === b.categoryId || cd.categoryId === b.category?.slug || cd.categoryId === 'shop' || b.category?.id === cd.categoryId || b.productCategories?.some((pc: any) => pc.categoryId === cd.categoryId || pc.category?.slug === cd.categoryId)
+          );
+          if (catIdxA !== -1 && catIdxB !== -1 && catIdxA !== catIdxB) {
+            return catIdxA - catIdxB;
+          }
+        }
+
+        // Apply standard sorting for category matches
+        if (sortMethod === 'newest') {
+          return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime();
+        } else if (sortMethod === 'price_low') {
+          return a.price - b.price;
+        } else if (sortMethod === 'price_high') {
+          return b.price - a.price;
+        }
+        
+        return (b.createdAt || '').localeCompare(a.createdAt || '');
+      });
 
   const baseLimit = section.settings?.limit || 8;
   const effectiveLimit = loadMoreLimit || baseLimit;
@@ -214,7 +227,6 @@ function FlashSaleSection({ section, products, currencySymbol, settings, isPrevi
         products={displayProducts} 
         currencySymbol={currencySymbol} 
         settings={settings}
-        isFlashSale={true}
       />
 
       {(bottomEnableLoadMore || bottomEnableViewAll) && (
