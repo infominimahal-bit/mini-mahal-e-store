@@ -89,11 +89,14 @@ export async function upsertAbandonedCart(data: {
     updated_at: new Date().toISOString(),
   };
 
-  const { data: existing } = await staticSupabase
+  const { data: existingList } = await staticSupabase
     .from('abandoned_carts')
     .select('id, order_placed')
     .eq('session_id', data.sessionId)
-    .maybeSingle();
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  const existing = existingList?.[0];
 
   if (existing) {
     // Don't overwrite if order was already placed
@@ -142,12 +145,15 @@ export async function getAllAbandonedCarts(): Promise<AbandonedCart[]> {
 
 /** Get single cart by session */
 export async function getAbandonedCartBySession(sessionId: string): Promise<AbandonedCart | null> {
-  const { data, error } = await staticSupabase
+  const { data: dataList, error } = await staticSupabase
     .from('abandoned_carts')
     .select('*')
     .eq('session_id', sessionId)
-    .maybeSingle();
+    .order('created_at', { ascending: false })
+    .limit(1);
+    
   if (error) throw error;
+  const data = dataList?.[0];
   return data ? mapCart(data) : null;
 }
 

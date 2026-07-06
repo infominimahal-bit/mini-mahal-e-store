@@ -116,28 +116,32 @@ export function useAbandonedCartTracker(currency = 'PKR') {
   }) => {
     contactRef.current = contact;
     if (!sessionId.current || items.length === 0) return;
-    saveToServer({
-      sessionId: sessionId.current,
-      customerName: contact.name,
-      customerEmail: contact.email,
-      customerPhone: contact.phone,
-      customerAddress: contact.address,
-      customerCity: contact.city,
-      customerApartment: contact.apartment,
-      customerPostalCode: contact.postalCode,
-      items: items.map(item => ({
-        product: {
-          id: item.product.id,
-          name: item.product.name,
-          images: item.product.images?.slice(0, 1),
-        },
-        quantity: item.quantity,
-        price: item.unitPrice,
-        selectedVariant: item.selectedVariant,
-      })),
-      subtotal: totalPrice,
-      currency,
-    });
+    
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      saveToServer({
+        sessionId: sessionId.current,
+        customerName: contact.name,
+        customerEmail: contact.email,
+        customerPhone: contact.phone,
+        customerAddress: contact.address,
+        customerCity: contact.city,
+        customerApartment: contact.apartment,
+        customerPostalCode: contact.postalCode,
+        items: items.map(item => ({
+          product: {
+            id: item.product.id,
+            name: item.product.name,
+            images: item.product.images?.slice(0, 1),
+          },
+          quantity: item.quantity,
+          price: item.unitPrice,
+          selectedVariant: item.selectedVariant,
+        })),
+        subtotal: totalPrice,
+        currency,
+      });
+    }, DEBOUNCE_MS);
   }, [items, totalPrice, currency, saveToServer]);
 
   /** Call this immediately when order is placed to mark cart as recovered */
