@@ -41,7 +41,15 @@ if (!PROJECT_REF || !MGMT_TOKEN) {
 }
 
 const schemaPath = resolve(__dirname, '..', 'supabase', 'schema', 'SUPER_MASTER_SCHEMA.sql');
-const sql = readFileSync(schemaPath, 'utf-8');
+let sql = readFileSync(schemaPath, 'utf-8');
+
+// Automatically inject the correct webhook domain if set
+const siteUrl = envVars.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_SITE_URL;
+if (siteUrl) {
+  const cleanUrl = siteUrl.replace(/\/+$/, '');
+  console.log(`Injecting webhook domain: ${cleanUrl}`);
+  sql = sql.replace(/https:\/\/domain\.com/g, cleanUrl);
+}
 
 console.log(`Applying SUPER_MASTER_SCHEMA.sql to project: ${PROJECT_REF}...`);
 
