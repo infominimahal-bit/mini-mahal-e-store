@@ -755,7 +755,7 @@ bashcurl -X POST https://www.zaynahs.pk/api/revalidate \
    - Supabase URL + anon key + service role key
    - Cloudflare zone ID + API token
    - REVALIDATE_SECRET (Must strictly be: zaynahs_secret_cache_revalidate_2026)
-   - NEXT_PUBLIC_SITE_URL = https://[domain]
+   - NEXT_PUBLIC_SITE_URL = https://www.[domain] (⚠️ CRITICAL: Must be the final URL. If your domain redirects from root to www, you MUST include www here, otherwise Supabase Webhooks will drop the POST request due to 308 redirects and caching will break!)
 ```
 
 ### Step 2 — Supabase Database (via SQL API)

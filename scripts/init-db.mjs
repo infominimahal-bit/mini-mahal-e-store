@@ -47,6 +47,29 @@ let sql = readFileSync(schemaPath, 'utf-8');
 const siteUrl = envVars.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_SITE_URL;
 if (siteUrl) {
   const cleanUrl = siteUrl.replace(/\/+$/, '');
+  
+  // PERMANENT FIX: Validate that the URL does not redirect (which breaks webhooks)
+  if (!cleanUrl.includes('localhost')) {
+    console.log(`Validating webhook domain: ${cleanUrl} ...`);
+    try {
+      const checkRes = await fetch(cleanUrl, { redirect: 'manual' });
+      if (checkRes.status >= 300 && checkRes.status < 400) {
+        const location = checkRes.headers.get('location');
+        console.error('\n======================================================');
+        console.error('❌ CRITICAL ERROR: WEBHOOK DOMAIN REDIRECT DETECTED!');
+        console.error('======================================================');
+        console.error(`Your NEXT_PUBLIC_SITE_URL (${cleanUrl}) is returning a ${checkRes.status} Redirect.`);
+        console.error(`It redirects to: ${location}`);
+        console.error('\nSupabase Webhooks DO NOT follow redirects. If you proceed, cache revalidation WILL FAIL.');
+        console.error(`Please update NEXT_PUBLIC_SITE_URL in .env.local to the exact final URL (e.g., ${location})`);
+        console.error('======================================================\n');
+        process.exit(1);
+      }
+    } catch (e) {
+      console.warn(`⚠️ Warning: Could not validate domain ${cleanUrl} (Network error or offline). Proceeding anyway...`);
+    }
+  }
+
   console.log(`Injecting webhook domain: ${cleanUrl}`);
   sql = sql.replace(/https:\/\/domain\.com/g, cleanUrl);
 }
