@@ -113,6 +113,7 @@ This app runs across ANY domain (localhost, custom domain, production). Never ha
      SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
      REVALIDATE_SECRET=zaynahs_secret_cache_revalidate_2026
      ```
+   - **Vercel API Sync:** The agent MUST automatically sync this universal secret to all linked Vercel projects via the Vercel REST API (`PATCH /v9/projects/{id}/env/{env_id}`).
    - GitHub will block pushes containing secrets — use `rg "sbp_|ghp_" --glob '!.env*' --glob '!.git'` to check
 
 9. **Clone / setup from scratch:**

@@ -119,6 +119,7 @@ The webhook revalidation secret `REVALIDATE_SECRET` must **ALWAYS** be exactly `
 - Never generate or use a random secret for this value. 
 - It must be hardcoded in `.env.local`, Vercel environment variables, `NEW_PROJECT_SETUP_GUIDE.md`, and Supabase triggers. This ensures multi-domain clones don't break database webhooks.
 - Testing and manual curl triggers in `STORE_TESTING_GUIDE.md` must strictly use this secret.
+- **Vercel API Sync:** The agent MUST always ensure this secret is synced correctly across all connected Vercel projects (e.g., MiniMahal and Totvogue) using the Vercel REST API (`PATCH /v9/projects/{id}/env/{env_id}`). Never leave Vercel with a mismatched secret.
 
 ## RULE D4 — SOFT DELETE
 Never hard delete products. Use `products.active = false`.
