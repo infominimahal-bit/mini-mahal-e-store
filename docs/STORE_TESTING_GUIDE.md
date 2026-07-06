@@ -1,5 +1,7 @@
 # TotVogue / Zaynahs E-Store — Complete Testing Guide
 
+> **CRITICAL RULE**: The webhook secret must ALWAYS be `zaynahs_secret_cache_revalidate_2026` across all clones and instances. Do not use any other secret.
+
 > All API-based tests (Cloudflare, Supabase) use env vars from `.env.local`.  
 > Run with: `bash <(cat docs/STORE_TESTING_GUIDE.md | sed -n '/```bash/,/```/p' | sed 's/```//g')`  
 > Or copy-paste individual commands.

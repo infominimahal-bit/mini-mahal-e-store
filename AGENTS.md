@@ -111,6 +111,7 @@ This app runs across ANY domain (localhost, custom domain, production). Never ha
      NEXT_PUBLIC_SUPABASE_URL=https://yourref.supabase.co
      NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
      SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+     REVALIDATE_SECRET=zaynahs_secret_cache_revalidate_2026
      ```
    - GitHub will block pushes containing secrets — use `rg "sbp_|ghp_" --glob '!.env*' --glob '!.git'` to check
 

@@ -262,7 +262,7 @@ GITHUB_TOKEN=
 GITHUB_REPO=
 
 # Cache
-REVALIDATE_SECRET=your_secret_cache_2026
+REVALIDATE_SECRET=zaynahs_secret_cache_revalidate_2026
 
 # Cloudflare
 CLOUDFLARE_ZONE_ID=
@@ -651,7 +651,7 @@ GITHUB_TOKEN=ghp_xxxx
 GITHUB_REPO=your-repo
 
 # Cache & Cloudflare
-REVALIDATE_SECRET=your_secret_cache_2026
+REVALIDATE_SECRET=zaynahs_secret_cache_revalidate_2026
 CLOUDFLARE_ZONE_ID=
 CLOUDFLARE_API_TOKEN=
 CF_ACCOUNT_ID=
@@ -754,7 +754,7 @@ bashcurl -X POST https://www.zaynahs.pk/api/revalidate \
 ✅ .env.local file create kare ga with:
    - Supabase URL + anon key + service role key
    - Cloudflare zone ID + API token
-   - REVALIDATE_SECRET (auto-generate)
+   - REVALIDATE_SECRET (Must strictly be: zaynahs_secret_cache_revalidate_2026)
    - NEXT_PUBLIC_SITE_URL = https://[domain]
 ```
 

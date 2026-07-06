@@ -556,7 +556,7 @@ CREATE TRIGGER "revalidate-products"
   EXECUTE FUNCTION supabase_functions.http_request(
     'https://your-production-domain.com/api/revalidate',
     'POST',
-    '{"Content-Type":"application/json","x-revalidate-secret":"your_revalidate_secret_key"}',
+    '{"Content-Type":"application/json","x-revalidate-secret":"zaynahs_secret_cache_revalidate_2026"}',
     '{}',
     '5000'
   );
